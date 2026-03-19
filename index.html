@@ -838,22 +838,17 @@ window.submitPublicPrayer=async()=>{
     if(name){
       // S jménem → jde do normálních žádostí o modlitbu
       await addDoc(collection(db,'requests'),{
-        text,cat,
-        name,
-        prayedBy:[],
-        answered:false,
-        source:'public',
-        createdBy:'_public',
+        text,cat,name,
+        prayedBy:[],answered:false,
+        source:'public',createdBy:'_public',
         ts:serverTimestamp()
       });
     } else {
       // Bez jména → jde do anonymních
       await addDoc(collection(db,'anon'),{
-        text,cat,
-        name:'Anonymní',
+        text,cat,name:'Anonymní',
         prayedBy:[],
-        source:'public',
-        createdBy:'_public',
+        source:'public',createdBy:'_public',
         ts:serverTimestamp()
       });
     }
@@ -867,7 +862,10 @@ window.submitPublicPrayer=async()=>{
     btn.textContent='✓ Odesláno';
     setTimeout(()=>closePublicPrayer(),2800);
   }catch(e){
-    msgEl.className='amsg err';msgEl.textContent='Chyba při odesílání. Zkus to znovu.';msgEl.style.display='block';
+    console.error('submitPublicPrayer error:',e);
+    msgEl.className='amsg err';
+    msgEl.textContent='Chyba: '+e.message;
+    msgEl.style.display='block';
     btn.disabled=false;btn.textContent='🙏 Odeslat žádost';
   }
 };
