@@ -835,16 +835,32 @@ window.submitPublicPrayer=async()=>{
   }
   btn.disabled=true;btn.textContent='Odesílám…';
   try{
-    await addDoc(collection(db,'anon'),{
-      text,cat,
-      name:name||'Anonymní',
-      prayedBy:[],
-      source:'public',
-      createdBy:'_public',
-      ts:serverTimestamp()
-    });
+    if(name){
+      // S jménem → jde do normálních žádostí o modlitbu
+      await addDoc(collection(db,'requests'),{
+        text,cat,
+        name,
+        prayedBy:[],
+        answered:false,
+        source:'public',
+        createdBy:'_public',
+        ts:serverTimestamp()
+      });
+    } else {
+      // Bez jména → jde do anonymních
+      await addDoc(collection(db,'anon'),{
+        text,cat,
+        name:'Anonymní',
+        prayedBy:[],
+        source:'public',
+        createdBy:'_public',
+        ts:serverTimestamp()
+      });
+    }
     msgEl.className='amsg ok';
-    msgEl.textContent='✓ Žádost odeslána! Budeme se za tebe modlit.';
+    msgEl.textContent=name
+      ?`✓ Žádost odeslána, ${name}! Budeme se za tebe modlit.`
+      :'✓ Žádost odeslána anonymně! Budeme se za tebe modlit.';
     msgEl.style.display='block';
     document.getElementById('pubText').value='';
     document.getElementById('pubName').value='';
@@ -1072,12 +1088,14 @@ function renderReqs(){
   const allU=window._users||{};
   el.innerHTML=list.map(r=>{
     const prayed=(r.prayedBy||[]).includes(CU.username);
-    const canDel=isAdmin()||r.createdBy===CU.username;const canAns=r.createdBy===CU.username||isAdmin();
+    const isPublic=r.source==='public';
+    const canDel=isAdmin()||(r.createdBy===CU.username&&!isPublic);const canAns=canMgr()||isAdmin();
     const u=userByUn(r.createdBy);
     const pNames=(r.prayedBy||[]).map(un=>{const u2=allU[un];return(u2&&u2.emoji?u2.emoji+' ':'')+((u2&&u2.name?u2.name:un).split(' ')[0]);});
     const pHTML=pNames.length?`<div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:3px;align-items:center"><span style="font-size:.7rem;color:var(--muted)">Modlil/a se: </span>${pNames.map(n=>`<span style="font-size:.71rem;background:rgba(123,47,190,.15);border:1px solid var(--border);border-radius:20px;padding:1px 7px;color:var(--purple-xl)">${esc(n)}</span>`).join('')}</div>`:'';
+    const publicBadge=isPublic?`<span class="tag" style="background:rgba(255,209,102,.15);color:var(--gold);border:1px solid rgba(255,209,102,.3)">🌐 Veřejná</span>`:'';
     return`<div class="pc ${r.answered?'answered':''}">
-      <div class="rh"><div class="rm2">${u?.emoji?`<span style="font-size:.95rem">${u.emoji}</span>`:''}<span class="rn">${esc(r.name)}</span><span class="tag t-${r.cat}">${r.cat}</span><span class="tag" style="background:rgba(255,255,255,.07);color:var(--muted);font-size:.65rem">${(r.reqType||"jednorázová")==="opakovaná"?"🔄 Opakovaná":(r.reqType||"jednorázová")==="dlouhodobá"?"📅 Dlouhodobá":"🕯 Jednorázová"}</span></div><div class="rd">${fmtTs(r.ts)}</div></div>
+      <div class="rh"><div class="rm2">${u?.emoji?`<span style="font-size:.95rem">${u.emoji}</span>`:''}<span class="rn">${esc(r.name)}</span>${publicBadge}<span class="tag t-${r.cat}">${r.cat}</span><span class="tag" style="background:rgba(255,255,255,.07);color:var(--muted);font-size:.65rem">${(r.reqType||"jednorázová")==="opakovaná"?"🔄 Opakovaná":(r.reqType||"jednorázová")==="dlouhodobá"?"📅 Dlouhodobá":"🕯 Jednorázová"}</span></div><div class="rd">${fmtTs(r.ts)}</div></div>
       <p class="rt">${esc(r.text)}</p>
       ${pHTML}
       <div class="rf">
