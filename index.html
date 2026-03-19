@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Oxygen – Modlitební Tým</title>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Nunito:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%237B2FBE'/><text y='72' x='50' text-anchor='middle' font-size='58'>✝️</text></svg>">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
 :root{
@@ -13,7 +14,9 @@
   --border:rgba(155,79,222,0.2);--border-l:rgba(155,79,222,0.4);
   --text:#F0E8FF;--muted:#9B8FBB;--gold:#FFD166;--green:#06D6A0;--red:#EF476F;--white:#fff;
 }
-*{box-sizing:border-box;margin:0;padding:0}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none}
+button{-webkit-appearance:none;appearance:none;-webkit-tap-highlight-color:transparent}
+input,textarea,select{-webkit-tap-highlight-color:transparent}
 body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
 .orbs{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
 .orb{position:absolute;border-radius:50%;filter:blur(80px);opacity:0.2}
@@ -283,7 +286,20 @@ select.rs{padding:5px 8px;font-size:.77rem;background:var(--surface);border:1px 
 .slider::before{content:'';position:absolute;width:14px;height:14px;left:3px;top:3px;background:var(--white);border-radius:50%;transition:.3s}
 input:checked+.slider{background:var(--purple)}
 input:checked+.slider::before{transform:translateX(18px)}
-/* EMPTY / LOADING */
+/* GCAL BUTTON */
+.b-gcal{background:rgba(66,133,244,.12);border-color:rgba(66,133,244,.35);color:#6ea8fe;transition:all .2s}
+.b-gcal:hover{background:rgba(66,133,244,.25);border-color:#6ea8fe}
+/* EXTRA STATS */
+.stat-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);font-size:.85rem}
+.stat-row:last-child{border-bottom:none}
+.stat-row-label{color:var(--muted)}
+.stat-row-val{font-weight:800;color:var(--purple-xl)}
+.week-stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:10px}
+.week-scard{background:rgba(49,18,96,.5);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center}
+.week-snum{font-family:'Cinzel',serif;font-size:1.4rem;color:var(--purple-xl)}
+.week-slbl{color:var(--muted);font-size:.67rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;margin-top:2px}
+.streak-badge{display:inline-flex;align-items:center;gap:5px;background:rgba(255,209,102,.12);border:1px solid rgba(255,209,102,.3);border-radius:20px;padding:4px 12px;font-size:.82rem;color:var(--gold);font-weight:800}
+
 .empty{text-align:center;padding:36px 20px;color:var(--muted)}
 .empty .ei{font-size:2rem;margin-bottom:8px;opacity:.38}
 .loading{text-align:center;padding:30px;color:var(--muted);font-size:.87rem}
@@ -297,27 +313,36 @@ input:checked+.slider::before{transform:translateX(18px)}
 @media(max-width:700px){
   .sidebar{transform:translateX(-100%);width:82%;max-width:260px}
   .sidebar.open{transform:translateX(0)}
-  .mc{margin-left:0;padding:0 12px 20px}
+  .mc{margin-left:0;padding:0 0 80px}
   .g3{grid-template-columns:1fr 1fr}
   .g2{grid-template-columns:1fr}
+  .ph{padding:0 14px;margin-bottom:14px}
   .ph h1{font-size:1.15rem}
+  .ph p{font-size:.78rem}
   /* Top bar */
   .mob-topbar{display:flex}
   .notif-btn{top:10px;right:10px;width:36px;height:36px}
   .notif-panel{right:8px;left:8px;width:auto}
   /* Cards */
-  .card{padding:13px}
-  .bs{padding:5px 9px;font-size:.72rem}
-  /* Chat – always show action buttons on mobile */
-  .chat-wrap{height:calc(100vh - 200px)}
-  .chat-bubble-wrap{max-width:82%}
-  .chat-actions{opacity:1!important}
-  .chat-act-btn{font-size:.85rem;padding:3px 6px}
-  .emoji-bar{gap:3px;overflow-x:auto;flex-wrap:nowrap;padding-bottom:2px}
-  .emoji-bar::-webkit-scrollbar{display:none}
-  .emoji-btn{padding:3px 5px;font-size:.9rem;flex-shrink:0}
+  .card{padding:13px;margin-left:10px;margin-right:10px;border-radius:12px}
+  .card.card-top{margin-left:10px;margin-right:10px}
+  .cal-wrap{margin-left:10px;margin-right:10px}
+  .pc{margin-left:10px;margin-right:10px}
+  .de{margin-left:10px;margin-right:10px}
+  .ci{margin-left:10px;margin-right:10px}
+  .wc{margin-left:10px;margin-right:10px}
+  .usc{margin-left:10px;margin-right:10px}
+  .chart-wrap{margin-left:10px;margin-right:10px}
+  .scard{border-radius:10px}
+  .g3{gap:8px;padding:0 10px}
+  .g2{padding:0 10px}
+  /* Section headers with margin */
+  .sec-inner{padding:0 10px}
+  /* Stat cards responsive text */
+  .snum{font-size:1.5rem}
+  .slbl{font-size:.67rem}
   /* Tabs */
-  .tabs{overflow-x:auto;width:100%;flex-wrap:nowrap;-webkit-overflow-scrolling:touch}
+  .tabs{overflow-x:auto;width:100%;flex-wrap:nowrap;-webkit-overflow-scrolling:touch;margin-left:10px;margin-right:10px}
   .tabs::-webkit-scrollbar{display:none}
   /* Calendar */
   .cal-day{min-height:30px}
@@ -325,9 +350,10 @@ input:checked+.slider::before{transform:translateX(18px)}
   .cal-day-person{font-size:.56rem}
   .cal-popup{left:8px!important;right:8px!important;width:auto!important}
   /* Forms */
-  .irow{flex-direction:column}
+  .irow{flex-direction:column;padding:0 10px}
   .irow .fg{min-width:0}
   /* Stats */
+  .month-nav{padding:0 10px}
   .month-nav button{padding:5px 9px;font-size:.76rem}
   .month-label{font-size:.85rem}
   .usc-stats{gap:8px}
@@ -335,10 +361,23 @@ input:checked+.slider::before{transform:translateX(18px)}
   .abox{padding:26px 18px}
   /* Modal */
   .modal{padding:18px}
+  /* Buttons */
+  .bs{padding:5px 9px;font-size:.72rem}
+  /* Chat – always show action buttons on mobile */
+  .chat-wrap{height:calc(100vh - 180px)}
+  .chat-bubble-wrap{max-width:82%}
+  .chat-actions{opacity:1!important}
+  .chat-act-btn{font-size:.85rem;padding:3px 6px}
+  .emoji-bar{gap:3px;overflow-x:auto;flex-wrap:nowrap;padding-bottom:2px;padding-left:10px;padding-right:10px}
+  .emoji-bar::-webkit-scrollbar{display:none}
+  .emoji-btn{padding:3px 5px;font-size:.9rem;flex-shrink:0}
+  .chat-input-area{padding-left:10px;padding-right:10px}
+  /* month nav full width labels */
+  .week-stat-grid{grid-template-columns:1fr 1fr!important}
 }
 .mob-topbar{display:none;align-items:center;justify-content:space-between;padding:10px 14px;background:rgba(26,8,51,.95);border-bottom:1px solid var(--border);backdrop-filter:blur(12px);position:sticky;top:0;z-index:90;margin:-0px}
 .mob-topbar-title{font-family:'Cinzel',serif;font-size:1rem;color:var(--white);letter-spacing:.05em}
-.mob-topbar-btn{background:rgba(123,47,190,.15);border:1px solid var(--border);border-radius:8px;color:var(--purple-xl);padding:6px 10px;cursor:pointer;font-size:.9rem;line-height:1}
+.mob-topbar-btn{background:rgba(123,47,190,.15);border:1px solid var(--border);border-radius:8px;color:var(--purple-xl);padding:6px 10px;cursor:pointer;font-size:.9rem;line-height:1;-webkit-tap-highlight-color:transparent}
 @media(max-width:700px){.mob-topbar{display:flex}.hbg{display:none!important}}
 
 .diary-react-bar{display:flex;gap:5px;flex-wrap:wrap;margin-top:10px}
@@ -434,7 +473,7 @@ input:checked+.slider::before{transform:translateX(18px)}
 
     <!-- DASHBOARD -->
     <div class="sec on" id="sec-dashboard">
-      <div class="ph"><h1>Přehled</h1><p>Vítej v modlitebním týmu Oxygen</p></div>
+      <div class="ph" style="padding-top:16px"><h1>Přehled</h1><p>Vítej v modlitebním týmu Oxygen</p></div>
       <div class="g3">
         <div class="scard"><div class="snum" id="s1">–</div><div class="slbl">Žádostí</div></div>
         <div class="scard"><div class="snum" id="s2">–</div><div class="slbl">Vyslyšených</div></div>
@@ -572,12 +611,16 @@ input:checked+.slider::before{transform:translateX(18px)}
     <div class="sec" id="sec-stats">
       <div class="ph"><h1>Statistiky</h1><p>Měsíční přehled a aktivita týmu</p></div>
       <div class="month-nav"><button onclick="prevMonth()">← Předchozí</button><div class="month-label" id="monthLabel">–</div><button onclick="nextMonth()">Další →</button></div>
+      <!-- Extra overview cards -->
+      <div class="g3" id="statsOverviewCards" style="margin-bottom:16px"></div>
       <div class="g2">
         <div class="chart-wrap"><div class="chart-title">📋 Žádosti o modlitbu</div><canvas id="chartReqs" height="160"></canvas></div>
         <div class="chart-wrap"><div class="chart-title">✓ Vyslyšené modlitby</div><canvas id="chartAns" height="160"></canvas></div>
       </div>
+      <div class="chart-wrap"><div class="chart-title">📊 Kategorie žádostí (celkové)</div><canvas id="chartCats" height="130"></canvas></div>
       <div class="chart-wrap"><div class="chart-title">👥 Aktivita uživatelů (modlitby v měsíci)</div><canvas id="chartActivity" height="130"></canvas></div>
       <div class="chart-wrap"><div class="chart-title">⌚ Modlitební stráž – přehled měsíce</div><div id="watchHistory"></div></div>
+      <div class="chart-wrap"><div class="chart-title">📈 Celkové shrnutí</div><div id="statsSummary"></div></div>
       <div class="chart-wrap"><div class="chart-title">🏆 Statistiky uživatelů (celkové)</div><div id="userStats"></div></div>
     </div>
 
@@ -1003,8 +1046,8 @@ window.calClick=(y,mo,d,e)=>{
   const existing=window._watch?.find(w=>{if(!w.startDate)return false;const sd=new Date(w.startDate);const ed=w.endDate?new Date(w.endDate):sd;const dt=new Date(y,mo,d);return dt>=sd&&dt<=ed;});
   const popup=document.createElement('div');popup.className='cal-popup';calPopup=popup;
   if(existing){
-    popup.innerHTML=`<button class="cal-popup-close" onclick="document.querySelector('.cal-popup').remove();calPopup=null">✕</button><h3>${label}</h3><div style="color:var(--text);font-size:.88rem;margin-bottom:10px">Stráž: <strong>${esc(existing.person)}</strong><br>${esc(existing.date)}</div>${(existing.createdBy===CU.username||isAdmin())?`<button class="bs b-del" onclick="delWatch('${existing._id}');document.querySelector('.cal-popup').remove();calPopup=null">🗑 Smazat stráž</button>`:''}`;
-  }else{
+    const gcalUrl=makeGCalUrl(existing);
+    popup.innerHTML=`<button class="cal-popup-close" onclick="document.querySelector('.cal-popup').remove();calPopup=null">✕</button><h3>${label}</h3><div style="color:var(--text);font-size:.88rem;margin-bottom:10px">Stráž: <strong>${esc(existing.person)}</strong><br>${esc(existing.date)}</div><div style="display:flex;gap:6px;flex-wrap:wrap">${gcalUrl?`<a href="${gcalUrl}" target="_blank" rel="noopener" class="bs b-gcal" style="text-decoration:none">📅 Google Kalendář</a>`:''} ${(existing.createdBy===CU.username||isAdmin())?`<button class="bs b-del" onclick="delWatch('${existing._id}');document.querySelector('.cal-popup').remove();calPopup=null">🗑 Smazat stráž</button>`:''}</div>`;  }else{
     popup.innerHTML=`<button class="cal-popup-close" onclick="document.querySelector('.cal-popup').remove();calPopup=null">✕</button><h3>Přidat stráž</h3><div style="color:var(--muted);font-size:.79rem;margin-bottom:10px">${label}</div><div class="fg"><label>Kdo</label><input type="text" id="cpP" value="${CU.name}"></div><div class="fg"><label>Do data</label><input type="date" id="cpE" value="${iso}"></div><div class="fg"><label>Témata (čárkou)</label><input type="text" id="cpT" placeholder="Mládež, vedení, …"></div><button class="bp" style="padding:9px" onclick="saveCalWatch('${iso}')">Uložit</button>`;
   }
   const rect=e.currentTarget.getBoundingClientRect();
@@ -1023,6 +1066,17 @@ window.saveCalWatch=async iso=>{
   const dateLabel=sd.toLocaleDateString('cs-CZ',{day:'numeric',month:'numeric'})+(endVal&&endVal!==iso?' – '+ed.toLocaleDateString('cs-CZ',{day:'numeric',month:'numeric',year:'numeric'}):'. '+sd.getFullYear());
   try{await addDoc(collection(db,'watch'),{person,date:dateLabel,startDate:iso,endDate:endVal||iso,topics,createdBy:CU.username,ts:serverTimestamp()});document.querySelector('.cal-popup')?.remove();calPopup=null;toast('⌚ Stráž přidána');}catch(e){toast('Chyba: '+e.message);}
 };
+function makeGCalUrl(w){
+  if(!w.startDate)return null;
+  const sd=new Date(w.startDate);
+  const ed=w.endDate?new Date(w.endDate):sd;
+  // GCal needs dates in YYYYMMDD format; end date is exclusive so add 1 day
+  const fmt=d=>{const y=d.getFullYear();const m=String(d.getMonth()+1).padStart(2,'0');const day=String(d.getDate()).padStart(2,'0');return y+m+day;};
+  const edExcl=new Date(ed);edExcl.setDate(edExcl.getDate()+1);
+  const title=encodeURIComponent('Modlitební stráž – '+(w.person||''));
+  const details=encodeURIComponent((w.topics||[]).length?'Témata: '+(w.topics||[]).join(', '):'Modlitební stráž Oxygen');
+  return`https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${fmt(sd)}/${fmt(edExcl)}&details=${details}`;
+}
 function renderWatch(){
   const list=[...(window._watch||[])].reverse();const el=document.getElementById('watchList');
   if(!list.length){el.innerHTML=`<div class="empty"><div class="ei">⌚</div><p>Klikni na den v kalendáři pro přidání stráže</p></div>`;return;}
@@ -1030,10 +1084,14 @@ function renderWatch(){
   el.innerHTML=list.map(w=>{
     const isFuture=w.startDate&&new Date(w.startDate)>today;const isPast=w.endDate&&new Date(w.endDate)<today;const isCurr=!isFuture&&!isPast;
     const canDel=isAdmin()||w.createdBy===CU.username;
+    const gcalUrl=makeGCalUrl(w);
     return`<div class="wc ${isCurr?'curr':isFuture?'future':''}">
       <div style="display:flex;justify-content:space-between;align-items:flex-start">
         <div><div style="font-family:'Cinzel',serif;font-size:.77rem;color:${isCurr?'var(--gold)':isFuture?'var(--purple-xl)':'var(--muted)'}">✦ ${isCurr?'Aktuální stráž':isFuture?'Plánovaná stráž':'Minulá stráž'}</div><div style="font-weight:800;font-size:.92rem;color:var(--white);margin-top:2px">${esc(w.person)}</div><div style="color:var(--muted);font-size:.76rem;margin-top:1px">${esc(w.date)}</div></div>
-        ${canDel?`<button class="bs b-del" onclick="delWatch('${w._id}')">🗑</button>`:''}
+        <div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap">
+          ${gcalUrl?`<a href="${gcalUrl}" target="_blank" rel="noopener" class="bs b-gcal" style="text-decoration:none">📅 Google Kalendář</a>`:''}
+          ${canDel?`<button class="bs b-del" onclick="delWatch('${w._id}')">🗑</button>`:''}
+        </div>
       </div><div class="wt">${(w.topics||[]).map(t=>`<span class="wtag">${esc(t)}</span>`).join('')}</div>
     </div>`;
   }).join('');
@@ -1217,9 +1275,47 @@ function renderStats(){
     return inM(r.ts);
   }).length);
   mkC('chartActivity',au.map(u=>u.name.split(' ')[0]),actData,'rgba(192,128,255,.7)','rgba(192,128,255,.2)',cfgLine(),'bar');
+
+  // Category pie chart
+  const cats=['osobní','rodina','zdraví','vztahy','práce','duchovní','jiné'];
+  const catColors=['rgba(155,79,222,.7)','rgba(255,209,102,.7)','rgba(239,71,111,.7)','rgba(255,140,60,.7)','rgba(80,180,255,.7)','rgba(6,214,160,.7)','rgba(180,180,180,.5)'];
+  const catData=cats.map(c=>reqs.filter(r=>r.cat===c).length);
+  const cfgPie={responsive:true,plugins:{legend:{display:true,labels:{color:'#9B8FBB',font:{size:10},padding:10}}}};
+  mkC('chartCats',cats.map(c=>c.charAt(0).toUpperCase()+c.slice(1)),catData,catColors,catColors,cfgPie,'doughnut');
+
+  // Overview cards for this month
+  const mReqs=reqs.filter(r=>inM(r.ts));
+  const mAns=reqs.filter(r=>r.answered&&inM(r.ts));
+  const mWatch=watch.filter(w=>{if(!w.startDate){return inM(w.ts);}const sd=new Date(w.startDate);return sd.getFullYear()===m.getFullYear()&&sd.getMonth()===m.getMonth();});
+  const mDiary=diary.filter(d=>inM(d.ts));
+  const totalPrayers=reqs.reduce((a,r)=>a+(r.prayedBy||[]).length,0);
+  const ansRate=reqs.length?Math.round((reqs.filter(r=>r.answered).length/reqs.length)*100):0;
+  document.getElementById('statsOverviewCards').innerHTML=`
+    <div class="scard"><div class="snum" style="color:var(--purple-xl)">${mReqs.length}</div><div class="slbl">Žádostí v měsíci</div></div>
+    <div class="scard"><div class="snum" style="color:var(--green)">${mAns.length}</div><div class="slbl">Vyslyšených v měsíci</div></div>
+    <div class="scard"><div class="snum" style="color:var(--gold)">${mWatch.length}</div><div class="slbl">Stráží v měsíci</div></div>
+  `;
+
+  // Summary stats
+  const topUser=au.length?au.reduce((best,u)=>{const c=reqs.reduce((a,r)=>a+((r.prayedBy||[]).includes(u.username)?1:0),0);return c>(best.c||0)?{u,c}:best;},{}):{};
+  document.getElementById('statsSummary').innerHTML=`
+    <div class="stat-row"><span class="stat-row-label">📋 Celkem žádostí</span><span class="stat-row-val">${reqs.length}</span></div>
+    <div class="stat-row"><span class="stat-row-label">✓ Celkem vyslyšených</span><span class="stat-row-val">${reqs.filter(r=>r.answered).length}</span></div>
+    <div class="stat-row"><span class="stat-row-label">🙏 Celkem modliteb</span><span class="stat-row-val">${totalPrayers}</span></div>
+    <div class="stat-row"><span class="stat-row-label">📊 Míra vyslyšení</span><span class="stat-row-val">${ansRate}%</span></div>
+    <div class="stat-row"><span class="stat-row-label">📖 Zápisů v deníku</span><span class="stat-row-val">${diary.length}</span></div>
+    <div class="stat-row"><span class="stat-row-label">⌚ Celkem stráží</span><span class="stat-row-val">${watch.length}</span></div>
+    <div class="stat-row"><span class="stat-row-label">👥 Aktivních členů</span><span class="stat-row-val">${au.length}</span></div>
+    ${topUser.u?`<div class="stat-row"><span class="stat-row-label">🏆 Nejvíce modliteb</span><span class="stat-row-val">${esc(topUser.u.name.split(' ')[0])} (${topUser.c}×)</span></div>`:''}
+  `;
+
   const mW=watch.filter(w=>{if(!w.startDate){return inM(w.ts);}const sd=new Date(w.startDate);return sd.getFullYear()===m.getFullYear()&&sd.getMonth()===m.getMonth();});
-  document.getElementById('watchHistory').innerHTML=mW.length?mW.map(w=>`<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border)"><span style="font-weight:700;font-size:.84rem;color:var(--white)">${esc(w.person)}</span><span style="color:var(--muted);font-size:.76rem">${esc(w.date)}</span><div style="display:flex;gap:4px;flex-wrap:wrap">${(w.topics||[]).map(t=>`<span class="wtag">${esc(t)}</span>`).join('')}</div></div>`).join(''):`<div style="color:var(--muted);font-size:.82rem;padding:8px 0">V tomto měsíci žádná stráž.</div>`;
-  document.getElementById('userStats').innerHTML=au.map(u=>{
+  document.getElementById('watchHistory').innerHTML=mW.length?mW.map(w=>{const gcalUrl=makeGCalUrl(w);return`<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border);flex-wrap:wrap"><span style="font-weight:700;font-size:.84rem;color:var(--white)">${esc(w.person)}</span><span style="color:var(--muted);font-size:.76rem">${esc(w.date)}</span><div style="display:flex;gap:4px;flex-wrap:wrap;flex:1">${(w.topics||[]).map(t=>`<span class="wtag">${esc(t)}</span>`).join('')}</div>${gcalUrl?`<a href="${gcalUrl}" target="_blank" rel="noopener" class="bs b-gcal" style="text-decoration:none;flex-shrink:0">📅</a>`:''}</div>`;}).join(''):`<div style="color:var(--muted);font-size:.82rem;padding:8px 0">V tomto měsíci žádná stráž.</div>`;
+  document.getElementById('userStats').innerHTML=au.sort((a,b)=>{
+    const pA=reqs.reduce((x,r)=>x+((r.prayedBy||[]).includes(a.username)?1:0),0);
+    const pB=reqs.reduce((x,r)=>x+((r.prayedBy||[]).includes(b.username)?1:0),0);
+    return pB-pA;
+  }).map(u=>{
     const pC=reqs.reduce((a,r)=>a+((r.prayedBy||[]).includes(u.username)?1:0),0);
     const rC=reqs.filter(r=>r.createdBy===u.username).length;
     const _tod=new Date();_tod.setHours(0,0,0,0);
