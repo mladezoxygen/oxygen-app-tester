@@ -423,7 +423,7 @@ input:checked+.slider::before{transform:translateX(18px)}
 </div>
 
 <!-- PUBLIC PRAYER OVERLAY -->
-<div id="publicPrayerOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:800;display:none;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(6px)">
+<div id="publicPrayerOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:800;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(6px)">
   <div style="background:rgba(42,16,80,.97);border:1px solid var(--border-l);border-radius:22px;padding:36px 30px;width:100%;max-width:420px;box-shadow:0 32px 80px rgba(0,0,0,.6);animation:fu .4s ease;position:relative">
     <button onclick="closePublicPrayer()" style="position:absolute;top:14px;right:16px;background:none;border:none;color:var(--muted);font-size:1.4rem;cursor:pointer;line-height:1">✕</button>
     <div style="text-align:center;margin-bottom:22px">
@@ -824,10 +824,6 @@ window.openPublicPrayer=()=>{
 window.closePublicPrayer=()=>{
   document.getElementById('publicPrayerOverlay').style.display='none';
 };
-// Close on backdrop click
-document.getElementById('publicPrayerOverlay').addEventListener('click',e=>{
-  if(e.target===document.getElementById('publicPrayerOverlay'))closePublicPrayer();
-});
 window.submitPublicPrayer=async()=>{
   const text=document.getElementById('pubText').value.trim();
   const name=document.getElementById('pubName').value.trim();
@@ -859,6 +855,10 @@ window.submitPublicPrayer=async()=>{
     btn.disabled=false;btn.textContent='🙏 Odeslat žádost';
   }
 };
+// Close overlay on backdrop click - attach after DOM ready
+document.getElementById('publicPrayerOverlay').addEventListener('click',e=>{
+  if(e.target.id==='publicPrayerOverlay')window.closePublicPrayer();
+});
 
 // ── AUTH ──────────────────────────────────────────────────────────────────
 window.switchAuth=mode=>{
