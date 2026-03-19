@@ -17,13 +17,13 @@
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none}
 button{-webkit-appearance:none;appearance:none;-webkit-tap-highlight-color:transparent}
 input,textarea,select{-webkit-tap-highlight-color:transparent}
-body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;overscroll-behavior:none}
 .orbs{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
 .orb{position:absolute;border-radius:50%;filter:blur(80px);opacity:0.2}
 .o1{width:600px;height:600px;background:var(--purple-d);top:-180px;left:-100px}
 .o2{width:500px;height:500px;background:#3D0D8C;bottom:-140px;right:-100px}
 .o3{width:280px;height:280px;background:#5A1BA0;top:42%;left:50%;transform:translate(-50%,-50%)}
-#app{position:relative;z-index:1;min-height:100vh}
+#app{position:relative;z-index:1}
 /* AUTH */
 #authWrap{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px}
 .abox{background:rgba(49,18,96,0.92);border:1px solid var(--border-l);border-radius:24px;padding:44px 38px;width:100%;max-width:410px;backdrop-filter:blur(20px);box-shadow:0 32px 80px rgba(0,0,0,0.5);animation:fu .5s ease}
@@ -52,7 +52,7 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 .pendbox h2{font-family:'Cinzel',serif;font-size:1.3rem;color:var(--white);margin-bottom:10px}
 .pendbox p{color:var(--muted);font-size:.87rem;line-height:1.65}
 /* SIDEBAR */
-#mainApp{display:none;min-height:100vh}
+#mainApp{display:none}
 .sidebar{position:fixed;top:0;left:0;bottom:0;width:238px;background:rgba(26,8,51,.97);border-right:1px solid var(--border);display:flex;flex-direction:column;z-index:100;backdrop-filter:blur(20px);transition:transform .3s ease}
 .slogo{padding:20px 18px 15px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
 .slogo-icon{width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,var(--purple),var(--purple-d));display:flex;align-items:center;justify-content:center;font-size:.95rem;flex-shrink:0}
@@ -102,11 +102,11 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 .watch-banner{margin-bottom:14px;padding:12px 16px;background:rgba(255,209,102,.1);border:1px solid rgba(255,209,102,.3);border-radius:11px;display:flex;align-items:center;gap:10px;animation:fu .4s ease}
 .watch-banner-txt{flex:1;font-size:.85rem;color:var(--gold);font-weight:700}
 /* CONTENT */
-.mc{margin-left:238px;min-height:100vh;padding:24px 28px}
+.mc{margin-left:238px;padding:24px 28px}
 .ph{margin-bottom:20px}
 .ph h1{font-family:'Cinzel',serif;font-size:1.55rem;color:var(--white);letter-spacing:.04em;margin-bottom:3px}
 .ph p{color:var(--muted);font-size:.84rem}
-.sec{display:none}.sec.on{display:block;animation:fu .3s ease}
+.sec{display:none}.sec.on{display:block;animation:fu .3s ease;padding-bottom:24px}
 .card{background:rgba(49,18,96,.72);border:1px solid var(--border);border-radius:14px;padding:19px;margin-bottom:13px}
 .card-top::before{content:'';display:block;height:2px;background:linear-gradient(90deg,transparent,var(--purple-l),transparent);margin:-19px -19px 15px;border-radius:14px 14px 0 0}
 .g3{display:grid;grid-template-columns:repeat(3,1fr);gap:11px;margin-bottom:16px}
@@ -313,25 +313,24 @@ input:checked+.slider::before{transform:translateX(18px)}
 @media(max-width:700px){
   .sidebar{transform:translateX(-100%);width:82%;max-width:260px}
   .sidebar.open{transform:translateX(0)}
-  .mc{margin-left:0;padding:52px 0 80px}
-  .g3{grid-template-columns:1fr 1fr;gap:8px;padding:0 10px}
-  .g2{grid-template-columns:1fr;padding:0 10px}
-  .ph{padding:14px 14px 10px;margin-bottom:10px}
+  .mc{margin-left:0;padding:64px 12px 80px}
+  .g3{grid-template-columns:1fr 1fr;gap:8px}
+  .g2{grid-template-columns:1fr}
+  .ph{margin-bottom:12px}
   .ph h1{font-size:1.15rem}
   .ph p{font-size:.78rem}
   /* Top bar */
   .mob-topbar{display:flex}
   .notif-btn{top:10px;right:10px;width:36px;height:36px}
   .notif-panel{right:8px;left:8px;width:auto}
-  /* Cards & list items - side margins */
-  .card,.card.card-top,.cal-wrap,.pc,.de,.ci,.wc,.usc,.chart-wrap{margin-left:10px;margin-right:10px}
+  /* Cards */
   .card{padding:13px;border-radius:12px}
   .scard{border-radius:10px}
   /* Stat cards text */
   .snum{font-size:1.5rem}
   .slbl{font-size:.67rem}
-  /* Tabs */
-  .tabs{overflow-x:auto;width:calc(100% - 20px);flex-wrap:nowrap;-webkit-overflow-scrolling:touch;margin-left:10px;margin-right:10px}
+  /* Tabs - full bleed with scroll */
+  .tabs{overflow-x:auto;flex-wrap:nowrap;-webkit-overflow-scrolling:touch;width:100%}
   .tabs::-webkit-scrollbar{display:none}
   /* Calendar */
   .cal-day{min-height:30px}
@@ -339,10 +338,8 @@ input:checked+.slider::before{transform:translateX(18px)}
   .cal-day-person{font-size:.56rem}
   .cal-popup{left:8px!important;right:8px!important;width:auto!important}
   /* Forms */
-  .irow{flex-direction:column;padding:0 10px}
-  .irow .fg{min-width:0}
+  .irow{flex-direction:column}
   /* Stats month nav */
-  .month-nav{padding:0 10px}
   .month-nav button{padding:5px 9px;font-size:.76rem}
   .month-label{font-size:.85rem}
   .usc-stats{gap:8px}
@@ -353,16 +350,14 @@ input:checked+.slider::before{transform:translateX(18px)}
   /* Buttons */
   .bs{padding:5px 9px;font-size:.72rem}
   /* Chat */
-  .chat-wrap{height:calc(100vh - 180px)}
-  .chat-bubble-wrap{max-width:82%}
+  .chat-wrap{height:calc(100dvh - 200px)}
+  .chat-bubble-wrap{max-width:85%}
   .chat-actions{opacity:1!important}
   .chat-act-btn{font-size:.85rem;padding:3px 6px}
-  .emoji-bar{gap:3px;overflow-x:auto;flex-wrap:nowrap;padding-bottom:2px;padding-left:10px;padding-right:10px}
+  .emoji-bar{gap:3px;overflow-x:auto;flex-wrap:nowrap;padding-bottom:2px}
   .emoji-bar::-webkit-scrollbar{display:none}
   .emoji-btn{padding:3px 5px;font-size:.9rem;flex-shrink:0}
-  .chat-input-area{padding-left:10px;padding-right:10px}
   .week-stat-grid{grid-template-columns:1fr 1fr!important}
-  /* Watch GCal button on mobile - stack vertically */
   .b-gcal{font-size:.68rem;padding:4px 8px}
 }
 .mob-topbar{display:none;align-items:center;justify-content:space-between;padding:10px 14px;background:rgba(26,8,51,.98);border-bottom:1px solid var(--border);backdrop-filter:blur(12px);position:fixed;top:0;left:0;right:0;z-index:90;height:52px}
@@ -683,24 +678,44 @@ async function requestPush(){
   if(!('Notification' in window))return;
   if(Notification.permission==='granted')return;
   if(Notification.permission==='denied')return;
-  // Show banner asking user
+  // Only show banner once per session - use localStorage to remember dismissal
+  if(localStorage.getItem('oxygen_push_dismissed'))return;
   const b=document.getElementById('banners');
+  if(b.querySelector('#pushBanner'))return;
   const div=document.createElement('div');div.className='push-banner';div.id='pushBanner';
-  div.innerHTML=`<span class="push-banner-txt">🔔 Chceš dostávat oznámení i když appka není otevřená?</span><button class="bs b-ok" onclick="enablePush()">Zapnout</button><button class="bs b-ghost" style="margin-left:4px" onclick="document.getElementById('pushBanner').remove()">Teď ne</button>`;
+  div.innerHTML=`<span class="push-banner-txt">🔔 Chceš dostávat oznámení o nových žádostech?</span><button class="bs b-ok" onclick="enablePush()">Zapnout</button><button class="bs b-ghost" style="margin-left:4px" onclick="dismissPush()">Ne, díky</button>`;
   b.appendChild(div);
 }
 
+window.dismissPush=()=>{
+  document.getElementById('pushBanner')?.remove();
+  localStorage.setItem('oxygen_push_dismissed','1');
+};
+
 window.enablePush=async()=>{
+  // iOS Safari doesn't support the Notifications API in the standard way
+  const isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent)&&!window.MSStream;
+  if(isIOS){
+    document.getElementById('pushBanner')?.remove();
+    localStorage.setItem('oxygen_push_dismissed','1');
+    toast('ℹ️ Na iPhone přidej appku na plochu pro oznámení');
+    return;
+  }
   try{
     const perm=await Notification.requestPermission();
     document.getElementById('pushBanner')?.remove();
-    if(perm==='granted')toast('🔔 Push oznámení zapnutá!');
-  }catch(e){}
+    localStorage.setItem('oxygen_push_dismissed','1');
+    if(perm==='granted'){toast('🔔 Oznámení zapnutá!');}
+    else{toast('Oznámení byla zamítnuta v nastavení prohlížeče');}
+  }catch(e){
+    document.getElementById('pushBanner')?.remove();
+    localStorage.setItem('oxygen_push_dismissed','1');
+  }
 };
 
 function pushNotif(title,body){
   if(Notification.permission==='granted'&&document.hidden){
-    new Notification('Oxygen – '+title,{body,icon:'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><text y="28" font-size="28">✝️</text></svg>'});
+    try{new Notification('Oxygen – '+title,{body,icon:'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="7" fill="%237B2FBE"/><rect x="14" y="4" width="4" height="24" rx="2" fill="white"/><rect x="6" y="10" width="20" height="4" rx="2" fill="white"/></svg>'});}catch(e){}
   }
 }
 
