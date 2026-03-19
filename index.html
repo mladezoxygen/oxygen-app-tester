@@ -415,6 +415,44 @@ input:checked+.slider::before{transform:translateX(18px)}
       <button class="bp" id="rbtn" onclick="doRegister()">Odeslat žádost o přístup</button>
     </div>
     <div class="amsg" id="amsg"></div>
+    <div style="margin-top:18px;padding-top:16px;border-top:1px solid var(--border);text-align:center">
+      <div style="font-size:.75rem;color:var(--muted);margin-bottom:10px">Nechceš se registrovat?</div>
+      <button class="bp" style="background:rgba(255,209,102,.12);border:1px solid rgba(255,209,102,.3);color:var(--gold);box-shadow:none" onclick="openPublicPrayer()">🙏 Pošli žádost o modlitbu</button>
+    </div>
+  </div>
+</div>
+
+<!-- PUBLIC PRAYER OVERLAY -->
+<div id="publicPrayerOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:800;display:none;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(6px)">
+  <div style="background:rgba(42,16,80,.97);border:1px solid var(--border-l);border-radius:22px;padding:36px 30px;width:100%;max-width:420px;box-shadow:0 32px 80px rgba(0,0,0,.6);animation:fu .4s ease;position:relative">
+    <button onclick="closePublicPrayer()" style="position:absolute;top:14px;right:16px;background:none;border:none;color:var(--muted);font-size:1.4rem;cursor:pointer;line-height:1">✕</button>
+    <div style="text-align:center;margin-bottom:22px">
+      <div style="width:56px;height:56px;border-radius:15px;background:linear-gradient(135deg,var(--purple),var(--purple-d));display:flex;align-items:center;justify-content:center;font-size:1.6rem;margin:0 auto 12px;box-shadow:0 6px 24px rgba(123,47,190,.4)">🙏</div>
+      <h2 style="font-family:'Cinzel',serif;font-size:1.35rem;color:var(--white);margin-bottom:4px">Žádost o modlitbu</h2>
+      <p style="color:var(--muted);font-size:.82rem">Pošli žádost týmu Oxygen – budeme se za tebe modlit</p>
+    </div>
+    <div class="fg" style="margin-bottom:10px">
+      <label>Tvoje jméno <span style="color:var(--muted);font-weight:400">(nepovinné)</span></label>
+      <input type="text" id="pubName" placeholder="nebo nech prázdné pro anonymní" maxlength="60">
+    </div>
+    <div class="fg" style="margin-bottom:10px">
+      <label>Kategorie</label>
+      <select id="pubCat">
+        <option value="osobní">Osobní</option>
+        <option value="rodina">Rodina</option>
+        <option value="zdraví">Zdraví</option>
+        <option value="vztahy">Vztahy</option>
+        <option value="duchovní">Duchovní růst</option>
+        <option value="jiné">Jiné</option>
+      </select>
+    </div>
+    <div class="fg" style="margin-bottom:18px">
+      <label>Za co se chceš modlit?</label>
+      <textarea id="pubText" placeholder="Napiš svou žádost…" maxlength="600" style="min-height:110px"></textarea>
+    </div>
+    <button class="bp" id="pubBtn" onclick="submitPublicPrayer()">🙏 Odeslat žádost</button>
+    <div id="pubMsg" class="amsg" style="margin-top:12px"></div>
+    <p style="text-align:center;font-size:.72rem;color:var(--muted);margin-top:14px">Žádosti vidí pouze členové modlitebního týmu</p>
   </div>
 </div>
 
@@ -772,6 +810,55 @@ function renderBanners(){
     b.appendChild(div);
   }
 }
+
+// ── PUBLIC PRAYER (no login) ───────────────────────────────────────────────
+window.openPublicPrayer=()=>{
+  const el=document.getElementById('publicPrayerOverlay');
+  el.style.display='flex';
+  document.getElementById('pubMsg').style.display='none';
+  document.getElementById('pubText').value='';
+  document.getElementById('pubName').value='';
+  document.getElementById('pubBtn').disabled=false;
+  document.getElementById('pubBtn').textContent='🙏 Odeslat žádost';
+};
+window.closePublicPrayer=()=>{
+  document.getElementById('publicPrayerOverlay').style.display='none';
+};
+// Close on backdrop click
+document.getElementById('publicPrayerOverlay').addEventListener('click',e=>{
+  if(e.target===document.getElementById('publicPrayerOverlay'))closePublicPrayer();
+});
+window.submitPublicPrayer=async()=>{
+  const text=document.getElementById('pubText').value.trim();
+  const name=document.getElementById('pubName').value.trim();
+  const cat=document.getElementById('pubCat').value;
+  const msgEl=document.getElementById('pubMsg');
+  const btn=document.getElementById('pubBtn');
+  if(!text){
+    msgEl.className='amsg err';msgEl.textContent='✏️ Napiš svou žádost.';msgEl.style.display='block';return;
+  }
+  btn.disabled=true;btn.textContent='Odesílám…';
+  try{
+    await addDoc(collection(db,'anon'),{
+      text,cat,
+      name:name||'Anonymní',
+      prayedBy:[],
+      source:'public',
+      createdBy:'_public',
+      ts:serverTimestamp()
+    });
+    msgEl.className='amsg ok';
+    msgEl.textContent='✓ Žádost odeslána! Budeme se za tebe modlit.';
+    msgEl.style.display='block';
+    document.getElementById('pubText').value='';
+    document.getElementById('pubName').value='';
+    btn.textContent='✓ Odesláno';
+    setTimeout(()=>closePublicPrayer(),2800);
+  }catch(e){
+    msgEl.className='amsg err';msgEl.textContent='Chyba při odesílání. Zkus to znovu.';msgEl.style.display='block';
+    btn.disabled=false;btn.textContent='🙏 Odeslat žádost';
+  }
+};
 
 // ── AUTH ──────────────────────────────────────────────────────────────────
 window.switchAuth=mode=>{
@@ -1138,8 +1225,12 @@ function renderAnon(){
     const prayed=(r.prayedBy||[]).includes(CU.username);
     const pNames=(r.prayedBy||[]).map(un=>{const u2=allU[un];return(u2&&u2.emoji?u2.emoji+' ':'')+((u2&&u2.name?u2.name:un).split(' ')[0]);});
     const pHTML=pNames.length?`<div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:3px;align-items:center"><span style="font-size:.7rem;color:var(--muted)">Modlil/a se: </span>${pNames.map(n=>`<span style="font-size:.71rem;background:rgba(123,47,190,.15);border:1px solid var(--border);border-radius:20px;padding:1px 7px;color:var(--purple-xl)">${esc(n)}</span>`).join('')}</div>`:'';
+    const isPublic=r.source==='public';
+    const senderBadge=isPublic
+      ?`<span class="tag" style="background:rgba(255,209,102,.15);color:var(--gold);border:1px solid rgba(255,209,102,.3)">🌐 Veřejná</span>${r.name&&r.name!=='Anonymní'?`<span style="font-size:.78rem;color:var(--text);font-weight:700">${esc(r.name)}</span>`:''}`
+      :`<span class="tag t-anon">Anonymní</span>`;
     return`<div class="pc" style="margin-bottom:9px">
-      <div class="rh"><div class="rm2"><span class="tag t-anon">Anonymní</span><span class="tag t-${r.cat}">${r.cat}</span><span class="tag" style="background:rgba(255,255,255,.07);color:var(--muted);font-size:.65rem">${(r.reqType||"jednorázová")==="opakovaná"?"🔄 Opakovaná":(r.reqType||"jednorázová")==="dlouhodobá"?"📅 Dlouhodobá":"🕯 Jednorázová"}</span></div><div class="rd">${fmtTs(r.ts)}</div></div>
+      <div class="rh"><div class="rm2">${senderBadge}<span class="tag t-${r.cat}">${r.cat}</span></div><div class="rd">${fmtTs(r.ts)}</div></div>
       <p class="rt">${esc(r.text)}</p>
       ${pHTML}
       <div class="rf"><button class="bs b-pray${prayed?' on':''}" onclick="tgPrayAnon('${r._id}')">${prayed?'🙏 Modleno':'🙏 Modlím se'}</button><span class="pc-cnt">${(r.prayedBy||[]).length}×</span>${isAdmin()?`<button class="bs b-del" style="margin-left:auto" onclick="delAnon('${r._id}')">🗑</button>`:''}</div>
