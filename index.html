@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Oxygen – Modlitební Tým</title>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Nunito:wght@300;400;600;700;800&display=swap" rel="stylesheet">
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%237B2FBE'/><text y='72' x='50' text-anchor='middle' font-size='58'>✝️</text></svg>">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%237B2FBE'/><rect x='14' y='4' width='4' height='24' rx='2' fill='white'/><rect x='6' y='10' width='20' height='4' rx='2' fill='white'/></svg>">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
 :root{
@@ -313,36 +313,25 @@ input:checked+.slider::before{transform:translateX(18px)}
 @media(max-width:700px){
   .sidebar{transform:translateX(-100%);width:82%;max-width:260px}
   .sidebar.open{transform:translateX(0)}
-  .mc{margin-left:0;padding:0 0 80px}
-  .g3{grid-template-columns:1fr 1fr}
-  .g2{grid-template-columns:1fr}
-  .ph{padding:0 14px;margin-bottom:14px}
+  .mc{margin-left:0;padding:52px 0 80px}
+  .g3{grid-template-columns:1fr 1fr;gap:8px;padding:0 10px}
+  .g2{grid-template-columns:1fr;padding:0 10px}
+  .ph{padding:14px 14px 10px;margin-bottom:10px}
   .ph h1{font-size:1.15rem}
   .ph p{font-size:.78rem}
   /* Top bar */
   .mob-topbar{display:flex}
   .notif-btn{top:10px;right:10px;width:36px;height:36px}
   .notif-panel{right:8px;left:8px;width:auto}
-  /* Cards */
-  .card{padding:13px;margin-left:10px;margin-right:10px;border-radius:12px}
-  .card.card-top{margin-left:10px;margin-right:10px}
-  .cal-wrap{margin-left:10px;margin-right:10px}
-  .pc{margin-left:10px;margin-right:10px}
-  .de{margin-left:10px;margin-right:10px}
-  .ci{margin-left:10px;margin-right:10px}
-  .wc{margin-left:10px;margin-right:10px}
-  .usc{margin-left:10px;margin-right:10px}
-  .chart-wrap{margin-left:10px;margin-right:10px}
+  /* Cards & list items - side margins */
+  .card,.card.card-top,.cal-wrap,.pc,.de,.ci,.wc,.usc,.chart-wrap{margin-left:10px;margin-right:10px}
+  .card{padding:13px;border-radius:12px}
   .scard{border-radius:10px}
-  .g3{gap:8px;padding:0 10px}
-  .g2{padding:0 10px}
-  /* Section headers with margin */
-  .sec-inner{padding:0 10px}
-  /* Stat cards responsive text */
+  /* Stat cards text */
   .snum{font-size:1.5rem}
   .slbl{font-size:.67rem}
   /* Tabs */
-  .tabs{overflow-x:auto;width:100%;flex-wrap:nowrap;-webkit-overflow-scrolling:touch;margin-left:10px;margin-right:10px}
+  .tabs{overflow-x:auto;width:calc(100% - 20px);flex-wrap:nowrap;-webkit-overflow-scrolling:touch;margin-left:10px;margin-right:10px}
   .tabs::-webkit-scrollbar{display:none}
   /* Calendar */
   .cal-day{min-height:30px}
@@ -352,7 +341,7 @@ input:checked+.slider::before{transform:translateX(18px)}
   /* Forms */
   .irow{flex-direction:column;padding:0 10px}
   .irow .fg{min-width:0}
-  /* Stats */
+  /* Stats month nav */
   .month-nav{padding:0 10px}
   .month-nav button{padding:5px 9px;font-size:.76rem}
   .month-label{font-size:.85rem}
@@ -363,7 +352,7 @@ input:checked+.slider::before{transform:translateX(18px)}
   .modal{padding:18px}
   /* Buttons */
   .bs{padding:5px 9px;font-size:.72rem}
-  /* Chat – always show action buttons on mobile */
+  /* Chat */
   .chat-wrap{height:calc(100vh - 180px)}
   .chat-bubble-wrap{max-width:82%}
   .chat-actions{opacity:1!important}
@@ -372,10 +361,11 @@ input:checked+.slider::before{transform:translateX(18px)}
   .emoji-bar::-webkit-scrollbar{display:none}
   .emoji-btn{padding:3px 5px;font-size:.9rem;flex-shrink:0}
   .chat-input-area{padding-left:10px;padding-right:10px}
-  /* month nav full width labels */
   .week-stat-grid{grid-template-columns:1fr 1fr!important}
+  /* Watch GCal button on mobile - stack vertically */
+  .b-gcal{font-size:.68rem;padding:4px 8px}
 }
-.mob-topbar{display:none;align-items:center;justify-content:space-between;padding:10px 14px;background:rgba(26,8,51,.95);border-bottom:1px solid var(--border);backdrop-filter:blur(12px);position:sticky;top:0;z-index:90;margin:-0px}
+.mob-topbar{display:none;align-items:center;justify-content:space-between;padding:10px 14px;background:rgba(26,8,51,.98);border-bottom:1px solid var(--border);backdrop-filter:blur(12px);position:fixed;top:0;left:0;right:0;z-index:90;height:52px}
 .mob-topbar-title{font-family:'Cinzel',serif;font-size:1rem;color:var(--white);letter-spacing:.05em}
 .mob-topbar-btn{background:rgba(123,47,190,.15);border:1px solid var(--border);border-radius:8px;color:var(--purple-xl);padding:6px 10px;cursor:pointer;font-size:.9rem;line-height:1;-webkit-tap-highlight-color:transparent}
 @media(max-width:700px){.mob-topbar{display:flex}.hbg{display:none!important}}
@@ -473,7 +463,7 @@ input:checked+.slider::before{transform:translateX(18px)}
 
     <!-- DASHBOARD -->
     <div class="sec on" id="sec-dashboard">
-      <div class="ph" style="padding-top:16px"><h1>Přehled</h1><p>Vítej v modlitebním týmu Oxygen</p></div>
+      <div class="ph"><h1>Přehled</h1><p>Vítej v modlitebním týmu Oxygen</p></div>
       <div class="g3">
         <div class="scard"><div class="snum" id="s1">–</div><div class="slbl">Žádostí</div></div>
         <div class="scard"><div class="snum" id="s2">–</div><div class="slbl">Vyslyšených</div></div>
@@ -880,7 +870,10 @@ function renderDash(){
   const lblEl=document.getElementById('dashWatchLabel');
   if(lblEl)lblEl.textContent=curWatch?'⌚ Aktuální modlitební stráž':'📅 Nadcházející modlitební stráž';
   document.getElementById('dashWatch').innerHTML=cur
-    ?`<strong style="color:var(--white)">${esc(cur.person)}</strong> <span style="color:var(--muted);font-size:.77rem">${esc(cur.date)}</span><div class="wt" style="margin-top:6px">${(cur.topics||[]).map(t=>`<span class="wtag">${esc(t)}</span>`).join('')}</div>`
+    ?`<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;flex-wrap:wrap">
+        <div><strong style="color:var(--white)">${esc(cur.person)}</strong> <span style="color:var(--muted);font-size:.77rem">${esc(cur.date)}</span><div class="wt" style="margin-top:6px">${(cur.topics||[]).map(t=>`<span class="wtag">${esc(t)}</span>`).join('')}</div></div>
+        ${makeGCalUrl(cur)?`<a href="${makeGCalUrl(cur)}" target="_blank" rel="noopener" class="bs b-gcal" style="text-decoration:none;flex-shrink:0">📅 Google Kalendář</a>`:''}
+      </div>`
     :'<span style="color:var(--muted)">Žádná stráž nebyla přiřazena</span>';
   const rec=reqs.slice(0,3);
   document.getElementById('dashRecent').innerHTML=rec.length
