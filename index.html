@@ -271,7 +271,7 @@ select.rs{padding:5px 8px;font-size:.77rem;background:var(--surface);border:1px 
 .tab.on{background:var(--purple);color:var(--white)}
 .irow{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-bottom:10px}
 .irow .fg{flex:1;margin-bottom:0;min-width:120px}
-.irow>.bp{flex-shrink:0}
+.irow-btn{flex-shrink:0;width:auto}
 .lbl{font-size:.72rem;font-weight:700;color:var(--purple-xl);letter-spacing:.06em;text-transform:uppercase;margin-bottom:5px;display:block}
 /* MODAL */
 .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:500;display:flex;align-items:center;justify-content:center;padding:20px;animation:fu .2s ease}
@@ -345,7 +345,7 @@ input:checked+.slider::before{transform:translateX(18px)}
   /* Forms */
   .irow{flex-direction:column}
   .irow .fg{min-width:0;width:100%}
-  .irow>.bp,.irow>.irow-btn{width:100%;align-self:stretch}
+  .irow-btn,.irow>.bp{width:100%!important;align-self:stretch}
   /* Stats month nav */
   .month-nav button{padding:5px 9px;font-size:.76rem}
   .month-label{font-size:.85rem}
@@ -529,7 +529,7 @@ input:checked+.slider::before{transform:translateX(18px)}
         <span class="lbl" style="margin-bottom:9px">✦ Přidat do seznamu</span>
         <div class="irow">
           <div class="fg" style="flex:2"><label>Téma modlitby</label><input type="text" id="chkText" placeholder="Za koho nebo za co?" maxlength="200"></div>
-          <button class="bp irow-btn" style="padding:10px 15px;align-self:flex-end;white-space:nowrap;flex-shrink:0" onclick="addChkItem()">+ Přidat</button>
+          <button class="bp irow-btn" style="padding:10px 15px;align-self:flex-end;white-space:nowrap" onclick="addChkItem()">+ Přidat</button>
         </div>
       </div>
       <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:7px;margin-bottom:14px">
@@ -1402,7 +1402,7 @@ window.saveNS=async()=>{notifSettings={newRequest:document.getElementById('ns1')
 // ── ADMIN ──────────────────────────────────────────────────────────────────
 window.aTab=(tab,btn)=>{document.querySelectorAll('#sec-admin .tab').forEach(b=>b.classList.remove('on'));btn.classList.add('on');['aUsers','aPending','aAnon'].forEach(id=>document.getElementById(id).style.display='none');if(tab==='users'){document.getElementById('aUsers').style.display='block';renderAdminUsers();}if(tab==='pending'){document.getElementById('aPending').style.display='block';renderAdminPending();}if(tab==='anon'){document.getElementById('aAnon').style.display='block';renderAdminAnon();}};
 function renderAdminSec(){document.getElementById('aUsers').style.display='block';document.getElementById('aPending').style.display='none';document.getElementById('aAnon').style.display='none';renderAdminUsers();}
-function renderAdminUsers(){const el=document.getElementById('aUsers');const users=Object.values(window._users||{}).filter(u=>u.role!=='pending').sort((a,b)=>a.name.localeCompare(b.name));if(!users.length){el.innerHTML=`<div class="empty"><p>Žádní uživatelé</p></div>`;return;}el.innerHTML=users.map(u=>`<div class="ur"><div class="uav ${u.emoji?'ea':''}" style="flex-shrink:0">${u.emoji||ini(u.name)}</div><div class="ui"><div class="un2">${esc(u.name)}</div><div class="us">@${esc(u.username)}</div></div><div class="ua"><select class="rs" onchange="chRole('${u.username}',this.value)"><option value="admin" ${u.role==='admin'?'selected':''}>Admin</option><option value="modlitebnik" ${u.role==='modlitebnik'?'selected':''}>Modlitebník</option><option value="mladeznik" ${u.role==='mladeznik'?'selected':''}>Mládežník</option></select>${u.username!==CU.username?`<button class="bs b-del" onclick="delUser('${u.username}')">🗑</button>`:''}</div></div>`).join('');}
+function renderAdminUsers(){const el=document.getElementById('aUsers');const users=Object.values(window._users||{}).filter(u=>u.role!=='pending').sort((a,b)=>a.name.localeCompare(b.name));if(!users.length){el.innerHTML=`<div class="empty"><p>Žádní uživatelé</p></div>`;return;}el.innerHTML=users.map(u=>`<div class="ur"><div class="uav ${u.emoji?'ea':''}" style="flex-shrink:0">${u.emoji||ini(u.name)}</div><div class="ui"><div class="un2">${esc(u.name)}</div><div class="us">@${esc(u.username)}</div></div><div class="ua"><select class="rs" onchange="chRole('${u.username}',this.value)"><option value="admin" ${u.role==='admin'?'selected':''}>Admin</option><option value="modlitebnik" ${u.role==='modlitebnik'?'selected':''}>Modlitebník</option><option value="mladeznik" ${u.role==='mladeznik'?'selected':''}>Mládežník</option></select>${u.username!==CU.username?`<button class="bs b-del" onclick="delUser('${u.username}')">🗑</button>`:`<div style="width:30px;flex-shrink:0"></div>`}</div></div>`).join('');}
 function renderAdminPending(){const el=document.getElementById('aPending');const pend=Object.values(window._users||{}).filter(u=>u.role==='pending');const pc=document.getElementById('pCnt');if(pc)pc.textContent=pend.length?` (${pend.length})`:'';if(!pend.length){el.innerHTML=`<div class="empty"><div class="ei">✓</div><p>Žádné čekající žádosti</p></div>`;return;}el.innerHTML=pend.map(u=>`<div class="ur"><div class="uav" style="flex-shrink:0">${ini(u.name)}</div><div class="ui"><div class="un2">${esc(u.name)}</div><div class="us">@${esc(u.username)}</div></div><div class="ua"><button class="bs b-ok" onclick="approveUser('${u.username}','modlitebnik')">✓ Modlitebník</button><button class="bs b-ghost" onclick="approveUser('${u.username}','mladeznik')">✓ Mládežník</button><button class="bs b-del" onclick="rejectUser('${u.username}')">✗</button></div></div>`).join('');}
 function renderAdminAnon(){const el=document.getElementById('aAnon');const list=window._anon||[];if(!list.length){el.innerHTML=`<div class="empty"><div class="ei">📭</div><p>Žádné anonymní žádosti</p></div>`;return;}el.innerHTML=list.map(r=>`<div class="pc" style="margin-bottom:9px"><div class="rh"><div class="rm2"><span class="tag t-anon">Anonymní</span><span class="tag t-${r.cat}">${r.cat}</span><span class="tag" style="background:rgba(255,255,255,.07);color:var(--muted);font-size:.65rem">${(r.reqType||"jednorázová")==="opakovaná"?"🔄 Opakovaná":(r.reqType||"jednorázová")==="dlouhodobá"?"📅 Dlouhodobá":"🕯 Jednorázová"}</span></div><div class="rd">${fmtTs(r.ts)}</div></div><p class="rt">${esc(r.text)}</p><div class="rf"><span class="pc-cnt">${(r.prayedBy||[]).length}×</span><button class="bs b-del" style="margin-left:auto" onclick="delAnon('${r._id}')">🗑</button></div></div>`).join('');}
 window.approveUser=async(un,role)=>{try{await updateDoc(doc(db,'users',un),{role});toast(`✓ Schválen/a jako ${role}`);}catch(e){toast('Chyba: '+e.message);}};
