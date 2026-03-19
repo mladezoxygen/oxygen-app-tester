@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#1A0833">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>Oxygen – Modlitební Tým</title>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Nunito:wght@300;400;600;700;800&display=swap" rel="stylesheet">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%237B2FBE'/><rect x='14' y='4' width='4' height='24' rx='2' fill='white'/><rect x='6' y='10' width='20' height='4' rx='2' fill='white'/></svg>">
@@ -14,10 +17,11 @@
   --border:rgba(155,79,222,0.2);--border-l:rgba(155,79,222,0.4);
   --text:#F0E8FF;--muted:#9B8FBB;--gold:#FFD166;--green:#06D6A0;--red:#EF476F;--white:#fff;
 }
+html{background:var(--bg);overscroll-behavior:none;height:100%}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none}
 button{-webkit-appearance:none;appearance:none;-webkit-tap-highlight-color:transparent}
 input,textarea,select{-webkit-tap-highlight-color:transparent}
-body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;overscroll-behavior:none}
+body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-height:100%;overflow-x:hidden;overscroll-behavior:none}
 .orbs{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
 .orb{position:absolute;border-radius:50%;filter:blur(80px);opacity:0.2}
 .o1{width:600px;height:600px;background:var(--purple-d);top:-180px;left:-100px}
@@ -266,7 +270,8 @@ select.rs{padding:5px 8px;font-size:.77rem;background:var(--surface);border:1px 
 .tab{padding:6px 13px;border-radius:7px;cursor:pointer;font-size:.79rem;font-weight:700;color:var(--muted);transition:all .2s;border:none;background:transparent;font-family:'Nunito',sans-serif}
 .tab.on{background:var(--purple);color:var(--white)}
 .irow{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-bottom:10px}
-.irow .fg{flex:1;margin-bottom:0;min-width:90px}
+.irow .fg{flex:1;margin-bottom:0;min-width:120px}
+.irow>.bp{flex-shrink:0}
 .lbl{font-size:.72rem;font-weight:700;color:var(--purple-xl);letter-spacing:.06em;text-transform:uppercase;margin-bottom:5px;display:block}
 /* MODAL */
 .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:500;display:flex;align-items:center;justify-content:center;padding:20px;animation:fu .2s ease}
@@ -313,7 +318,7 @@ input:checked+.slider::before{transform:translateX(18px)}
 @media(max-width:700px){
   .sidebar{transform:translateX(-100%);width:82%;max-width:260px}
   .sidebar.open{transform:translateX(0)}
-  .mc{margin-left:0;padding:64px 12px 80px}
+  .mc{margin-left:0;padding:64px 12px calc(80px + env(safe-area-inset-bottom))}
   .g3{grid-template-columns:1fr 1fr;gap:8px}
   .g2{grid-template-columns:1fr}
   .ph{margin-bottom:12px}
@@ -339,6 +344,8 @@ input:checked+.slider::before{transform:translateX(18px)}
   .cal-popup{left:8px!important;right:8px!important;width:auto!important}
   /* Forms */
   .irow{flex-direction:column}
+  .irow .fg{min-width:0;width:100%}
+  .irow>.bp,.irow>.irow-btn{width:100%;align-self:stretch}
   /* Stats month nav */
   .month-nav button{padding:5px 9px;font-size:.76rem}
   .month-label{font-size:.85rem}
@@ -522,12 +529,12 @@ input:checked+.slider::before{transform:translateX(18px)}
         <span class="lbl" style="margin-bottom:9px">✦ Přidat do seznamu</span>
         <div class="irow">
           <div class="fg" style="flex:2"><label>Téma modlitby</label><input type="text" id="chkText" placeholder="Za koho nebo za co?" maxlength="200"></div>
-          <button class="bp" style="width:auto;padding:10px 15px;align-self:flex-end;white-space:nowrap" onclick="addChkItem()">+ Přidat</button>
+          <button class="bp irow-btn" style="padding:10px 15px;align-self:flex-end;white-space:nowrap;flex-shrink:0" onclick="addChkItem()">+ Přidat</button>
         </div>
       </div>
       <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:7px;margin-bottom:14px">
         <div class="tabs" style="margin-bottom:0"><button class="tab on" onclick="setCF('all',this)">Vše</button><button class="tab" onclick="setCF('active',this)">Aktivní</button><button class="tab" onclick="setCF('done',this)">✓ Vyslyšené</button></div>
-        <button class="bs b-exp" onclick="exportChecklist()">📥 Export Excel</button>
+        <button class="bs b-exp" style="flex-shrink:0" onclick="exportChecklist()">📥 Export Excel</button>
       </div>
       <div id="chkList"><div class="loading"><div class="spin"></div>Načítám…</div></div>
     </div>
