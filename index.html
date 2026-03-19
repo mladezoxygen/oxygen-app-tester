@@ -433,7 +433,8 @@ input:checked+.slider::before{transform:translateX(18px)}
     </div>
     <div class="fg" style="margin-bottom:10px">
       <label>Tvoje jméno <span style="color:var(--muted);font-weight:400">(nepovinné)</span></label>
-      <input type="text" id="pubName" placeholder="nebo nech prázdné pro anonymní" maxlength="60">
+      <input type="text" id="pubName" placeholder="nebo nech prázdné pro anonymní" maxlength="60" autocomplete="name" oninput="onPubNameChange(this)" onchange="onPubNameChange(this)" onblur="onPubNameChange(this)">
+      <div id="pubNameHint" style="font-size:.72rem;margin-top:5px;color:var(--muted)">Bez jména → půjde do anonymních žádostí</div>
     </div>
     <div class="fg" style="margin-bottom:10px">
       <label>Kategorie</label>
@@ -812,21 +813,36 @@ function renderBanners(){
 }
 
 // ── PUBLIC PRAYER (no login) ───────────────────────────────────────────────
+let _pubName='';
 window.openPublicPrayer=()=>{
   const el=document.getElementById('publicPrayerOverlay');
   el.style.display='flex';
+  _pubName='';
   document.getElementById('pubMsg').style.display='none';
   document.getElementById('pubText').value='';
   document.getElementById('pubName').value='';
   document.getElementById('pubBtn').disabled=false;
   document.getElementById('pubBtn').textContent='🙏 Odeslat žádost';
+  updatePubHint();
 };
 window.closePublicPrayer=()=>{
   document.getElementById('publicPrayerOverlay').style.display='none';
 };
+window.onPubNameChange=el=>{
+  _pubName=el.value.trim();
+  updatePubHint();
+};
+function updatePubHint(){
+  const h=document.getElementById('pubNameHint');
+  if(!h)return;
+  if(_pubName){h.style.color='var(--green)';h.textContent='✓ Půjde do žádostí o modlitbu jako: '+_pubName;}
+  else{h.style.color='var(--muted)';h.textContent='Bez jména → půjde do anonymních žádostí';}
+}
 window.submitPublicPrayer=async()=>{
+  // Přečti znovu pro jistotu, ale priorita má uložená proměnná
+  const domVal=document.getElementById('pubName').value.trim();
+  const senderName=_pubName||domVal;
   const text=document.getElementById('pubText').value.trim();
-  const name=document.getElementById('pubName').value.trim();
   const cat=document.getElementById('pubCat').value;
   const msgEl=document.getElementById('pubMsg');
   const btn=document.getElementById('pubBtn');
@@ -835,16 +851,14 @@ window.submitPublicPrayer=async()=>{
   }
   btn.disabled=true;btn.textContent='Odesílám…';
   try{
-    if(name){
-      // S jménem → jde do normálních žádostí o modlitbu
+    if(senderName){
       await addDoc(collection(db,'requests'),{
-        text,cat,name,
+        text,cat,name:senderName,
         prayedBy:[],answered:false,
         source:'public',createdBy:'_public',
         ts:serverTimestamp()
       });
     } else {
-      // Bez jména → jde do anonymních
       await addDoc(collection(db,'anon'),{
         text,cat,name:'Anonymní',
         prayedBy:[],
@@ -853,16 +867,16 @@ window.submitPublicPrayer=async()=>{
       });
     }
     msgEl.className='amsg ok';
-    msgEl.textContent=name
-      ?`✓ Žádost odeslána, ${name}! Budeme se za tebe modlit.`
+    msgEl.textContent=senderName
+      ?`✓ Žádost odeslána, ${senderName}! Budeme se za tebe modlit.`
       :'✓ Žádost odeslána anonymně! Budeme se za tebe modlit.';
     msgEl.style.display='block';
     document.getElementById('pubText').value='';
     document.getElementById('pubName').value='';
+    _pubName='';
     btn.textContent='✓ Odesláno';
     setTimeout(()=>closePublicPrayer(),2800);
   }catch(e){
-    console.error('submitPublicPrayer error:',e);
     msgEl.className='amsg err';
     msgEl.textContent='Chyba: '+e.message;
     msgEl.style.display='block';
