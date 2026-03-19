@@ -205,7 +205,9 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 .dt{color:var(--text);line-height:1.68;font-size:.88rem;margin-top:8px}
 .ds{margin-top:9px;padding:8px 12px;background:rgba(255,209,102,.07);border-left:3px solid var(--gold);border-radius:0 6px 6px 0;color:var(--gold);font-style:italic;font-size:.83rem}
 /* CHAT */
-.chat-wrap{display:flex;flex-direction:column;height:calc(100vh - 200px);min-height:380px}
+.chat-wrap{display:flex;flex-direction:column;height:calc(100vh - 248px);min-height:340px}
+#sec-chat{padding-bottom:0!important;overflow:hidden}
+#sec-chat .ph{margin-bottom:12px}
 .chat-msgs{flex:1;overflow-y:auto;padding:8px 0;display:flex;flex-direction:column;gap:6px}
 .chat-msg{display:flex;gap:9px;animation:fu .2s ease;position:relative}
 .chat-msg.mine{flex-direction:row-reverse}
@@ -360,7 +362,8 @@ input:checked+.slider::before{transform:translateX(18px)}
   /* Buttons */
   .bs{padding:5px 9px;font-size:.72rem}
   /* Chat */
-  .chat-wrap{height:calc(100dvh - 200px)}
+  .chat-wrap{height:calc(100dvh - 190px)}
+  #sec-chat .ph{margin-bottom:8px}
   .chat-bubble-wrap{max-width:85%}
   .chat-actions{opacity:1!important}
   .chat-act-btn{font-size:.85rem;padding:3px 6px}
@@ -846,10 +849,18 @@ function navigate(id){
   document.getElementById('sec-'+id).classList.add('on');
   document.querySelectorAll('.ni').forEach(n=>{if(n.dataset.sec===id)n.classList.add('on');});
   document.getElementById('sb').classList.remove('open');const _ov=document.getElementById('sbOverlay');if(_ov)_ov.style.display='none';
+  // Scroll to top when changing sections, lock scroll on chat
+  window.scrollTo(0,0);
+  if(id==='chat'){
+    document.body.style.overflow='hidden';
+    document.getElementById('bChat').style.display='none';
+    setTimeout(scrollChatBottom,100);
+  } else {
+    document.body.style.overflow='';
+  }
   if(id==='stats')renderStats();
   if(id==='admin')renderAdminSec();
   if(id==='watch'){renderCalendar();renderWatch();}
-  if(id==='chat'){document.getElementById('bChat').style.display='none';setTimeout(scrollChatBottom,100);}
 }
 
 // ── LISTENERS ─────────────────────────────────────────────────────────────
