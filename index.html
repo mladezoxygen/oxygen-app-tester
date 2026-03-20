@@ -6,6 +6,8 @@
 <meta name="theme-color" content="#1A0833">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Oxygen">
+<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%237B2FBE'/><rect x='14' y='4' width='4' height='24' rx='2' fill='white'/><rect x='6' y='10' width='20' height='4' rx='2' fill='white'/></svg>">
 <title>Oxygen – Modlitební Tým</title>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Nunito:wght@300;400;600;700;800&display=swap" rel="stylesheet">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%237B2FBE'/><rect x='14' y='4' width='4' height='24' rx='2' fill='white'/><rect x='6' y='10' width='20' height='4' rx='2' fill='white'/></svg>">
@@ -419,6 +421,45 @@ input:checked+.slider::before{transform:translateX(18px)}
 .online-dot{width:7px;height:7px;background:var(--green);border-radius:50%;border:1px solid var(--bg);position:absolute;bottom:0;right:0}
 .online-av.mine{border-color:var(--gold);opacity:.85}
 ::-webkit-scrollbar{width:5px}::-webkit-scrollbar-thumb{background:var(--purple-d);border-radius:3px}
+
+/* THEME COLORS */
+:root{
+  --theme-h:270; /* hue, changed by color picker */
+}
+.theme-swatch{width:28px;height:28px;border-radius:50%;cursor:pointer;border:3px solid transparent;transition:transform .2s,border-color .2s;flex-shrink:0}
+.theme-swatch.active{border-color:var(--white);transform:scale(1.15)}
+.theme-swatch:hover{transform:scale(1.1)}
+
+/* STREAK */
+.streak-card{background:linear-gradient(135deg,rgba(255,209,102,.12),rgba(255,209,102,.06));border:1px solid rgba(255,209,102,.3);border-radius:14px;padding:16px 20px;margin-bottom:14px;display:flex;align-items:center;gap:14px}
+.streak-fire{font-size:2.2rem;line-height:1;animation:streak-bounce 2s ease infinite}
+@keyframes streak-bounce{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-4px) scale(1.08)}}
+.streak-num{font-family:'Cinzel',serif;font-size:2rem;color:var(--gold);font-weight:700;line-height:1}
+.streak-lbl{font-size:.75rem;color:var(--gold);opacity:.8;text-transform:uppercase;letter-spacing:.06em;margin-top:2px}
+.streak-best{font-size:.72rem;color:var(--muted);margin-top:4px}
+
+/* COUNTDOWN */
+.countdown-card{background:linear-gradient(135deg,rgba(155,79,222,.15),rgba(155,79,222,.07));border:1px solid rgba(155,79,222,.3);border-radius:14px;padding:14px 18px;margin-bottom:14px;display:flex;align-items:center;gap:12px}
+.countdown-num{font-family:'Cinzel',serif;font-size:1.6rem;color:var(--purple-xl);font-weight:700;min-width:36px;text-align:center}
+.countdown-lbl{font-size:.78rem;color:var(--muted)}
+.countdown-title{font-size:.88rem;font-weight:700;color:var(--text)}
+
+/* PERSONAL STATS section */
+.pstat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+.pstat-card{background:rgba(49,18,96,.72);border:1px solid var(--border);border-radius:12px;padding:14px;text-align:center}
+.pstat-num{font-family:'Cinzel',serif;font-size:1.6rem;color:var(--purple-xl);margin-bottom:2px}
+.pstat-lbl{color:var(--muted);font-size:.67rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase}
+.cat-bar-row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.cat-bar-label{font-size:.78rem;color:var(--text);min-width:70px}
+.cat-bar-track{flex:1;height:8px;background:rgba(255,255,255,.07);border-radius:4px;overflow:hidden}
+.cat-bar-fill{height:100%;border-radius:4px;transition:width .6s ease}
+
+/* PWA banner */
+.pwa-banner{margin-bottom:14px;padding:12px 16px;background:rgba(6,214,160,.08);border:1px solid rgba(6,214,160,.2);border-radius:11px;display:flex;align-items:center;gap:10px;animation:fu .4s ease}
+.pwa-banner-txt{flex:1;font-size:.83rem;color:var(--green);font-weight:600}
+
+@media(max-width:700px){.pstat-grid{grid-template-columns:1fr 1fr}}
+
 </style>
 </head>
 <body>
@@ -516,6 +557,7 @@ input:checked+.slider::before{transform:translateX(18px)}
       <div class="ni" data-sec="diary"><span class="ni-ic">📖</span>Boží hlas – Deník</div>
       <div class="ni" data-sec="chat"><span class="ni-ic">💬</span>Týmový chat<span class="nbadge" id="bChat" style="display:none">!</span></div>
       <div class="ni" data-sec="stats"><span class="ni-ic">📊</span>Statistiky</div>
+      <div class="ni" data-sec="my-stats"><span class="ni-ic">⭐</span>Moje statistiky</div>
       <div class="ni admin-only" data-sec="admin" style="display:none"><span class="ni-ic">⚙️</span>Admin panel<span class="nbadge" id="bAdmin" style="display:none">0</span></div>
     </nav>
     <div class="online-section" id="onlineSection" style="display:none">
@@ -539,6 +581,8 @@ input:checked+.slider::before{transform:translateX(18px)}
     <!-- DASHBOARD -->
     <div class="sec on" id="sec-dashboard">
       <div class="ph"><h1>Přehled</h1><p>Vítej v modlitebním týmu Oxygen</p></div>
+      <div id="dashStreakRow"></div>
+      <div id="dashCountdown"></div>
       <div class="g3">
         <div class="scard"><div class="snum" id="s1">–</div><div class="slbl">Žádostí</div></div>
         <div class="scard"><div class="snum" id="s2">–</div><div class="slbl">Vyslyšených</div></div>
@@ -670,6 +714,23 @@ input:checked+.slider::before{transform:translateX(18px)}
             <button class="chat-send" onclick="sendChat()">→</button>
           </div>
         </div>
+      </div>
+    </div>
+
+
+    <!-- MY STATS -->
+    <div class="sec" id="sec-my-stats">
+      <div class="ph"><h1>Moje statistiky</h1><p>Tvoje osobní přehled modliteb a aktivity</p></div>
+      <div id="myStreakCard"></div>
+      <div id="myCountdownCard"></div>
+      <div class="pstat-grid" id="myStatCards"></div>
+      <div class="chart-wrap" style="margin-bottom:14px">
+        <div class="chart-title">📅 Aktivita za posledních 30 dní</div>
+        <canvas id="chartMyActivity" height="120"></canvas>
+      </div>
+      <div class="chart-wrap">
+        <div class="chart-title">🏷️ Moje kategorie žádostí</div>
+        <div id="myCatBars"></div>
       </div>
     </div>
 
@@ -1046,6 +1107,7 @@ function navigate(id){
     document.body.style.overflow='';
   }
   if(id==='stats')renderStats();
+  if(id==='my-stats')renderMyStats();
   if(id==='admin')renderAdminSec();
   if(id==='watch'){renderCalendar();renderWatch();}
 }
@@ -1059,7 +1121,7 @@ function startListeners(){
     _fl.req=false;renderReqs();updateBadges();
   }));
   unsubs.push(onSnapshot(query(collection(db,'checklist'),orderBy('ts','desc')),snap=>{window._chk=snap.docs.map(d=>({...d.data(),_id:d.id}));renderChk();updateBadges();}));
-  unsubs.push(onSnapshot(query(collection(db,'watch'),orderBy('ts','asc')),snap=>{window._watch=snap.docs.map(d=>({...d.data(),_id:d.id}));renderWatch();renderCalendar();renderDash();renderBanners();}));
+  unsubs.push(onSnapshot(query(collection(db,'watch'),orderBy('ts','asc')),snap=>{window._watch=snap.docs.map(d=>({...d.data(),_id:d.id}));renderWatch();renderCalendar();renderDash();renderBanners();if(document.getElementById('sec-my-stats').classList.contains('on'))renderMyStats();}));
   unsubs.push(onSnapshot(query(collection(db,'anon'),orderBy('ts','desc')),snap=>{window._anon=snap.docs.map(d=>({...d.data(),_id:d.id}));renderAnon();updateBadges();const el=document.getElementById('aAnon');if(el&&el.style.display!=='none')renderAdminAnon();}));
   unsubs.push(onSnapshot(query(collection(db,'diary'),orderBy('ts','desc')),snap=>{window._diary=snap.docs.map(d=>({...d.data(),_id:d.id}));renderDiary();updateBadges();}));
   unsubs.push(onSnapshot(collection(db,'users'),snap=>{window._users={};snap.docs.forEach(d=>{window._users[d.id]=d.data();});updateBadges();}));
@@ -1105,6 +1167,7 @@ function renderDash(){
         ${makeGCalUrl(cur)?`<a href="${makeGCalUrl(cur)}" target="_blank" rel="noopener" class="bs b-gcal" style="text-decoration:none;flex-shrink:0">📅 Google Kalendář</a>`:''}
       </div>`
     :'<span style="color:var(--muted)">Žádná stráž nebyla přiřazena</span>';
+  renderStreakDash();renderCountdownDash();
   const rec=reqs.slice(0,3);
   document.getElementById('dashRecent').innerHTML=rec.length
     ?rec.map(r=>`<div style="padding:7px 0;border-bottom:1px solid var(--border)"><div style="display:flex;gap:5px;align-items:center;margin-bottom:2px"><span style="font-weight:800;font-size:.82rem;color:var(--purple-xl)">${esc(r.name)}</span><span class="tag t-${r.cat}">${r.cat}</span>${r.answered?'<span style="color:var(--green);font-size:.7rem;font-weight:700">✓</span>':''}</div><div style="font-size:.82rem;color:var(--muted)">${esc(r.text).slice(0,100)}${r.text.length>100?'…':''}</div></div>`).join('')
@@ -1601,6 +1664,10 @@ window.showProfile=()=>{
       <div id="profPrev" style="width:52px;height:52px;border-radius:50%;background:${_selEmoji?'var(--surface)':'linear-gradient(135deg,var(--purple),var(--purple-d))'};display:flex;align-items:center;justify-content:center;font-size:${_selEmoji?'1.8rem':'.95rem'};font-weight:800;color:#fff">${_selEmoji||ini(CU.name)}</div>
       <div><div style="font-weight:800;font-size:1rem;color:var(--white)">${esc(CU.name)}</div><div style="color:var(--muted);font-size:.82rem">@${esc(CU.username)}</div></div>
     </div>
+    <div class="lbl" style="margin-bottom:8px">🎨 Barva tématu</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px">
+      ${THEMES.map((t,i)=>`<div class="theme-swatch ${i===_activeTheme?'active':''}" onclick="pickTheme(${i})" title="${t.name}" style="background:hsl(${t.h},${t.s},46%)"></div>`).join('')}
+    </div>
     <div class="lbl">Emoji profilovka</div>
     <div class="ep">${EMOJIS.map(e=>`<div class="ep-e ${e===_selEmoji?'sel':''}" onclick="selEm('${e}',this)">${e}</div>`).join('')}<div class="ep-e ${!_selEmoji?'sel':''}" onclick="selEm('',this)" title="Bez emoji (iniciály)">🔤</div></div>
     <button class="bp" style="margin-bottom:18px" onclick="saveEmoji()">Uložit profilovku</button>
@@ -1744,6 +1811,223 @@ function startOnline(){
     }).join('');
   });
 }
+
+
+// ── THEME COLORS ──────────────────────────────────────────────────────────
+const THEMES=[
+  {name:'Fialová',h:270,s:'70%'},
+  {name:'Modrá',h:220,s:'75%'},
+  {name:'Tyrkysová',h:185,s:'70%'},
+  {name:'Zelená',h:150,s:'60%'},
+  {name:'Červená',h:350,s:'70%'},
+  {name:'Oranžová',h:28,s:'80%'},
+  {name:'Růžová',h:320,s:'65%'},
+];
+let _activeTheme=0;
+function applyTheme(idx){
+  _activeTheme=idx;
+  const t=THEMES[idx];
+  const r=document.documentElement.style;
+  const h=t.h,s=t.s;
+  r.setProperty('--purple',`hsl(${h},${s},46%)`);
+  r.setProperty('--purple-l',`hsl(${h},${s},57%)`);
+  r.setProperty('--purple-xl',`hsl(${h},${s},72%)`);
+  r.setProperty('--purple-d',`hsl(${h},${s},30%)`);
+  r.setProperty('--bg',`hsl(${h},55%,8%)`);
+  r.setProperty('--bg2',`hsl(${h},52%,11%)`);
+  r.setProperty('--surface',`hsl(${h},50%,14%)`);
+  r.setProperty('--card',`hsl(${h},48%,17%)`);
+  r.setProperty('--border',`hsla(${h},${s},60%,0.2)`);
+  r.setProperty('--border-l',`hsla(${h},${s},60%,0.4)`);
+  localStorage.setItem('oxygen_theme',idx);
+}
+function loadTheme(){const s=localStorage.getItem('oxygen_theme');if(s!==null)applyTheme(parseInt(s));}
+loadTheme();
+window.pickTheme=idx=>{applyTheme(idx);document.querySelectorAll('.theme-swatch').forEach((el,i)=>el.classList.toggle('active',i===idx));toast('🎨 Téma změněno');};
+
+// ── STREAK ────────────────────────────────────────────────────────────────
+function calcStreak(){
+  const reqs=window._req||[],chk=window._chk||[];
+  // Collect all days the user prayed (prayedBy)
+  const prayedDays=new Set();
+  [...reqs,...chk].forEach(item=>{
+    if(!(item.prayedBy||[]).includes(CU?.username))return;
+    const ts=item.ts;if(!ts)return;
+    const d=ts.toDate?ts.toDate():new Date(ts);
+    if(!isNaN(d.getTime()))prayedDays.add(d.toDateString());
+  });
+  // Count current streak (consecutive days ending today or yesterday)
+  let streak=0,best=0,cur=0;
+  const today=new Date();today.setHours(0,0,0,0);
+  // Build sorted day list
+  const days=[...prayedDays].map(s=>new Date(s)).sort((a,b)=>b-a);
+  if(!days.length)return{streak:0,best:0};
+  // Check if today or yesterday is in set
+  const todayStr=today.toDateString();
+  const yest=new Date(today);yest.setDate(yest.getDate()-1);
+  const yestStr=yest.toDateString();
+  let ref=prayedDays.has(todayStr)?new Date(today):prayedDays.has(yestStr)?new Date(yest):null;
+  if(ref){
+    streak=1;
+    let check=new Date(ref);
+    while(true){check.setDate(check.getDate()-1);if(prayedDays.has(check.toDateString())){streak++;}else break;}
+  }
+  // Best streak
+  let sorted=[...prayedDays].map(s=>new Date(s)).sort((a,b)=>a-b);
+  cur=sorted.length>0?1:0;best=cur;
+  for(let i=1;i<sorted.length;i++){
+    const diff=(sorted[i]-sorted[i-1])/(1000*60*60*24);
+    if(Math.round(diff)===1){cur++;best=Math.max(best,cur);}else{cur=1;}
+  }
+  return{streak,best};
+}
+
+function renderStreakDash(){
+  const {streak,best}=calcStreak();
+  const el=document.getElementById('dashStreakRow');
+  if(!el)return;
+  if(streak===0){el.innerHTML='';return;}
+  el.innerHTML=`<div class="streak-card">
+    <div class="streak-fire">🔥</div>
+    <div><div style="display:flex;align-items:baseline;gap:6px"><div class="streak-num">${streak}</div><div class="streak-lbl">${streak===1?'den':'dnů'} streak</div></div>
+    <div class="streak-best">Nejlepší: ${best} ${best===1?'den':'dnů'}</div></div>
+    <div style="margin-left:auto;font-size:.75rem;color:var(--muted);text-align:right">Modlíš se<br>každý den 💪</div>
+  </div>`;
+}
+
+function renderCountdownDash(){
+  const el=document.getElementById('dashCountdown');
+  if(!el)return;
+  const watch=window._watch||[];
+  const today=new Date();today.setHours(0,0,0,0);
+  // Find next watch for current user
+  const myNext=watch.filter(w=>w.createdBy===CU?.username&&w.startDate).map(w=>({...w,sd:new Date(w.startDate)})).filter(w=>{w.sd.setHours(0,0,0,0);return w.sd>=today;}).sort((a,b)=>a.sd-b.sd)[0];
+  if(!myNext){el.innerHTML='';return;}
+  const diff=Math.round((myNext.sd-today)/(1000*60*60*24));
+  const label=diff===0?'Dnes máš stráž! 🙏':diff===1?'Zítra máš stráž':`Za ${diff} dní máš stráž`;
+  el.innerHTML=`<div class="countdown-card">
+    <div class="countdown-num">${diff===0?'⌚':diff}</div>
+    <div><div class="countdown-title">${label}</div>
+    <div class="countdown-lbl">${esc(myNext.date)} · ${(myNext.topics||[]).join(', ')||'Žádná témata'}</div></div>
+  </div>`;
+}
+
+// ── PERSONAL STATS ────────────────────────────────────────────────────────
+let _myStatsChart=null;
+function renderMyStats(){
+  if(!CU)return;
+  const reqs=window._req||[],chk=window._chk||[],watch=window._watch||[],diary=window._diary||[];
+  const {streak,best}=calcStreak();
+
+  // Stat cards
+  const prayedReqs=reqs.filter(r=>(r.prayedBy||[]).includes(CU.username)).length;
+  const prayedChk=chk.filter(c=>(c.prayedBy||[]).includes(CU.username)).length;
+  const myReqs=reqs.filter(r=>r.createdBy===CU.username).length;
+  const myWatches=watch.filter(w=>w.createdBy===CU.username).length;
+  const myDiary=diary.filter(d=>d.createdBy===CU.username).length;
+  const myAnswered=reqs.filter(r=>r.createdBy===CU.username&&r.answered).length;
+
+  const streak_el=document.getElementById('myStreakCard');
+  if(streak_el)streak_el.innerHTML=streak>0?`<div class="streak-card" style="margin-bottom:14px">
+    <div class="streak-fire">🔥</div>
+    <div><div style="display:flex;align-items:baseline;gap:6px"><div class="streak-num">${streak}</div><div class="streak-lbl">${streak===1?'den':'dnů'} streak</div></div>
+    <div class="streak-best">Nejlepší: ${best} ${best===1?'den':'dnů'}</div></div></div>`:'';
+
+  // Countdown
+  renderCountdownMy();
+
+  document.getElementById('myStatCards').innerHTML=`
+    <div class="pstat-card"><div class="pstat-num">${prayedReqs+prayedChk}</div><div class="pstat-lbl">Modliteb celkem</div></div>
+    <div class="pstat-card"><div class="pstat-num">${streak}</div><div class="pstat-lbl">Aktuální streak</div></div>
+    <div class="pstat-card"><div class="pstat-num">${best}</div><div class="pstat-lbl">Nejlepší streak</div></div>
+    <div class="pstat-card"><div class="pstat-num">${myReqs}</div><div class="pstat-lbl">Mých žádostí</div></div>
+    <div class="pstat-card"><div class="pstat-num">${myAnswered}</div><div class="pstat-lbl">Vyslyšených</div></div>
+    <div class="pstat-card"><div class="pstat-num">${myWatches}</div><div class="pstat-lbl">Stráží</div></div>
+    <div class="pstat-card"><div class="pstat-num">${myDiary}</div><div class="pstat-lbl">Zápisů</div></div>
+    <div class="pstat-card"><div class="pstat-num">${chk.filter(c=>c.createdBy===CU.username&&c.done).length}</div><div class="pstat-lbl">Splněno</div></div>
+    <div class="pstat-card"><div class="pstat-num">${prayedChk}</div><div class="pstat-lbl">Mod. ze seznamu</div></div>
+  `;
+
+  // 30-day activity chart
+  const days30=[];const labels30=[];const data30=[];
+  const today=new Date();today.setHours(23,59,59,999);
+  for(let i=29;i>=0;i--){
+    const d=new Date(today);d.setDate(d.getDate()-i);d.setHours(0,0,0,0);
+    days30.push(d.toDateString());
+    labels30.push(i===0?'Dnes':i===1?'Včera':(d.getDate()+'. '+(d.getMonth()+1)+'.'));
+  }
+  days30.forEach((ds,i)=>{
+    let count=0;
+    [...reqs,...chk].forEach(item=>{
+      if(!(item.prayedBy||[]).includes(CU.username))return;
+      const ts=item.ts;if(!ts)return;
+      const d=ts.toDate?ts.toDate():new Date(ts);
+      if(d.toDateString()===ds)count++;
+    });
+    data30.push(count);
+  });
+  const ctx=document.getElementById('chartMyActivity');
+  if(ctx){
+    if(_myStatsChart)_myStatsChart.destroy();
+    _myStatsChart=new Chart(ctx,{type:'bar',data:{labels:labels30,datasets:[{data:data30,backgroundColor:data30.map(v=>v>0?'rgba(155,79,222,.7)':'rgba(155,79,222,.15)'),borderRadius:4,borderSkipped:false}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#9B8FBB',font:{size:8},maxTicksLimit:8},grid:{display:false}},y:{ticks:{color:'#9B8FBB',font:{size:9},stepSize:1},grid:{color:'rgba(155,79,222,.1)'}}}}});
+  }
+
+  // Category breakdown of my requests
+  const cats=['osobní','rodina','zdraví','vztahy','práce','duchovní','jiné'];
+  const catColors=['rgba(155,79,222,.8)','rgba(255,209,102,.8)','rgba(239,71,111,.8)','rgba(255,140,60,.8)','rgba(80,180,255,.8)','rgba(6,214,160,.8)','rgba(180,180,180,.6)'];
+  const myCatCounts=cats.map(c=>reqs.filter(r=>r.createdBy===CU.username&&r.cat===c).length);
+  const maxCat=Math.max(...myCatCounts,1);
+  document.getElementById('myCatBars').innerHTML=cats.map((c,i)=>myCatCounts[i]>0?`
+    <div class="cat-bar-row">
+      <div class="cat-bar-label">${c.charAt(0).toUpperCase()+c.slice(1)}</div>
+      <div class="cat-bar-track"><div class="cat-bar-fill" style="width:${Math.round(myCatCounts[i]/maxCat*100)}%;background:${catColors[i]}"></div></div>
+      <div style="font-size:.75rem;color:var(--muted);min-width:22px;text-align:right">${myCatCounts[i]}</div>
+    </div>`:'').join('');
+}
+
+function renderCountdownMy(){
+  const el=document.getElementById('myCountdownCard');
+  if(!el)return;
+  const watch=window._watch||[];
+  const today=new Date();today.setHours(0,0,0,0);
+  const myNext=watch.filter(w=>w.createdBy===CU?.username&&w.startDate).map(w=>({...w,sd:new Date(w.startDate)})).filter(w=>{w.sd.setHours(0,0,0,0);return w.sd>=today;}).sort((a,b)=>a.sd-b.sd)[0];
+  if(!myNext){el.innerHTML='';return;}
+  const diff=Math.round((myNext.sd-today)/(1000*60*60*24));
+  const label=diff===0?'Dnes máš stráž! 🙏':diff===1?'Zítra máš stráž':`Za ${diff} dní máš stráž`;
+  el.innerHTML=`<div class="countdown-card" style="margin-bottom:14px">
+    <div class="countdown-num">${diff===0?'⌚':diff}</div>
+    <div><div class="countdown-title">${label}</div>
+    <div class="countdown-lbl">${esc(myNext.date)}</div></div>
+  </div>`;
+}
+
+// ── PWA ───────────────────────────────────────────────────────────────────
+let _deferredPrompt=null;
+window.addEventListener('beforeinstallprompt',e=>{
+  e.preventDefault();_deferredPrompt=e;
+  // Show banner after user is logged in
+  setTimeout(showPwaBanner,3000);
+});
+function showPwaBanner(){
+  if(!CU||localStorage.getItem('oxygen_pwa_dismissed'))return;
+  const b=document.getElementById('banners');
+  if(b&&!b.querySelector('#pwaBanner')){
+    const div=document.createElement('div');div.className='pwa-banner';div.id='pwaBanner';
+    div.innerHTML=`<span style="font-size:1.2rem">📱</span><span class="pwa-banner-txt">Přidej Oxygen na plochu pro rychlý přístup</span><button class="bs b-ok" onclick="installPwa()">Přidat</button><button class="bs b-ghost" style="margin-left:4px" onclick="dismissPwa()">Ne</button>`;
+    b.appendChild(div);
+  }
+}
+window.installPwa=async()=>{
+  if(!_deferredPrompt)return;
+  _deferredPrompt.prompt();
+  const{outcome}=await _deferredPrompt.userChoice;
+  if(outcome==='accepted')toast('✅ Oxygen přidáno na plochu!');
+  _deferredPrompt=null;
+  document.getElementById('pwaBanner')?.remove();
+  localStorage.setItem('oxygen_pwa_dismissed','1');
+};
+window.dismissPwa=()=>{document.getElementById('pwaBanner')?.remove();localStorage.setItem('oxygen_pwa_dismissed','1');};
+
 
 restoreSession();
 </script>
