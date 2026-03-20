@@ -159,6 +159,7 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 .b-del{background:rgba(239,71,111,.1);border-color:rgba(239,71,111,.3);color:var(--red)}
 .b-del:hover{background:rgba(239,71,111,.2)}
 .b-ok{background:rgba(6,214,160,.1);border-color:rgba(6,214,160,.3);color:var(--green)}
+.b-ok:hover{background:rgba(6,214,160,.25);border-color:var(--green)}
 .b-exp{background:rgba(255,209,102,.1);border-color:rgba(255,209,102,.3);color:var(--gold)}
 .b-exp:hover{background:rgba(255,209,102,.2)}
 .b-ghost{background:transparent;border-color:var(--border);color:var(--muted)}
@@ -1454,11 +1455,14 @@ window.calClick=(y,mo,d,e)=>{
       ? '<div style="font-size:.8rem;color:var(--muted);margin-top:2px">+ '+(existing.coPersons||[]).map(n=>esc(n)).join(', ')+'</div>'
       : '';
     const isPastWatch=(()=>{if(!existing.endDate)return false;const ed=new Date(existing.endDate);ed.setHours(23,59,59,999);return ed<new Date();})();
+    const isOwner=existing.createdBy===CU.username||existing.addedBy===CU.username;
     const joinBtn=isPastWatch
       ? '<span class="bs b-ghost" style="cursor:default;opacity:.5">📦 Stráž již proběhla</span>'
-      : alreadyIn
-        ? '<button class="bs b-del" onclick="leaveWatch(\''+existing._id+'\');document.querySelector(\'.cal-popup\').remove();calPopup=null">✕ Odebrat se ze stráže</button>'
-        : '<button class="bs b-ok" onclick="joinWatch(\''+existing._id+'\');document.querySelector(\'.cal-popup\').remove();calPopup=null">+ Přidat se ke stráži</button>';
+      : isOwner
+        ? ''
+        : alreadyIn
+          ? '<button class="bs b-del" onclick="leaveWatch(\''+existing._id+'\');document.querySelector(\'.cal-popup\').remove();calPopup=null">✕ Odebrat se ze stráže</button>'
+          : '<button class="bs b-ok" onclick="joinWatch(\''+existing._id+'\');document.querySelector(\'.cal-popup\').remove();calPopup=null">+ Přidat se ke stráži</button>';
     const gcalBtn=gcalUrl
       ? '<a href="'+gcalUrl+'" target="_blank" rel="noopener" class="bs b-gcal" style="text-decoration:none">📅 Google Kalendář</a>'
       : '';
