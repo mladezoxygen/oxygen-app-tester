@@ -228,7 +228,16 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 .cal-day.cal-has:hover{background:rgba(123,47,190,.3)}
 .cal-day-num{font-size:.77rem;font-weight:700;color:var(--muted)}.cal-day.cal-today .cal-day-num{color:var(--purple-xl)}
 .cal-day-person{font-size:.65rem;color:var(--purple-xl);font-weight:700;line-height:1.2;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.cal-popup{position:fixed;background:var(--surface);border:1px solid var(--border-l);border-radius:12px;padding:16px;width:260px;box-shadow:0 12px 40px rgba(0,0,0,.6);z-index:300;animation:fu .15s ease}
+.cal-popup{position:fixed;background:var(--surface);border:1px solid var(--border-l);border-radius:12px;padding:16px;width:300px;box-shadow:0 12px 40px rgba(0,0,0,.6);z-index:300;animation:fu .15s ease}
+.cp-user-list{display:flex;flex-direction:column;gap:4px;max-height:160px;overflow-y:auto;margin-bottom:8px}
+.cp-user-row{display:flex;align-items:center;gap:8px;padding:5px 8px;border-radius:8px;cursor:pointer;transition:background .15s;border:1px solid transparent}
+.cp-user-row:hover{background:rgba(123,47,190,.15)}
+.cp-user-row.selected{background:rgba(123,47,190,.22);border-color:var(--border-l)}
+.cp-user-row input[type=radio],.cp-user-row input[type=checkbox]{accent-color:var(--purple-l);width:14px;height:14px;flex-shrink:0;cursor:pointer}
+.cp-user-av{width:24px;height:24px;border-radius:50%;background:linear-gradient(135deg,var(--purple),var(--purple-d));display:flex;align-items:center;justify-content:center;font-size:.58rem;font-weight:800;color:#fff;flex-shrink:0}
+.cp-user-av.ea{background:var(--surface);font-size:.85rem}
+.cp-user-name{font-size:.82rem;color:var(--text);font-weight:600}
+.cp-section-lbl{font-size:.68rem;font-weight:800;color:var(--purple-xl);letter-spacing:.06em;text-transform:uppercase;margin:8px 0 4px}
 .cal-popup h3{font-family:'Cinzel',serif;font-size:.9rem;color:var(--white);margin-bottom:12px}
 .cal-popup-close{float:right;background:none;border:none;color:var(--muted);cursor:pointer;font-size:1.1rem;line-height:1}
 /* WATCH */
@@ -825,17 +834,10 @@ const isAdmin=()=>CU?.role==='admin';
 const canMgr=()=>['admin','modlitebnik'].includes(CU?.role);
 // Helper: check if a username is the guardian or co-person of a watch
 const watchCountFor=(watchList,username)=>{
-  const allU=window._users||{};
-  const u=allU[username];
-  const name=u?.name||'';
-  const firstName=name.split(' ')[0];
   return watchList.filter(w=>{
-    // Primary: explicit guardianUsername field
     if(w.guardianUsername===username)return true;
-    // Fallback for old records: createdBy
     if(!w.guardianUsername&&w.createdBy===username)return true;
-    // Co-persons: match by full name or first name
-    if(name&&(w.coPersons||[]).some(n=>n.trim().toLowerCase()===name.toLowerCase()||n.trim().toLowerCase()===firstName.toLowerCase()))return true;
+    if((w.coPersons||[]).includes(username))return true;
     return false;
   }).length;
 };
@@ -1437,7 +1439,7 @@ function renderCalendar(){
     if(isCurrentDay){borderColor='var(--purple-l)';}
     html+=`<div class="cal-day ${isCurrentDay?'cal-today':''} ${w?'cal-has':''}" style="background:${bgColor};border-color:${borderColor}" onclick="calClick(${m.getFullYear()},${m.getMonth()},${d},event)">
       <div class="cal-day-num">${d}</div>
-      ${w?`<div class="cal-day-person">${esc(w.person.split(' ')[0])}${(w.coPersons||[]).length?` <span style="opacity:.7;font-size:.62rem">+${(w.coPersons||[]).length}</span>`:''}</div>`:''}
+      ${w?(()=>{const gu=window._users?.[w.guardianUsername||w.createdBy];const gname=gu?gu.name.split(' ')[0]:(w.person||'?').split(' ')[0];return`<div class="cal-day-person">${esc(gname)}${(w.coPersons||[]).length?` <span style="opacity:.7;font-size:.62rem">+${(w.coPersons||[]).length}</span>`:''}</div>`;})():''}
     </div>`;
   }
   document.getElementById('calGrid').innerHTML=html;
@@ -1452,42 +1454,55 @@ window.calClick=(y,mo,d,e)=>{
   const popup=document.createElement('div');popup.className='cal-popup';calPopup=popup;
   if(existing){
     const gcalUrl=makeGCalUrl(existing);
-    const allInWatch=[existing.person,...(existing.coPersons||[])];
-    const cuFirst=CU.name.split(' ')[0];
-    const alreadyIn=allInWatch.some(n=>n===CU.name||n===cuFirst);
-    const extraNames=(existing.coPersons||[]).length
-      ? '<div style="font-size:.8rem;color:var(--muted);margin-top:2px">+ '+(existing.coPersons||[]).map(n=>esc(n)).join(', ')+'</div>'
-      : '';
+    const guardian=window._users?.[existing.guardianUsername||existing.createdBy];
+    const guardianName=guardian?guardian.name:(existing.person||'?');
+    // Build co-persons display with avatars
+    const coPersonsHTML=(existing.coPersons||[]).map(un=>{
+      const u=window._users?.[un];
+      const av=u?.emoji?`<div class="cp-user-av ea">${u.emoji}</div>`:`<div class="cp-user-av">${ini(u?.name||un)}</div>`;
+      return`<div style="display:flex;align-items:center;gap:6px;padding:3px 0">${av}<span style="font-size:.82rem;color:var(--text)">${esc(u?.name||un)}</span></div>`;
+    }).join('');
     const isPastWatch=(()=>{if(!existing.endDate)return false;const ed=new Date(existing.endDate);ed.setHours(23,59,59,999);return ed<new Date();})();
     const isOwner=(existing.guardianUsername||existing.createdBy)===CU.username||existing.addedBy===CU.username;
+    const isCoMember=(existing.coPersons||[]).includes(CU.username);
     const joinBtn=isPastWatch
       ? '<span class="bs b-ghost" style="cursor:default;opacity:.5">📦 Stráž již proběhla</span>'
-      : isOwner
-        ? ''
-        : alreadyIn
-          ? '<button class="bs b-del" onclick="leaveWatch(\''+existing._id+'\');document.querySelector(\'.cal-popup\').remove();calPopup=null">✕ Odebrat se ze stráže</button>'
-          : '<button class="bs b-ok" onclick="joinWatch(\''+existing._id+'\');document.querySelector(\'.cal-popup\').remove();calPopup=null">+ Přidat se ke stráži</button>';
-    const gcalBtn=gcalUrl
-      ? '<a href="'+gcalUrl+'" target="_blank" rel="noopener" class="bs b-gcal" style="text-decoration:none">📅 Google Kalendář</a>'
-      : '';
-    const delBtn=((existing.guardianUsername||existing.createdBy)===CU.username||existing.addedBy===CU.username||isAdmin())
-      ? '<button class="bs b-del" onclick="delWatch(\''+existing._id+'\');document.querySelector(\'.cal-popup\').remove();calPopup=null">🗑 Smazat stráž</button>'
-      : '';
+      : isOwner?''
+      : isCoMember
+        ? '<button class="bs b-del" onclick="leaveWatch(\''+existing._id+'\');document.querySelector(\'.cal-popup\').remove();calPopup=null">✕ Odebrat se ze stráže</button>'
+        : '<button class="bs b-ok" onclick="joinWatch(\''+existing._id+'\');document.querySelector(\'.cal-popup\').remove();calPopup=null">+ Přidat se ke stráži</button>';
+    const gcalBtn=gcalUrl?'<a href="'+gcalUrl+'" target="_blank" rel="noopener" class="bs b-gcal" style="text-decoration:none">📅 Google Kalendář</a>':'';
+    const delBtn=isOwner?'<button class="bs b-del" onclick="delWatch(\''+existing._id+'\');document.querySelector(\'.cal-popup\').remove();calPopup=null">🗑 Smazat stráž</button>':'';
+    const guardAv=guardian?.emoji?`<div class="cp-user-av ea">${guardian.emoji}</div>`:`<div class="cp-user-av">${ini(guardianName)}</div>`;
     popup.innerHTML=
       '<button class="cal-popup-close" onclick="document.querySelector(\'.cal-popup\').remove();calPopup=null">✕</button>'
       +'<h3>'+label+'</h3>'
-      +'<div style="color:var(--text);font-size:.88rem;margin-bottom:10px">Stráž: <strong>'+esc(existing.person)+'</strong>'+extraNames+'<br><span style="color:var(--muted);font-size:.8rem">'+esc(existing.date)+'</span></div>'
-      +'<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">'+joinBtn+'</div>'
+      +'<div class="cp-section-lbl">Strážce</div>'
+      +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">'+guardAv+'<span style="font-size:.88rem;font-weight:800;color:var(--white)">'+esc(guardianName)+'</span></div>'
+      +(coPersonsHTML?'<div class="cp-section-lbl">Další strážci</div><div style="margin-bottom:8px">'+coPersonsHTML+'</div>':'')
+      +'<div style="color:var(--muted);font-size:.76rem;margin-bottom:10px">'+esc(existing.date)+'</div>'
+      +((existing.topics||[]).length?'<div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:10px">'+(existing.topics||[]).map(t=>'<span class="wtag">'+esc(t)+'</span>').join('')+'</div>':'')
+      +'<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px">'+joinBtn+'</div>'
       +'<div style="display:flex;gap:6px;flex-wrap:wrap">'+gcalBtn+' '+delBtn+'</div>';
   }else{
+    // Sestavit seznam uživatelů pro výběr
+    const users=Object.values(window._users||{}).filter(u=>u.role!=='pending').sort((a,b)=>a.name.localeCompare(b.name));
+    const guardianRows=users.map(u=>{
+      const av=u.emoji?`<div class="cp-user-av ea">${u.emoji}</div>`:`<div class="cp-user-av">${ini(u.name)}</div>`;
+      const checked=u.username===CU.username?'checked':'';
+      return`<label class="cp-user-row ${u.username===CU.username?'selected':''}" onclick="this.querySelector('input').checked=true;document.querySelectorAll('.cp-guardian-row').forEach(r=>r.classList.remove('selected'));this.classList.add('selected')">
+        <input type="radio" name="cpGuardian" value="${u.username}" class="cp-guardian-row" ${checked} style="display:none">
+        ${av}<span class="cp-user-name">${esc(u.name)}</span>
+      </label>`;
+    }).join('');
     popup.innerHTML=
       '<button class="cal-popup-close" onclick="document.querySelector(\'.cal-popup\').remove();calPopup=null">✕</button>'
       +'<h3>Přidat stráž</h3>'
       +'<div style="color:var(--muted);font-size:.79rem;margin-bottom:10px">'+label+'</div>'
-      +'<div class="fg"><label>Kdo (hlavní strážce)</label><input type="text" id="cpP" value="'+esc(CU.name)+'"></div>'
-      +'<div class="fg"><label>Další jména <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted)">(nepovinné, čárkou)</span></label><input type="text" id="cpCo" placeholder="Jana, Pavel, …"></div>'
-      +'<div class="fg"><label>Do data</label><input type="date" id="cpE" value="'+iso+'"></div>'
-      +'<div class="fg"><label>Témata (čárkou)</label><input type="text" id="cpT" placeholder="Mládež, vedení, …"></div>'
+      +'<div class="cp-section-lbl">Strážce</div>'
+      +'<div class="cp-user-list" id="cpGuardianList">'+guardianRows+'</div>'
+      +'<div class="fg" style="margin-bottom:8px"><label>Do data</label><input type="date" id="cpE" value="'+iso+'"></div>'
+      +'<div class="fg" style="margin-bottom:10px"><label>Témata (čárkou)</label><input type="text" id="cpT" placeholder="Mládež, vedení, …"></div>'
       +'<button class="bp" style="padding:9px" onclick="saveCalWatch(\''+iso+'\')">Uložit</button>';
   }
   const rect=e.currentTarget.getBoundingClientRect();
@@ -1499,9 +1514,12 @@ window.calClick=(y,mo,d,e)=>{
 };
 
 window.saveCalWatch=async iso=>{
-  const person=document.getElementById('cpP')?.value.trim()||CU.name;
+  // Přečti vybraného strážce
+  const guardianUsername=document.querySelector('input[name="cpGuardian"]:checked')?.value||CU.username;
+  const guardianUser=window._users?.[guardianUsername];
+  const person=guardianUser?.name||CU.name;
   const endVal=document.getElementById('cpE')?.value||iso;
-  // Block overlapping dates
+  // Blokuj překryv
   const sd0=new Date(iso);sd0.setHours(0,0,0,0);
   const ed0=new Date(endVal);ed0.setHours(23,59,59,999);
   const overlap=(window._watch||[]).find(w=>{
@@ -1511,28 +1529,21 @@ window.saveCalWatch=async iso=>{
     return sd0<=wed&&ed0>=wsd;
   });
   if(overlap){toast('⚠️ Toto období je již obsazeno – '+overlap.person);return;}
-  const coStr=document.getElementById('cpCo')?.value.trim()||'';
-  const coPersons=coStr.split(',').map(s=>s.trim()).filter(Boolean);
   const topStr=document.getElementById('cpT')?.value.trim()||'';
   const topics=topStr.split(',').map(s=>s.trim()).filter(Boolean);
   const sd=new Date(iso);const ed=new Date(endVal);
   const dateLabel=(()=>{const day=sd.getDate();const mon=sd.getMonth()+1;const dayE=ed.getDate();const monE=ed.getMonth()+1;return endVal!==iso?`${day}. ${mon}. – ${dayE}. ${monE}. ${ed.getFullYear()}`:`${day}. ${mon}. ${sd.getFullYear()}`;})();
-  // Resolve guardian: if person matches existing user → that user is guardian, else addedBy is guardian
-  const allUsers=Object.values(window._users||{});
-  const matched=allUsers.find(u=>u.name&&u.name.trim().toLowerCase()===person.toLowerCase());
-  const guardianUsername=matched?matched.username:CU.username;
   try{
     await addDoc(collection(db,'watch'),{
-      person,coPersons,date:dateLabel,startDate:iso,endDate:endVal,
-      topics,guardianUsername,addedBy:CU.username,
-      // keep createdBy = guardianUsername for backwards compat
-      createdBy:guardianUsername,
-      ts:serverTimestamp()
+      person,guardianUsername,addedBy:CU.username,
+      coPersons:[],date:dateLabel,startDate:iso,endDate:endVal,
+      topics,createdBy:guardianUsername,ts:serverTimestamp()
     });
     document.querySelector('.cal-popup')?.remove();calPopup=null;
     toast('⌚ Stráž přidána');
   }catch(e){toast('Chyba: '+e.message);}
 };
+
 function makeGCalUrl(w){
   if(!w.startDate)return null;
   const sd=new Date(w.startDate);
@@ -1577,7 +1588,7 @@ function renderWatch(){
     const gcalUrl=makeGCalUrl(w);
     return`<div class="wc ${isCurr?'curr':isFuture?'future':''}">
       <div style="display:flex;justify-content:space-between;align-items:flex-start">
-        <div><div style="font-family:'Cinzel',serif;font-size:.77rem;color:${isCurr?'var(--gold)':isFuture?'var(--purple-xl)':'var(--muted)'}">✦ ${isCurr?'Aktuální stráž':isFuture?'Plánovaná stráž':'Minulá stráž'}</div><div style="font-weight:800;font-size:.92rem;color:var(--white);margin-top:2px">${esc(w.person)}</div>${(w.coPersons||[]).length?`<div style="font-size:.77rem;color:var(--muted);margin-top:1px">+ ${(w.coPersons||[]).map(n=>esc(n)).join(', ')}</div>`:''}<div style="color:var(--muted);font-size:.76rem;margin-top:1px">${esc(w.date)}</div></div>
+        <div><div style="font-family:'Cinzel',serif;font-size:.77rem;color:${isCurr?'var(--gold)':isFuture?'var(--purple-xl)':'var(--muted)'}">✦ ${isCurr?'Aktuální stráž':isFuture?'Plánovaná stráž':'Minulá stráž'}</div><div style="font-weight:800;font-size:.92rem;color:var(--white);margin-top:2px">${esc(w.person)}</div>${(w.coPersons||[]).length?`<div style="font-size:.77rem;color:var(--muted);margin-top:1px">+ ${(w.coPersons||[]).map(un=>{const u2=window._users?.[un];return esc(u2?.name||un);}).join(', ')}</div>`:''}<div style="color:var(--muted);font-size:.76rem;margin-top:1px">${esc(w.date)}</div></div>
         <div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap">
           ${gcalUrl?`<a href="${gcalUrl}" target="_blank" rel="noopener" class="bs b-gcal" style="text-decoration:none">📅 Google Kalendář</a>`:''}
           ${canDel?`<button class="bs b-del" onclick="delWatch('${w._id}')">🗑</button>`:''}
@@ -1588,19 +1599,14 @@ function renderWatch(){
 }
 window.joinWatch=async id=>{
   const w=(window._watch||[]).find(x=>x._id===id);if(!w)return;
-  // Block joining past watches
   if(w.endDate){const ed=new Date(w.endDate);ed.setHours(23,59,59,999);if(ed<new Date()){toast('Tato stráž již proběhla.');return;}}
-  const firstName=CU.name.split(' ')[0];
-  const already=[w.person,...(w.coPersons||[])].some(n=>n===CU.name||n===firstName);
-  if(already){toast('Už jsi v této stráži');return;}
-  const updated=[...(w.coPersons||[]),firstName];
+  if((w.coPersons||[]).includes(CU.username)||(w.guardianUsername||w.createdBy)===CU.username){toast('Už jsi v této stráži');return;}
+  const updated=[...(w.coPersons||[]),CU.username];
   try{await updateDoc(doc(db,'watch',id),{coPersons:updated});toast('✓ Přidán/a ke stráži!');}catch(e){toast('Chyba: '+e.message);}
 };
 window.leaveWatch=async id=>{
   const w=(window._watch||[]).find(x=>x._id===id);if(!w)return;
-  const firstName=CU.name.split(' ')[0];
-  // Match by full name or first name
-  const updated=(w.coPersons||[]).filter(n=>n!==CU.name&&n!==firstName);
+  const updated=(w.coPersons||[]).filter(n=>n!==CU.username);
   if(updated.length===(w.coPersons||[]).length){toast('Nejsi v této stráži');return;}
   try{await updateDoc(doc(db,'watch',id),{coPersons:updated});toast('Odebráno ze stráže');}catch(e){toast('Chyba: '+e.message);}
 };
