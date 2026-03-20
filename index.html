@@ -823,15 +823,19 @@ const esc=s=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 const isAdmin=()=>CU?.role==='admin';
 const canMgr=()=>['admin','modlitebnik'].includes(CU?.role);
-// Helper: check if a username is involved in a watch (as main person or co-person)
+// Helper: check if a username is the guardian or co-person of a watch
 const watchCountFor=(watchList,username)=>{
   const allU=window._users||{};
   const u=allU[username];
   const name=u?.name||'';
+  const firstName=name.split(' ')[0];
   return watchList.filter(w=>{
-    if(w.createdBy===username)return true;
-    if(name&&w.person&&w.person.trim().toLowerCase()===name.toLowerCase())return true;
-    if(name&&(w.coPersons||[]).some(n=>n.trim().toLowerCase()===name.toLowerCase()))return true;
+    // Primary: explicit guardianUsername field
+    if(w.guardianUsername===username)return true;
+    // Fallback for old records: createdBy
+    if(!w.guardianUsername&&w.createdBy===username)return true;
+    // Co-persons: match by full name or first name
+    if(name&&(w.coPersons||[]).some(n=>n.trim().toLowerCase()===name.toLowerCase()||n.trim().toLowerCase()===firstName.toLowerCase()))return true;
     return false;
   }).length;
 };
@@ -942,7 +946,7 @@ function renderBanners(){
   const existing=b.querySelector('.watch-banner');if(existing)existing.remove();
   const watch=window._watch||[];
   const tomorrow=new Date();tomorrow.setDate(tomorrow.getDate()+1);
-  const myWatch=watch.find(w=>{if(!w.startDate)return false;const sd=new Date(w.startDate);return sd.toDateString()===tomorrow.toDateString()&&(w.createdBy===CU?.username||w.addedBy===CU?.username);});
+  const myWatch=watch.find(w=>{if(!w.startDate)return false;const sd=new Date(w.startDate);return sd.toDateString()===tomorrow.toDateString()&&((w.guardianUsername||w.createdBy)===CU?.username||w.addedBy===CU?.username);});
   if(myWatch&&notifSettings.watchReminder){
     const div=document.createElement('div');div.className='watch-banner';
     div.innerHTML=`<span style="font-size:1.2rem">⏰</span><div class="watch-banner-txt">Připomínka: Zítra máš modlitební stráž! (${esc(myWatch.date)})</div>`;
@@ -1455,7 +1459,7 @@ window.calClick=(y,mo,d,e)=>{
       ? '<div style="font-size:.8rem;color:var(--muted);margin-top:2px">+ '+(existing.coPersons||[]).map(n=>esc(n)).join(', ')+'</div>'
       : '';
     const isPastWatch=(()=>{if(!existing.endDate)return false;const ed=new Date(existing.endDate);ed.setHours(23,59,59,999);return ed<new Date();})();
-    const isOwner=existing.createdBy===CU.username||existing.addedBy===CU.username;
+    const isOwner=(existing.guardianUsername||existing.createdBy)===CU.username||existing.addedBy===CU.username;
     const joinBtn=isPastWatch
       ? '<span class="bs b-ghost" style="cursor:default;opacity:.5">📦 Stráž již proběhla</span>'
       : isOwner
@@ -1466,7 +1470,7 @@ window.calClick=(y,mo,d,e)=>{
     const gcalBtn=gcalUrl
       ? '<a href="'+gcalUrl+'" target="_blank" rel="noopener" class="bs b-gcal" style="text-decoration:none">📅 Google Kalendář</a>'
       : '';
-    const delBtn=(existing.createdBy===CU.username||existing.addedBy===CU.username||isAdmin())
+    const delBtn=((existing.guardianUsername||existing.createdBy)===CU.username||existing.addedBy===CU.username||isAdmin())
       ? '<button class="bs b-del" onclick="delWatch(\''+existing._id+'\');document.querySelector(\'.cal-popup\').remove();calPopup=null">🗑 Smazat stráž</button>'
       : '';
     popup.innerHTML=
@@ -1497,7 +1501,7 @@ window.calClick=(y,mo,d,e)=>{
 window.saveCalWatch=async iso=>{
   const person=document.getElementById('cpP')?.value.trim()||CU.name;
   const endVal=document.getElementById('cpE')?.value||iso;
-  // Block if any existing watch overlaps the selected date range
+  // Block overlapping dates
   const sd0=new Date(iso);sd0.setHours(0,0,0,0);
   const ed0=new Date(endVal);ed0.setHours(23,59,59,999);
   const overlap=(window._watch||[]).find(w=>{
@@ -1511,13 +1515,23 @@ window.saveCalWatch=async iso=>{
   const coPersons=coStr.split(',').map(s=>s.trim()).filter(Boolean);
   const topStr=document.getElementById('cpT')?.value.trim()||'';
   const topics=topStr.split(',').map(s=>s.trim()).filter(Boolean);
-  const sd=new Date(iso);const ed=endVal?new Date(endVal):sd;
-  const dateLabel=(()=>{const day=sd.getDate();const mon=sd.getMonth()+1;const dayE=ed.getDate();const monE=ed.getMonth()+1;return endVal&&endVal!==iso?`${day}. ${mon}. – ${dayE}. ${monE}. ${ed.getFullYear()}`:`${day}. ${mon}. ${sd.getFullYear()}`;})();
-  // Resolve createdBy: if main person matches an existing user's name, use their username
+  const sd=new Date(iso);const ed=new Date(endVal);
+  const dateLabel=(()=>{const day=sd.getDate();const mon=sd.getMonth()+1;const dayE=ed.getDate();const monE=ed.getMonth()+1;return endVal!==iso?`${day}. ${mon}. – ${dayE}. ${monE}. ${ed.getFullYear()}`:`${day}. ${mon}. ${sd.getFullYear()}`;})();
+  // Resolve guardian: if person matches existing user → that user is guardian, else addedBy is guardian
   const allUsers=Object.values(window._users||{});
-  const matchedUser=allUsers.find(u=>u.name&&u.name.trim().toLowerCase()===person.toLowerCase());
-  const resolvedCreatedBy=matchedUser?matchedUser.username:CU.username;
-  try{await addDoc(collection(db,'watch'),{person,coPersons,date:dateLabel,startDate:iso,endDate:endVal||iso,topics,createdBy:resolvedCreatedBy,addedBy:CU.username,ts:serverTimestamp()});document.querySelector('.cal-popup')?.remove();calPopup=null;toast('⌚ Stráž přidána');}catch(e){toast('Chyba: '+e.message);}
+  const matched=allUsers.find(u=>u.name&&u.name.trim().toLowerCase()===person.toLowerCase());
+  const guardianUsername=matched?matched.username:CU.username;
+  try{
+    await addDoc(collection(db,'watch'),{
+      person,coPersons,date:dateLabel,startDate:iso,endDate:endVal,
+      topics,guardianUsername,addedBy:CU.username,
+      // keep createdBy = guardianUsername for backwards compat
+      createdBy:guardianUsername,
+      ts:serverTimestamp()
+    });
+    document.querySelector('.cal-popup')?.remove();calPopup=null;
+    toast('⌚ Stráž přidána');
+  }catch(e){toast('Chyba: '+e.message);}
 };
 function makeGCalUrl(w){
   if(!w.startDate)return null;
@@ -1559,7 +1573,7 @@ function renderWatch(){
   }
   el.innerHTML=list.map(w=>{
     const{isFuture,isCurr}=classify(w);
-    const canDel=isAdmin()||w.createdBy===CU.username||w.addedBy===CU.username;
+    const canDel=isAdmin()||(w.guardianUsername||w.createdBy)===CU.username||w.addedBy===CU.username;
     const gcalUrl=makeGCalUrl(w);
     return`<div class="wc ${isCurr?'curr':isFuture?'future':''}">
       <div style="display:flex;justify-content:space-between;align-items:flex-start">
@@ -1590,7 +1604,7 @@ window.leaveWatch=async id=>{
   if(updated.length===(w.coPersons||[]).length){toast('Nejsi v této stráži');return;}
   try{await updateDoc(doc(db,'watch',id),{coPersons:updated});toast('Odebráno ze stráže');}catch(e){toast('Chyba: '+e.message);}
 };
-window.delWatch=async id=>{const w=(window._watch||[]).find(x=>x._id===id);if(!w)return;if(!isAdmin()&&w.createdBy!==CU.username&&w.addedBy!==CU.username){toast('Nemáš oprávnění.');return;}confirmDialog('Smazat modlitební stráž?',async()=>{try{await deleteDoc(doc(db,'watch',id));toast('Smazáno');}catch(e){toast('Chyba: '+e.message);}})};
+window.delWatch=async id=>{const w=(window._watch||[]).find(x=>x._id===id);if(!w)return;if(!isAdmin()&&(w.guardianUsername||w.createdBy)!==CU.username&&w.addedBy!==CU.username){toast('Nemáš oprávnění.');return;}confirmDialog('Smazat modlitební stráž?',async()=>{try{await deleteDoc(doc(db,'watch',id));toast('Smazáno');}catch(e){toast('Chyba: '+e.message);}})};
 
 // ── ANON ──────────────────────────────────────────────────────────────────
 let _anonFilter='active';
@@ -2284,7 +2298,7 @@ function renderCountdownMy(){
   if(!el)return;
   const watch=window._watch||[];
   const today=new Date();today.setHours(0,0,0,0);
-  const myNext=watch.filter(w=>w.createdBy===CU?.username&&w.startDate).map(w=>({...w,sd:new Date(w.startDate)})).filter(w=>{w.sd.setHours(0,0,0,0);return w.sd>=today;}).sort((a,b)=>a.sd-b.sd)[0];
+  const myNext=watch.filter(w=>((w.guardianUsername||w.createdBy)===CU?.username||w.addedBy===CU?.username)&&w.startDate).map(w=>({...w,sd:new Date(w.startDate)})).filter(w=>{w.sd.setHours(0,0,0,0);return w.sd>=today;}).sort((a,b)=>a.sd-b.sd)[0];
   if(!myNext){el.innerHTML='';return;}
   const diff=Math.round((myNext.sd-today)/(1000*60*60*24));
   const label=diff===0?'Dnes máš stráž! 🙏':diff===1?'Zítra máš stráž':`Za ${diff} dní máš stráž`;
