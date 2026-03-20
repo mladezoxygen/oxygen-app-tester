@@ -575,7 +575,7 @@ input:checked+.slider::before{transform:translateX(18px)}
 
     <!-- CHECKLIST -->
     <div class="sec" id="sec-checklist">
-      <div class="ph"><h1>Modlitební seznam</h1><p>Zapisujte a zaškrtávejte vyslyšené modlitby</p></div>
+      <div class="ph"><h1>Modlitební seznam</h1><p>Zapisujte a zaškrtávejte splněné modlitby</p></div>
       <div class="card card-top" id="chkAddCard" style="margin-bottom:16px">
         <span class="lbl" style="margin-bottom:9px">✦ Přidat do seznamu</span>
         <div class="irow">
@@ -584,7 +584,7 @@ input:checked+.slider::before{transform:translateX(18px)}
         </div>
       </div>
       <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:7px;margin-bottom:14px">
-        <div class="tabs" style="margin-bottom:0"><button class="tab on" onclick="setCF('all',this)">Vše</button><button class="tab" onclick="setCF('active',this)">Aktivní</button><button class="tab" onclick="setCF('done',this)">✓ Vyslyšené</button></div>
+        <div class="tabs" style="margin-bottom:0"><button class="tab on" onclick="setCF('all',this)">Vše</button><button class="tab" onclick="setCF('active',this)">Aktivní</button><button class="tab" onclick="setCF('done',this)">✓ Splněné</button></div>
         <button class="bs b-exp" style="flex-shrink:0" onclick="exportChecklist()">📥 Export Excel</button>
       </div>
       <div id="chkList"><div class="loading"><div class="spin"></div>Načítám…</div></div>
@@ -1171,7 +1171,7 @@ function renderChk(){
     </div>`;
   }).join('');
 }
-window.toggleChk=async id=>{const item=(window._chk||[]).find(x=>x._id===id);if(!item)return;try{await updateDoc(doc(db,'checklist',id),{done:!item.done});if(!item.done)toast('✓ Sláva Bohu!');}catch(e){toast('Chyba: '+e.message);}};
+window.toggleChk=async id=>{const item=(window._chk||[]).find(x=>x._id===id);if(!item)return;try{await updateDoc(doc(db,'checklist',id),{done:!item.done});if(!item.done)toast('✓ Splněno!');}catch(e){toast('Chyba: '+e.message);}};
 window.toggleChkPray=async id=>{const item=(window._chk||[]).find(x=>x._id===id);if(!item)return;const prayed=(item.prayedBy||[]).includes(CU.username);try{await updateDoc(doc(db,'checklist',id),{prayedBy:prayed?arrayRemove(CU.username):arrayUnion(CU.username)});toast(prayed?'Modlitba odebrána':'🙏 Modlíš se!');}catch(e){toast('Chyba: '+e.message);}};
 window.delChk=async id=>{const item=(window._chk||[]).find(x=>x._id===id);if(!item)return;if(!isAdmin()&&item.createdBy!==CU.username){toast('Nemáš oprávnění.');return;}if(!confirm('Smazat?'))return;try{await deleteDoc(doc(db,'checklist',id));toast('Smazáno');}catch(e){toast('Chyba: '+e.message);}};
 
@@ -1589,7 +1589,7 @@ window.delUser=async un=>{if(!confirm('Smazat uživatele?'))return;try{await del
 const cr=cells=>cells.map(c=>'"'+String(c||'').replace(/"/g,'""')+'"').join(',');
 const dl=(name,rows)=>{const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,\uFEFF'+encodeURIComponent(rows.join('\r\n'));a.download=name;a.click();};
 window.exportRequests=()=>{const r=[cr(['Jméno','Kategorie','Typ','Žádost','Čas','Modlitby','Vyslyšeno'])];(window._req||[]).forEach(x=>r.push(cr([x.name,x.cat,x.reqType||'jednorázová',x.text,fmtTs(x.ts),(x.prayedBy||[]).length,x.answered?'Ano':'Ne'])));dl('oxygen-zadosti.csv',r);toast('📥 Export stažen');};
-window.exportChecklist=()=>{const r=[cr(['Téma','Přidal/a','Čas','Stav'])];(window._chk||[]).forEach(x=>r.push(cr([x.text,x.author,fmtTs(x.ts),x.done?'Vyslyšeno':'Aktivní'])));dl('oxygen-seznam.csv',r);toast('📥 Export stažen');};
+window.exportChecklist=()=>{const r=[cr(['Téma','Přidal/a','Čas','Stav'])];(window._chk||[]).forEach(x=>r.push(cr([x.text,x.author,fmtTs(x.ts),x.done?'Splněno':'Aktivní'])));dl('oxygen-seznam.csv',r);toast('📥 Export stažen');};
 window.exportDiary=()=>{const r=[cr(['Autor','Čas','Zápis','Verš'])];(window._diary||[]).forEach(x=>r.push(cr([x.author,fmtTs(x.ts),x.text,x.scripture||''])));dl('oxygen-denik.csv',r);toast('📥 Export stažen');};
 window.exportWatch=()=>{const r=[cr(['Strážce','Datum','Témata'])];(window._watch||[]).forEach(x=>r.push(cr([x.person,x.date,(x.topics||[]).join('; ')])));dl('oxygen-straz.csv',r);toast('📥 Export stažen');};
 window.exportAnon=()=>{if(!canMgr()){toast('Nemáš oprávnění.');return;}const r=[cr(['Kategorie','Žádost','Čas','Modlitby'])];(window._anon||[]).forEach(x=>r.push(cr([x.cat,x.text,fmtTs(x.ts),(x.prayedBy||[]).length])));dl('oxygen-anonymni.csv',r);toast('📥 Export stažen');};
