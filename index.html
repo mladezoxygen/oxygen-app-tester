@@ -237,6 +237,7 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 .cp-user-av{width:24px;height:24px;border-radius:50%;background:linear-gradient(135deg,var(--purple),var(--purple-d));display:flex;align-items:center;justify-content:center;font-size:.58rem;font-weight:800;color:#fff;flex-shrink:0}
 .cp-user-av.ea{background:var(--surface);font-size:.85rem}
 .cp-user-name{font-size:.82rem;color:var(--text);font-weight:600}
+.cp-user-badge{font-size:.8rem;margin-left:auto;min-width:16px;text-align:center}
 .cp-section-lbl{font-size:.68rem;font-weight:800;color:var(--purple-xl);letter-spacing:.06em;text-transform:uppercase;margin:8px 0 4px}
 .cal-popup h3{font-family:'Cinzel',serif;font-size:.9rem;color:var(--white);margin-bottom:12px}
 .cal-popup-close{float:right;background:none;border:none;color:var(--muted);cursor:pointer;font-size:1.1rem;line-height:1}
@@ -1450,60 +1451,72 @@ window.calClick=(y,mo,d,e)=>{
   if(calPopup)calPopup.remove();if(!CU)return;
   const iso=`${y}-${String(mo+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
   const label=new Date(y,mo,d).toLocaleDateString('cs-CZ',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
-  const existing=window._watch?.find(w=>{if(!w.startDate)return false;const sd=new Date(w.startDate);sd.setHours(0,0,0,0);const ed=w.endDate?new Date(w.endDate):new Date(w.startDate);ed.setHours(23,59,59,999);const dt=new Date(y,mo,d);dt.setHours(12,0,0,0);return dt>=sd&&dt<=ed;});
+  const existing=window._watch?.find(w=>{
+    if(!w.startDate)return false;
+    const sd=new Date(w.startDate);sd.setHours(0,0,0,0);
+    const ed=w.endDate?new Date(w.endDate):new Date(w.startDate);ed.setHours(23,59,59,999);
+    const dt=new Date(y,mo,d);dt.setHours(12,0,0,0);
+    return dt>=sd&&dt<=ed;
+  });
   const popup=document.createElement('div');popup.className='cal-popup';calPopup=popup;
+
   if(existing){
     const gcalUrl=makeGCalUrl(existing);
     const guardian=window._users?.[existing.guardianUsername||existing.createdBy];
     const guardianName=guardian?guardian.name:(existing.person||'?');
-    // Build co-persons display with avatars
+    const guardAv=guardian?.emoji
+      ?'<div class="cp-user-av ea">'+guardian.emoji+'</div>'
+      :'<div class="cp-user-av">'+ini(guardianName)+'</div>';
     const coPersonsHTML=(existing.coPersons||[]).map(un=>{
       const u=window._users?.[un];
-      const av=u?.emoji?`<div class="cp-user-av ea">${u.emoji}</div>`:`<div class="cp-user-av">${ini(u?.name||un)}</div>`;
-      return`<div style="display:flex;align-items:center;gap:6px;padding:3px 0">${av}<span style="font-size:.82rem;color:var(--text)">${esc(u?.name||un)}</span></div>`;
+      const av=u?.emoji?'<div class="cp-user-av ea">'+u.emoji+'</div>':'<div class="cp-user-av">'+ini(u?.name||un)+'</div>';
+      return'<div style="display:flex;align-items:center;gap:6px;padding:3px 0">'+av+'<span style="font-size:.82rem;color:var(--text)">'+esc(u?.name||un)+'</span></div>';
     }).join('');
-    const isPastWatch=(()=>{if(!existing.endDate)return false;const ed=new Date(existing.endDate);ed.setHours(23,59,59,999);return ed<new Date();})();
+    const isPast=(()=>{if(!existing.endDate)return false;const ed=new Date(existing.endDate);ed.setHours(23,59,59,999);return ed<new Date();})();
     const isOwner=(existing.guardianUsername||existing.createdBy)===CU.username||existing.addedBy===CU.username;
     const isCoMember=(existing.coPersons||[]).includes(CU.username);
-    const joinBtn=isPastWatch
-      ? '<span class="bs b-ghost" style="cursor:default;opacity:.5">📦 Stráž již proběhla</span>'
-      : isOwner?''
-      : isCoMember
-        ? '<button class="bs b-del" onclick="leaveWatch(\''+existing._id+'\');document.querySelector(\'.cal-popup\').remove();calPopup=null">✕ Odebrat se ze stráže</button>'
-        : '<button class="bs b-ok" onclick="joinWatch(\''+existing._id+'\');document.querySelector(\'.cal-popup\').remove();calPopup=null">+ Přidat se ke stráži</button>';
+    const joinBtn=isPast
+      ?'<span class="bs b-ghost" style="cursor:default;opacity:.5">📦 Stráž již proběhla</span>'
+      :isOwner?''
+      :isCoMember
+        ?'<button class="bs b-del" onclick="leaveWatch(\''+existing._id+'\');document.querySelector(\'.cal-popup\').remove();calPopup=null">✕ Odebrat se ze stráže</button>'
+        :'<button class="bs b-ok" onclick="joinWatch(\''+existing._id+'\');document.querySelector(\'.cal-popup\').remove();calPopup=null">+ Přidat se ke stráži</button>';
     const gcalBtn=gcalUrl?'<a href="'+gcalUrl+'" target="_blank" rel="noopener" class="bs b-gcal" style="text-decoration:none">📅 Google Kalendář</a>':'';
     const delBtn=isOwner?'<button class="bs b-del" onclick="delWatch(\''+existing._id+'\');document.querySelector(\'.cal-popup\').remove();calPopup=null">🗑 Smazat stráž</button>':'';
-    const guardAv=guardian?.emoji?`<div class="cp-user-av ea">${guardian.emoji}</div>`:`<div class="cp-user-av">${ini(guardianName)}</div>`;
     popup.innerHTML=
       '<button class="cal-popup-close" onclick="document.querySelector(\'.cal-popup\').remove();calPopup=null">✕</button>'
       +'<h3>'+label+'</h3>'
       +'<div class="cp-section-lbl">Strážce</div>'
       +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">'+guardAv+'<span style="font-size:.88rem;font-weight:800;color:var(--white)">'+esc(guardianName)+'</span></div>'
       +(coPersonsHTML?'<div class="cp-section-lbl">Další strážci</div><div style="margin-bottom:8px">'+coPersonsHTML+'</div>':'')
-      +'<div style="color:var(--muted);font-size:.76rem;margin-bottom:10px">'+esc(existing.date)+'</div>'
-      +((existing.topics||[]).length?'<div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:10px">'+(existing.topics||[]).map(t=>'<span class="wtag">'+esc(t)+'</span>').join('')+'</div>':'')
-      +'<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px">'+joinBtn+'</div>'
+      +'<div style="color:var(--muted);font-size:.76rem;margin-bottom:'+(((existing.topics||[]).length)||joinBtn?'6':'10')+'px">'+esc(existing.date)+'</div>'
+      +((existing.topics||[]).length?'<div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px">'+(existing.topics||[]).map(t=>'<span class="wtag">'+esc(t)+'</span>').join('')+'</div>':'')
+      +(joinBtn?'<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px">'+joinBtn+'</div>':'')
       +'<div style="display:flex;gap:6px;flex-wrap:wrap">'+gcalBtn+' '+delBtn+'</div>';
+
   }else{
-    // Sestavit seznam uživatelů pro výběr
+    // Sestavit seznam uživatelů — radio pro strážce, checkboxy pro další
     const users=Object.values(window._users||{}).filter(u=>u.role!=='pending').sort((a,b)=>a.name.localeCompare(b.name));
-    const guardianRows=users.map(u=>{
-      const av=u.emoji?`<div class="cp-user-av ea">${u.emoji}</div>`:`<div class="cp-user-av">${ini(u.name)}</div>`;
-      const checked=u.username===CU.username?'checked':'';
-      return`<label class="cp-user-row ${u.username===CU.username?'selected':''}" onclick="this.querySelector('input').checked=true;document.querySelectorAll('.cp-guardian-row').forEach(r=>r.classList.remove('selected'));this.classList.add('selected')">
-        <input type="radio" name="cpGuardian" value="${u.username}" class="cp-guardian-row" ${checked} style="display:none">
-        ${av}<span class="cp-user-name">${esc(u.name)}</span>
-      </label>`;
+    const userRows=users.map(u=>{
+      const av=u.emoji?'<div class="cp-user-av ea">'+u.emoji+'</div>':'<div class="cp-user-av">'+ini(u.name)+'</div>';
+      const isMe=u.username===CU.username;
+      return'<label class="cp-user-row'+(isMe?' selected':'')+'" id="cpRow_'+u.username+'" onclick="cpToggleUser(\''+u.username+'\')" style="user-select:none">'
+        +'<div style="display:flex;align-items:center;gap:8px;flex:1">'+av+'<span class="cp-user-name">'+esc(u.name)+'</span></div>'
+        +'<span class="cp-user-badge" id="cpBadge_'+u.username+'">'+(isMe?'⭐':'')+'</span>'
+        +'</label>';
     }).join('');
     popup.innerHTML=
       '<button class="cal-popup-close" onclick="document.querySelector(\'.cal-popup\').remove();calPopup=null">✕</button>'
       +'<h3>Přidat stráž</h3>'
-      +'<div style="color:var(--muted);font-size:.79rem;margin-bottom:10px">'+label+'</div>'
-      +'<div class="cp-section-lbl">Strážce</div>'
-      +'<div class="cp-user-list" id="cpGuardianList">'+guardianRows+'</div>'
+      +'<div style="color:var(--muted);font-size:.79rem;margin-bottom:8px">'+label+'</div>'
+      +'<div class="cp-section-lbl">Kdo se účastní <span style="font-weight:400;text-transform:none;color:var(--muted)">(první = strážce)</span></div>'
+      +'<div class="cp-user-list" id="cpUserList">'+userRows+'</div>'
+      +'<div style="font-size:.72rem;color:var(--muted);margin-bottom:8px" id="cpOrderHint">⭐ = hlavní strážce</div>'
       +'<div class="fg" style="margin-bottom:8px"><label>Do data</label><input type="date" id="cpE" value="'+iso+'"></div>'
       +'<div class="fg" style="margin-bottom:10px"><label>Témata (čárkou)</label><input type="text" id="cpT" placeholder="Mládež, vedení, …"></div>'
       +'<button class="bp" style="padding:9px" onclick="saveCalWatch(\''+iso+'\')">Uložit</button>';
+    // Inicializuj výběr — já jsem strážce
+    window._cpSelected=[CU.username];
   }
   const rect=e.currentTarget.getBoundingClientRect();
   popup.style.top=Math.min(rect.bottom+window.scrollY+6,window.innerHeight+window.scrollY-320)+'px';
@@ -1513,9 +1526,38 @@ window.calClick=(y,mo,d,e)=>{
   setTimeout(()=>document.addEventListener('click',close),100);
 };
 
+// Toggle výběru uživatele v popup formuláři
+window.cpToggleUser=un=>{
+  if(!window._cpSelected)window._cpSelected=[CU.username];
+  const idx=window._cpSelected.indexOf(un);
+  if(idx===-1){
+    window._cpSelected.push(un);
+  }else{
+    // Nelze odebrat pokud je to jediný vybraný
+    if(window._cpSelected.length===1){toast('Musí být aspoň jeden strážce');return;}
+    window._cpSelected.splice(idx,1);
+  }
+  // Překresli badge a selected stav
+  document.querySelectorAll('[id^="cpRow_"]').forEach(row=>{
+    const rowUn=row.id.replace('cpRow_','');
+    const pos=window._cpSelected.indexOf(rowUn);
+    const badge=document.getElementById('cpBadge_'+rowUn);
+    if(pos===-1){
+      row.classList.remove('selected');
+      if(badge)badge.textContent='';
+    }else{
+      row.classList.add('selected');
+      if(badge)badge.textContent=pos===0?'⭐':'✓';
+    }
+  });
+};
+
+
 window.saveCalWatch=async iso=>{
-  // Přečti vybraného strážce
-  const guardianUsername=document.querySelector('input[name="cpGuardian"]:checked')?.value||CU.username;
+  const selected=window._cpSelected||[CU.username];
+  if(!selected.length){toast('Vyber aspoň jednoho strážce');return;}
+  const guardianUsername=selected[0];
+  const coPersons=selected.slice(1); // ostatní jsou co-persons
   const guardianUser=window._users?.[guardianUsername];
   const person=guardianUser?.name||CU.name;
   const endVal=document.getElementById('cpE')?.value||iso;
@@ -1535,11 +1577,12 @@ window.saveCalWatch=async iso=>{
   const dateLabel=(()=>{const day=sd.getDate();const mon=sd.getMonth()+1;const dayE=ed.getDate();const monE=ed.getMonth()+1;return endVal!==iso?`${day}. ${mon}. – ${dayE}. ${monE}. ${ed.getFullYear()}`:`${day}. ${mon}. ${sd.getFullYear()}`;})();
   try{
     await addDoc(collection(db,'watch'),{
-      person,guardianUsername,addedBy:CU.username,
-      coPersons:[],date:dateLabel,startDate:iso,endDate:endVal,
+      person,guardianUsername,coPersons,addedBy:CU.username,
+      date:dateLabel,startDate:iso,endDate:endVal,
       topics,createdBy:guardianUsername,ts:serverTimestamp()
     });
     document.querySelector('.cal-popup')?.remove();calPopup=null;
+    window._cpSelected=null;
     toast('⌚ Stráž přidána');
   }catch(e){toast('Chyba: '+e.message);}
 };
