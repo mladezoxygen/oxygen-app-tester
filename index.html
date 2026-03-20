@@ -1452,9 +1452,12 @@ window.calClick=(y,mo,d,e)=>{
     const extraNames=(existing.coPersons||[]).length
       ? '<div style="font-size:.8rem;color:var(--muted);margin-top:2px">+ '+(existing.coPersons||[]).map(n=>esc(n)).join(', ')+'</div>'
       : '';
-    const joinBtn=alreadyIn
-      ? '<span class="bs b-pray on" style="cursor:default">✓ Jsi v této stráži</span>'
-      : '<button class="bs b-ok" onclick="joinWatch(\''+existing._id+'\');document.querySelector(\'.cal-popup\').remove();calPopup=null">+ Přidat se ke stráži</button>';
+    const isPastWatch=(()=>{if(!existing.endDate)return false;const ed=new Date(existing.endDate);ed.setHours(23,59,59,999);return ed<new Date();})();
+    const joinBtn=isPastWatch
+      ? '<span class="bs b-ghost" style="cursor:default;opacity:.6">📦 Stráž již proběhla</span>'
+      : alreadyIn
+        ? '<button class="bs b-del" style="background:rgba(239,71,111,.08)" onclick="leaveWatch(\''+existing._id+'\');document.querySelector(\'.cal-popup\').remove();calPopup=null">✕ Odebrat se ze stráže</button>'
+        : '<button class="bs b-ok" onclick="joinWatch(\''+existing._id+'\');document.querySelector(\'.cal-popup\').remove();calPopup=null">+ Přidat se ke stráži</button>';
     const gcalBtn=gcalUrl
       ? '<a href="'+gcalUrl+'" target="_blank" rel="noopener" class="bs b-gcal" style="text-decoration:none">📅 Google Kalendář</a>'
       : '';
@@ -1487,6 +1490,17 @@ window.calClick=(y,mo,d,e)=>{
 };
 
 window.saveCalWatch=async iso=>{
+  // Block if any existing watch overlaps the selected date
+  const sd0=new Date(iso);sd0.setHours(0,0,0,0);
+  const endVal0=document.getElementById('cpE')?.value||iso;
+  const ed0=new Date(endVal0);ed0.setHours(23,59,59,999);
+  const overlap=(window._watch||[]).find(w=>{
+    if(!w.startDate)return false;
+    const wsd=new Date(w.startDate);wsd.setHours(0,0,0,0);
+    const wed=w.endDate?new Date(w.endDate):new Date(w.startDate);wed.setHours(23,59,59,999);
+    return sd0<=wed&&ed0>=wsd;
+  });
+  if(overlap){toast('⚠️ Toto období je již obsazeno – '+esc(overlap.person));return;}
   const person=document.getElementById('cpP')?.value.trim()||CU.name;
   const coStr=document.getElementById('cpCo')?.value.trim()||'';
   const coPersons=coStr.split(',').map(s=>s.trim()).filter(Boolean);
@@ -1507,10 +1521,12 @@ function makeGCalUrl(w){
   const ed=w.endDate?new Date(w.endDate):sd;
   const fmt=d=>{const y=d.getFullYear();const m=String(d.getMonth()+1).padStart(2,'0');const day=String(d.getDate()).padStart(2,'0');return y+m+day;};
   const edExcl=new Date(ed);edExcl.setDate(edExcl.getDate()+1);
+  const fn=n=>n?n.split(' ')[0]:n;
   const allPeople=[w.person||'',...(w.coPersons||[])].filter(Boolean);
-  const peopleStr=allPeople.join(', ');
+  const allFirstNames=allPeople.map(fn);
+  const peopleStr=allFirstNames.join(', ');
   const title=encodeURIComponent('Modlitebn\u00ed str\u00e1\u017e \u2013 '+peopleStr);
-  const peoplePart=allPeople.length>1?'Str\u00e1\u017e: '+peopleStr+'\n':'';
+  const peoplePart=allFirstNames.length>1?'Str\u00e1\u017e: '+peopleStr+'\n':'';
   const topicsPart=(w.topics||[]).length?'T\u00e9mata: '+(w.topics||[]).join(', '):'';
   const details=encodeURIComponent((peoplePart+topicsPart)||'Modlitebn\u00ed str\u00e1\u017e Oxygen');
   return`https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${fmt(sd)}/${fmt(edExcl)}&details=${details}`;
@@ -1554,10 +1570,22 @@ function renderWatch(){
 }
 window.joinWatch=async id=>{
   const w=(window._watch||[]).find(x=>x._id===id);if(!w)return;
+  // Block joining past watches
+  if(w.endDate){const ed=new Date(w.endDate);ed.setHours(23,59,59,999);if(ed<new Date()){toast('Tato stráž již proběhla.');return;}}
   const already=[w.person,...(w.coPersons||[])].some(n=>n===CU.name);
   if(already){toast('Už jsi v této stráži');return;}
-  const updated=[...(w.coPersons||[]),CU.name];
+  // Store only first name for auto-joined users
+  const firstName=CU.name.split(' ')[0];
+  const updated=[...(w.coPersons||[]),firstName];
   try{await updateDoc(doc(db,'watch',id),{coPersons:updated});toast('✓ Přidán/a ke stráži!');}catch(e){toast('Chyba: '+e.message);}
+};
+window.leaveWatch=async id=>{
+  const w=(window._watch||[]).find(x=>x._id===id);if(!w)return;
+  const firstName=CU.name.split(' ')[0];
+  // Match by full name or first name
+  const updated=(w.coPersons||[]).filter(n=>n!==CU.name&&n!==firstName);
+  if(updated.length===(w.coPersons||[]).length){toast('Nejsi v této stráži');return;}
+  try{await updateDoc(doc(db,'watch',id),{coPersons:updated});toast('Odebráno ze stráže');}catch(e){toast('Chyba: '+e.message);}
 };
 window.delWatch=async id=>{const w=(window._watch||[]).find(x=>x._id===id);if(!w)return;if(!isAdmin()&&w.createdBy!==CU.username&&w.addedBy!==CU.username){toast('Nemáš oprávnění.');return;}confirmDialog('Smazat modlitební stráž?',async()=>{try{await deleteDoc(doc(db,'watch',id));toast('Smazáno');}catch(e){toast('Chyba: '+e.message);}})};
 
