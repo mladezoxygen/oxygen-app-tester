@@ -585,7 +585,7 @@ input:checked+.slider::before{transform:translateX(18px)}
         </div>
       </div>
       <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:7px;margin-bottom:14px">
-        <div class="tabs" style="margin-bottom:0"><button class="tab on" onclick="setCF('all',this)">Vše</button><button class="tab" onclick="setCF('active',this)">Aktivní</button><button class="tab" onclick="setCF('done',this)">✓ Vyslyšené</button></div>
+        <div class="tabs" style="margin-bottom:0"><button class="tab on" onclick="setCF('all',this)">Vše</button><button class="tab" onclick="setCF('active',this)">Aktivní</button><button class="tab" onclick="setCF('done',this)">✓ Splněné</button></div>
         <button class="bs b-exp" style="flex-shrink:0" onclick="exportChecklist()">📥 Export Excel</button>
       </div>
       <div id="chkList"><div class="loading"><div class="spin"></div>Načítám…</div></div>
@@ -997,34 +997,30 @@ function getRenderedIds(containerId,selector,attr){
 function startListeners(){
   unsubs.push(onSnapshot(query(collection(db,'requests'),orderBy('ts','desc')),snap=>{
     const prev=window._req||[];window._req=snap.docs.map(d=>({...d.data(),_id:d.id}));
-    const prevIds=getRenderedIds('reqList','[data-rid]','data-rid');
-    if(!_fl.req){const nn=window._req.filter(r=>!prevIds.has(r._id)&&!prev.find(p=>p._id===r._id));nn.forEach(r=>{if(notifSettings.newRequest)addNotif('🙏 Nová žádost o modlitbu',r.name+': '+r.text.slice(0,55),'requests');});}
-    const newIds=new Set(window._req.filter(r=>!prevIds.has(r._id)).map(r=>r._id));
-    _fl.req=false;renderReqs(newIds);updateBadges();
+    // Only animate confirmed (non-pending) new docs
+    const confirmedNew=new Set(snap.docChanges().filter(c=>c.type==='added'&&!c.doc.metadata.hasPendingWrites).map(c=>c.doc.id));
+    if(!_fl.req){confirmedNew.forEach(id=>{const r=window._req.find(x=>x._id===id);if(r&&notifSettings.newRequest)addNotif('🙏 Nová žádost o modlitbu',r.name+': '+r.text.slice(0,55),'requests');});}
+    _fl.req=false;renderReqs(confirmedNew);updateBadges();
   }));
   unsubs.push(onSnapshot(query(collection(db,'checklist'),orderBy('ts','desc')),snap=>{
-    const prevIds=getRenderedIds('chkList','[data-cid]','data-cid');
     window._chk=snap.docs.map(d=>({...d.data(),_id:d.id}));
-    const newIds=new Set(window._chk.filter(x=>!prevIds.has(x._id)).map(x=>x._id));
-    renderChk(newIds);
+    const confirmedNew=new Set(snap.docChanges().filter(c=>c.type==='added'&&!c.doc.metadata.hasPendingWrites).map(c=>c.doc.id));
+    renderChk(confirmedNew);
   }));
   unsubs.push(onSnapshot(query(collection(db,'watch'),orderBy('ts','asc')),snap=>{
-    const prevIds=getRenderedIds('watchList','[data-wid]','data-wid');
     window._watch=snap.docs.map(d=>({...d.data(),_id:d.id}));
-    const newIds=new Set(window._watch.filter(x=>!prevIds.has(x._id)).map(x=>x._id));
-    renderWatch(newIds);renderCalendar();renderDash();renderBanners();
+    const confirmedNew=new Set(snap.docChanges().filter(c=>c.type==='added'&&!c.doc.metadata.hasPendingWrites).map(c=>c.doc.id));
+    renderWatch(confirmedNew);renderCalendar();renderDash();renderBanners();
   }));
   unsubs.push(onSnapshot(query(collection(db,'anon'),orderBy('ts','desc')),snap=>{
-    const prevIds=getRenderedIds('anonInbox','[data-aid]','data-aid');
     window._anon=snap.docs.map(d=>({...d.data(),_id:d.id}));
-    const newIds=new Set(window._anon.filter(x=>!prevIds.has(x._id)).map(x=>x._id));
-    renderAnon(newIds);updateBadges();const el=document.getElementById('aAnon');if(el&&el.style.display!=='none')renderAdminAnon();
+    const confirmedNew=new Set(snap.docChanges().filter(c=>c.type==='added'&&!c.doc.metadata.hasPendingWrites).map(c=>c.doc.id));
+    renderAnon(confirmedNew);updateBadges();const el=document.getElementById('aAnon');if(el&&el.style.display!=='none')renderAdminAnon();
   }));
   unsubs.push(onSnapshot(query(collection(db,'diary'),orderBy('ts','desc')),snap=>{
-    const prevIds=getRenderedIds('diaryList','[data-did]','data-did');
     window._diary=snap.docs.map(d=>({...d.data(),_id:d.id}));
-    const newIds=new Set(window._diary.filter(x=>!prevIds.has(x._id)).map(x=>x._id));
-    renderDiary(newIds);updateBadges();
+    const confirmedNew=new Set(snap.docChanges().filter(c=>c.type==='added'&&!c.doc.metadata.hasPendingWrites).map(c=>c.doc.id));
+    renderDiary(confirmedNew);updateBadges();
   }));
   unsubs.push(onSnapshot(collection(db,'users'),snap=>{window._users={};snap.docs.forEach(d=>{window._users[d.id]=d.data();});updateBadges();}));
   unsubs.push(onSnapshot(query(collection(db,'chat'),orderBy('ts','asc'),limit(300)),snap=>{
@@ -1200,7 +1196,7 @@ function renderChk(newIds=new Set()){
     </div>`;
   }).join('');
 }
-window.toggleChk=async id=>{const item=(window._chk||[]).find(x=>x._id===id);if(!item)return;try{await updateDoc(doc(db,'checklist',id),{done:!item.done});if(!item.done)toast('✓ Sláva Bohu!');}catch(e){toast('Chyba: '+e.message);}};
+window.toggleChk=async id=>{const item=(window._chk||[]).find(x=>x._id===id);if(!item)return;try{await updateDoc(doc(db,'checklist',id),{done:!item.done});if(!item.done)toast('✓ Splněno!');}catch(e){toast('Chyba: '+e.message);}};
 window.toggleChkPray=async id=>{const item=(window._chk||[]).find(x=>x._id===id);if(!item)return;const prayed=(item.prayedBy||[]).includes(CU.username);try{await updateDoc(doc(db,'checklist',id),{prayedBy:prayed?arrayRemove(CU.username):arrayUnion(CU.username)});toast(prayed?'Modlitba odebrána':'🙏 Modlíš se!');}catch(e){toast('Chyba: '+e.message);}};
 window.delChk=async id=>{const item=(window._chk||[]).find(x=>x._id===id);if(!item)return;if(!isAdmin()&&item.createdBy!==CU.username){toast('Nemáš oprávnění.');return;}if(!confirm('Smazat?'))return;try{await deleteDoc(doc(db,'checklist',id));toast('Smazáno');}catch(e){toast('Chyba: '+e.message);}};
 
@@ -1629,7 +1625,7 @@ window.exportRequests=()=>{
 };
 window.exportChecklist=()=>{
   const r=[cr(['Téma','Přidal/a','Datum','Stav','Počet modliteb'])];
-  (window._chk||[]).forEach(x=>r.push(cr([x.text,x.author,fmtDateTime(x.ts),x.done?'Vyslyšeno':'Aktivní',(x.prayedBy||[]).length])));
+  (window._chk||[]).forEach(x=>r.push(cr([x.text,x.author,fmtDateTime(x.ts),x.done?'Splněno':'Aktivní',(x.prayedBy||[]).length])));
   dl('oxygen-seznam.csv',r);toast('📥 Export stažen');
 };
 window.exportDiary=()=>{
