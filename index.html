@@ -105,7 +105,12 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 .online-dot-pulse{width:7px;height:7px;border-radius:50%;background:var(--green);display:inline-block;box-shadow:0 0 6px var(--green);animation:pulse-green 2s infinite}
 @keyframes pulse-green{0%,100%{opacity:1}50%{opacity:.4}}
 .online-list{display:flex;flex-direction:column;gap:4px}
-.online-person{display:flex;align-items:center;gap:7px;font-size:.78rem;color:var(--text)}
+.online-person{display:flex;align-items:center;gap:7px;font-size:.78rem;color:var(--text);cursor:pointer;border-radius:8px;padding:2px 4px;margin:-2px -4px;transition:background .15s}
+.online-person:hover{background:rgba(123,47,190,.15)}
+@keyframes online-join{from{opacity:0;transform:translateX(-12px)}to{opacity:1;transform:translateX(0)}}
+@keyframes online-leave{from{opacity:1;transform:translateX(0)}to{opacity:0;transform:translateX(12px)}}
+.online-person.joining{animation:online-join .3s ease forwards}
+.online-person.leaving{animation:online-leave .25s ease forwards}
 .online-av-sm{width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,var(--purple),var(--purple-d));display:flex;align-items:center;justify-content:center;font-size:.58rem;font-weight:800;color:#fff;flex-shrink:0}
 .online-av-sm.ea{background:var(--surface);font-size:.78rem}
 .blogout{width:100%;padding:8px;background:rgba(239,71,111,.1);border:1px solid rgba(239,71,111,.2);border-radius:9px;color:var(--red);font-family:'Nunito',sans-serif;font-size:.82rem;font-weight:700;cursor:pointer;transition:background .2s}
@@ -1253,7 +1258,7 @@ window.sendCmt=async(cn,docId,isAnon,createdBy)=>{
   try{await addDoc(collection(db,cn+'_comments'),{parentId:docId,text,author:CU.username,authorName:CU.name,ts:serverTimestamp()});inp.value='';await refreshCmts(cn,docId,isAnon==='true',createdBy);if(notifSettings.newComment)addNotif('💬 Nový komentář',CU.name+': '+text.slice(0,55),cn==='diary'?'diary':'requests');}
   catch(e){toast('Chyba: '+e.message);}
 };
-window.delCmt=async(cn,id,docId,isAnon,createdBy)=>{if(!confirm('Smazat komentář?'))return;try{await deleteDoc(doc(db,cn+'_comments',id));await refreshCmts(cn,docId,isAnon==='true',createdBy);toast('Komentář smazán');}catch(e){toast('Chyba: '+e.message);}};
+window.delCmt=async(cn,id,docId,isAnon,createdBy)=>{confirmDialog('Smazat komentář?',async()=>{try{await deleteDoc(doc(db,cn+'_comments',id));await refreshCmts(cn,docId,isAnon==='true',createdBy);toast('Komentář smazán');}catch(e){toast('Chyba: '+e.message);}};
 
 // ── REQUESTS ──────────────────────────────────────────────────────────────
 window.addRequest=async()=>{
@@ -1344,7 +1349,7 @@ window.saveAnswerStory=async id=>{
     toast('✓ Sláva Bohu! '+( story?'Příběh uložen 🙏':''));
   }catch(e){toast('Chyba: '+e.message);}
 };
-window.delReq=async id=>{const r=(window._req||[]).find(x=>x._id===id);if(!r)return;if(!isAdmin()&&r.createdBy!==CU.username){toast('Nemáš oprávnění.');return;}if(!confirm('Opravdu smazat?'))return;try{await deleteDoc(doc(db,'requests',id));toast('Smazáno');}catch(e){toast('Chyba: '+e.message);}};
+window.delReq=async id=>{const r=(window._req||[]).find(x=>x._id===id);if(!r)return;if(!isAdmin()&&r.createdBy!==CU.username){toast('Nemáš oprávnění.');return;}confirmDialog('Opravdu smazat tuto žádost?',async()=>{try{await deleteDoc(doc(db,'requests',id));toast('Smazáno');}catch(e){toast('Chyba: '+e.message);}})};
 
 // ── CHECKLIST ─────────────────────────────────────────────────────────────
 window.addChkItem=async()=>{const text=document.getElementById('chkText').value.trim();if(!text){toast('✏️ Napiš téma');return;}try{await addDoc(collection(db,'checklist'),{text,author:CU.name,done:false,prayedBy:[],createdBy:CU.username,ts:serverTimestamp()});document.getElementById('chkText').value='';toast('✅ Přidáno');}catch(e){toast('Chyba: '+e.message);}};
@@ -1373,7 +1378,7 @@ function renderChk(){
 }
 window.toggleChk=async id=>{const item=(window._chk||[]).find(x=>x._id===id);if(!item)return;try{await updateDoc(doc(db,'checklist',id),{done:!item.done});if(!item.done)toast('✓ Splněno!');}catch(e){toast('Chyba: '+e.message);}};
 window.toggleChkPray=async id=>{const item=(window._chk||[]).find(x=>x._id===id);if(!item)return;const prayed=(item.prayedBy||[]).includes(CU.username);try{await updateDoc(doc(db,'checklist',id),{prayedBy:prayed?arrayRemove(CU.username):arrayUnion(CU.username)});if(!prayed)logPrayerDay();toast(prayed?'Modlitba odebrána':'🙏 Modlíš se!');}catch(e){toast('Chyba: '+e.message);}};
-window.delChk=async id=>{const item=(window._chk||[]).find(x=>x._id===id);if(!item)return;if(!isAdmin()&&item.createdBy!==CU.username){toast('Nemáš oprávnění.');return;}if(!confirm('Smazat?'))return;try{await deleteDoc(doc(db,'checklist',id));toast('Smazáno');}catch(e){toast('Chyba: '+e.message);}};
+window.delChk=async id=>{const item=(window._chk||[]).find(x=>x._id===id);if(!item)return;if(!isAdmin()&&item.createdBy!==CU.username){toast('Nemáš oprávnění.');return;}confirmDialog('Smazat položku ze seznamu?',async()=>{try{await deleteDoc(doc(db,'checklist',id));toast('Smazáno');}catch(e){toast('Chyba: '+e.message);}})};
 
 // ── WATCH CALENDAR ─────────────────────────────────────────────────────────
 function renderCalendar(){
@@ -1463,7 +1468,7 @@ function renderWatch(){
     </div>`;
   }).join('');
 }
-window.delWatch=async id=>{const w=(window._watch||[]).find(x=>x._id===id);if(!w)return;if(!isAdmin()&&w.createdBy!==CU.username){toast('Nemáš oprávnění.');return;}if(!confirm('Smazat?'))return;try{await deleteDoc(doc(db,'watch',id));toast('Smazáno');}catch(e){toast('Chyba: '+e.message);}};
+window.delWatch=async id=>{const w=(window._watch||[]).find(x=>x._id===id);if(!w)return;if(!isAdmin()&&w.createdBy!==CU.username){toast('Nemáš oprávnění.');return;}confirmDialog('Smazat modlitební stráž?',async()=>{try{await deleteDoc(doc(db,'watch',id));toast('Smazáno');}catch(e){toast('Chyba: '+e.message);}})};
 
 // ── ANON ──────────────────────────────────────────────────────────────────
 let _anonFilter='active';
@@ -1507,7 +1512,7 @@ function renderAnon(){
 window.archiveAnon=async id=>{try{await updateDoc(doc(db,'anon',id),{archived:true});toast('📦 Žádost uzavřena');}catch(e){toast('Chyba: '+e.message);}};
 window.unarchiveAnon=async id=>{try{await updateDoc(doc(db,'anon',id),{archived:false});toast('↩ Žádost obnovena');}catch(e){toast('Chyba: '+e.message);}};
 window.tgPrayAnon=async id=>{const r=(window._anon||[]).find(x=>x._id===id);if(!r)return;const p=(r.prayedBy||[]).includes(CU.username);try{await updateDoc(doc(db,'anon',id),{prayedBy:p?arrayRemove(CU.username):arrayUnion(CU.username)});if(!p)logPrayerDay();toast(p?'Modlitba odebrána':'🙏 Modlíš se!');}catch(e){toast('Chyba: '+e.message);}};
-window.delAnon=async id=>{if(!isAdmin()){toast('Jen admin může mazat.');return;}if(!confirm('Smazat?'))return;try{await deleteDoc(doc(db,'anon',id));toast('Smazáno');}catch(e){toast('Chyba: '+e.message);}};
+window.delAnon=async id=>{if(!isAdmin()){toast('Jen admin může mazat.');return;}confirmDialog('Smazat anonymní žádost?',async()=>{try{await deleteDoc(doc(db,'anon',id));toast('Smazáno');}catch(e){toast('Chyba: '+e.message);}})};
 
 // ── DIARY ──────────────────────────────────────────────────────────────────
 window.addDiary=async()=>{
@@ -1536,7 +1541,7 @@ function renderDiary(){
     const readHTML=readers.length?`<div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:3px;align-items:center"><span style="font-size:.68rem;color:var(--muted)">👁 Četl/a: </span>${readerNames.map(n=>`<span style="font-size:.7rem;background:rgba(255,255,255,.06);border:1px solid var(--border);border-radius:20px;padding:1px 7px;color:var(--muted)">${esc(n)}</span>`).join('')}</div>`:'';
     return`<div class="de" id="de-${e._id}">
       <div style="display:flex;justify-content:space-between;align-items:flex-start">
-        <div><div class="da">${u?.emoji?`<span style="font-size:1rem;margin-right:3px">${u.emoji}</span>`:''} ✦ ${esc(e.author)}</div><div class="dd">${fmtTs(e.ts)}</div></div>
+        <div><div class="da" style="cursor:pointer" onclick="showUserProfile('${e.createdBy}')">${u?.emoji?`<span style="font-size:1rem;margin-right:3px">${u.emoji}</span>`:''} ✦ ${esc(e.author)}</div><div class="dd">${fmtTs(e.ts)}</div></div>
         ${canDel?`<button class="bs b-del" onclick="delDiary('${e._id}')">🗑</button>`:''}
       </div>
       <div class="dt">${esc(e.text)}</div>
@@ -1563,7 +1568,7 @@ async function markDiaryRead(ids){
     }
   }
 }
-window.delDiary=async id=>{const e=(window._diary||[]).find(x=>x._id===id);if(!e)return;if(!isAdmin()&&e.createdBy!==CU.username){toast('Nemáš oprávnění.');return;}if(!confirm('Smazat?'))return;try{await deleteDoc(doc(db,'diary',id));toast('Smazáno');}catch(e){toast('Chyba: '+e.message);}};
+window.delDiary=async id=>{const e=(window._diary||[]).find(x=>x._id===id);if(!e)return;if(!isAdmin()&&e.createdBy!==CU.username){toast('Nemáš oprávnění.');return;}confirmDialog('Smazat zápis z deníku?',async()=>{try{await deleteDoc(doc(db,'diary',id));toast('Smazáno');}catch(e){toast('Chyba: '+e.message);}})};
 
 // ── CHAT ──────────────────────────────────────────────────────────────────
 function initEmojiBar(){
@@ -1591,7 +1596,7 @@ function renderChat(){
     return`<div class="chat-msg ${mine?'mine':''}" id="cm-${m._id}">
       ${avEl}
       <div class="chat-bubble-wrap">
-        <div class="chat-name">${esc(m.authorName||m.author)}</div>
+        <div class="chat-name" style="cursor:pointer" onclick="showUserProfile('${m.author}')">${esc(m.authorName||m.author)}</div>
         <div class="chat-bubble">
           ${m.replyTo?`<div style="background:rgba(123,47,190,.15);border-left:3px solid var(--purple-l);border-radius:0 7px 7px 0;padding:5px 9px;margin-bottom:6px;font-size:.77rem;color:var(--muted)"><strong style="color:var(--purple-xl)">${esc(m.replyTo.author)}</strong><br>${esc(m.replyTo.text)}</div>`:''}
           <div class="chat-text">${esc(m.text)}</div>
@@ -1612,7 +1617,7 @@ function renderChat(){
 }
 function scrollChatBottom(){const el=document.getElementById('chatMsgs');if(el)el.scrollTo({top:el.scrollHeight,behavior:'smooth'});}
 
-window.delChat=async id=>{const m=(window._chat||[]).find(x=>x._id===id);if(!m)return;if(!isAdmin()&&m.author!==CU.username){toast('Nemáš oprávnění.');return;}if(!confirm('Smazat zprávu?'))return;try{await deleteDoc(doc(db,'chat',id));toast('Zpráva smazána');}catch(e){toast('Chyba: '+e.message);}};
+window.delChat=async id=>{const m=(window._chat||[]).find(x=>x._id===id);if(!m)return;if(!isAdmin()&&m.author!==CU.username){toast('Nemáš oprávnění.');return;}confirmDialog('Smazat tuto zprávu?',async()=>{try{await deleteDoc(doc(db,'chat',id));toast('Zpráva smazána');}catch(e){toast('Chyba: '+e.message);}})};
 
 window.setReply=id=>{const m=(window._chat||[]).find(x=>x._id===id);if(!m)return;_replyTo=m;const bar=document.getElementById('replyBar');bar.style.display='block';bar.innerHTML=`<div class="reply-preview"><strong>↩ Odpověď: ${esc(m.authorName)}</strong>${esc(m.text.slice(0,60))}<button class="reply-cancel" onclick="cancelReply()">✕</button></div>`;document.getElementById('chatInput').focus();};
 window.cancelReply=()=>{_replyTo=null;const bar=document.getElementById('replyBar');bar.style.display='none';bar.innerHTML='';};
@@ -1738,7 +1743,7 @@ window.showProfile=()=>{
     </div>
     <div class="lbl" style="margin-bottom:8px">🎨 Barva tématu</div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px">
-      ${THEMES.map((t,i)=>t.mode==='light'?`<div class="theme-swatch ${i===_activeTheme?'active':''}" onclick="pickTheme(${i})" title="Světlý mód" style="background:linear-gradient(135deg,#f0eef8,#d4cfe8);border:2px solid #b0a8d0"></div>`:t.mode==='dark'?`<div class="theme-swatch ${i===_activeTheme?'active':''}" onclick="pickTheme(${i})" title="Tmavý mód (výchozí)" style="background:linear-gradient(135deg,#1A0833,#4A1882)"></div>`:`<div class="theme-swatch ${i===_activeTheme?'active':''}" onclick="pickTheme(${i})" title="${t.name}" style="background:hsl(${t.h},${t.s},46%)"></div>`).join('')}
+      ${THEMES.map((t,i)=>`<div class="theme-swatch ${i===_activeTheme?'active':''}" onclick="pickTheme(${i})" title="${t.name}" style="background:hsl(${t.h},${t.s},46%)"></div>`).join('')}
     </div>
     <div class="lbl">Emoji profilovka</div>
     <div class="ep">${EMOJIS.map(e=>`<div class="ep-e ${e===_selEmoji?'sel':''}" onclick="selEm('${e}',this)">${e}</div>`).join('')}<div class="ep-e ${!_selEmoji?'sel':''}" onclick="selEm('',this)" title="Bez emoji (iniciály)">🔤</div></div>
@@ -1787,9 +1792,9 @@ function renderAdminUsers(){const el=document.getElementById('aUsers');const use
 function renderAdminPending(){const el=document.getElementById('aPending');const pend=Object.values(window._users||{}).filter(u=>u.role==='pending');const pc=document.getElementById('pCnt');if(pc)pc.textContent=pend.length?` (${pend.length})`:'';if(!pend.length){el.innerHTML=`<div class="empty"><div class="ei">✓</div><p>Žádné čekající žádosti</p></div>`;return;}el.innerHTML=pend.map(u=>`<div class="ur"><div class="uav" style="flex-shrink:0">${ini(u.name)}</div><div class="ui"><div class="un2">${esc(u.name)}</div><div class="us">@${esc(u.username)}</div></div><div class="ua"><button class="bs b-ok" onclick="approveUser('${u.username}','modlitebnik')">✓ Modlitebník</button><button class="bs b-ghost" onclick="approveUser('${u.username}','mladeznik')">✓ Mládežník</button><button class="bs b-del" onclick="rejectUser('${u.username}')">✗</button></div></div>`).join('');}
 function renderAdminAnon(){const el=document.getElementById('aAnon');const list=window._anon||[];if(!list.length){el.innerHTML=`<div class="empty"><div class="ei">📭</div><p>Žádné anonymní žádosti</p></div>`;return;}el.innerHTML=list.map(r=>`<div class="pc" style="margin-bottom:9px"><div class="rh"><div class="rm2"><span class="tag t-anon">Anonymní</span><span class="tag t-${r.cat}">${r.cat}</span><span class="tag" style="background:rgba(255,255,255,.07);color:var(--muted);font-size:.65rem">${(r.reqType||"jednorázová")==="opakovaná"?"🔄 Opakovaná":(r.reqType||"jednorázová")==="dlouhodobá"?"📅 Dlouhodobá":"🕯 Jednorázová"}</span></div><div class="rd">${fmtTs(r.ts)}</div></div><p class="rt">${esc(r.text)}</p><div class="rf"><span class="pc-cnt">${(r.prayedBy||[]).length}×</span><button class="bs b-del" style="margin-left:auto" onclick="delAnon('${r._id}')">🗑</button></div></div>`).join('');}
 window.approveUser=async(un,role)=>{try{await updateDoc(doc(db,'users',un),{role});toast(`✓ Schválen/a jako ${role}`);}catch(e){toast('Chyba: '+e.message);}};
-window.rejectUser=async un=>{if(!confirm('Odmítnout a smazat?'))return;try{await deleteDoc(doc(db,'users',un));toast('Odmítnuto');}catch(e){toast('Chyba: '+e.message);}};
+window.rejectUser=async un=>{confirmDialog('Odmítnout a smazat žádost?',async()=>{try{await deleteDoc(doc(db,'users',un));toast('Odmítnuto');}catch(e){toast('Chyba: '+e.message);}})};
 window.chRole=async(un,role)=>{try{await updateDoc(doc(db,'users',un),{role});toast('Role změněna');}catch(e){toast('Chyba: '+e.message);}};
-window.delUser=async un=>{if(!confirm('Smazat uživatele?'))return;try{await deleteDoc(doc(db,'users',un));toast('Smazáno');}catch(e){toast('Chyba: '+e.message);}};
+window.delUser=async un=>{confirmDialog('Smazat uživatele '+un+'?',async()=>{try{await deleteDoc(doc(db,'users',un));toast('Smazáno');}catch(e){toast('Chyba: '+e.message);}})};
 
 // ── EXPORT ────────────────────────────────────────────────────────────────
 const cr=cells=>cells.map(c=>'"'+String(c||'').replace(/"/g,'""')+'"').join(',');
@@ -1809,7 +1814,7 @@ window.importAll=async(input)=>{
   const file=input.files[0];if(!file)return;
   const text=await file.text();let data;
   try{data=JSON.parse(text);}catch{toast('❌ Neplatný soubor zálohy');return;}
-  if(!confirm('Importovat zálohu? Tato akce PŘIDÁ data k existujícím (nesmaže nic).'))return;
+  // import confirmed below
   let count=0;
   const colMap={requests:'requests',checklist:'checklist',watch:'watch',diary:'diary',anon:'anon'};
   for(const [key,col] of Object.entries(colMap)){
@@ -1864,6 +1869,13 @@ function startOnline(){
 
     if(online.length===0){section.style.display='none';return;}
     section.style.display='block';
+    // Animate leaving users before re-render
+    const existingNames=new Set(online.map(u=>u.username));
+    [...list.querySelectorAll('[data-uname]')].forEach(el=>{
+      if(!existingNames.has(el.getAttribute('data-uname'))&&!el.classList.contains('leaving')){
+        el.classList.add('leaving');
+      }
+    });
 
     const allU=window._users||{};
     list.innerHTML=online.map(u=>{
@@ -1875,7 +1887,7 @@ function startOnline(){
       const av=u.emoji
         ?'<div class="online-av-sm ea">'+u.emoji+'</div>'
         :'<div class="online-av-sm">'+ini(u.name)+'</div>';
-      return'<div class="online-person">'+av
+      return'<div class="online-person joining" data-uname="'+u.username+'" onclick="showUserProfile(''+u.username+'')" title="Zobrazit profil">'+av
         +'<div style="min-width:0"><div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap">'
         +'<span style="font-size:.78rem">'+esc(u.name)+(isMe?' <span style="color:var(--muted);font-size:.68rem">(ty)</span>':'')+'</span>'
         +(roleLabel?'<span class="urole '+roleCls+'" style="font-size:.62rem;padding:1px 5px">'+roleLabel+'</span>':'')
@@ -1895,8 +1907,6 @@ const THEMES=[
   {name:'Červená',h:350,s:'70%'},
   {name:'Oranžová',h:28,s:'80%'},
   {name:'Růžová',h:320,s:'65%'},
-  {name:'Tmavé',h:270,s:'70%',mode:'dark'},
-  {name:'Světlé',h:270,s:'60%',mode:'light'},
 ];
 let _activeTheme=0;
 function applyTheme(idx){
@@ -1904,50 +1914,26 @@ function applyTheme(idx){
   const t=THEMES[idx];
   const r=document.documentElement.style;
   const h=t.h,s=t.s;
-  document.documentElement.setAttribute('data-mode',t.mode||'dark');
-  if(t.mode==='light'){
-    r.setProperty('--purple',`hsl(${h},${s},40%)`);
-    r.setProperty('--purple-l',`hsl(${h},${s},50%)`);
-    r.setProperty('--purple-xl',`hsl(${h},${s},35%)`);
-    r.setProperty('--purple-d',`hsl(${h},${s},28%)`);
-    r.setProperty('--bg','#f0eef8');
-    r.setProperty('--bg2','#e6e2f5');
-    r.setProperty('--surface','#ddd8f0');
-    r.setProperty('--card','#d4cfe8');
-    r.setProperty('--border',`hsla(${h},${s},40%,0.18)`);
-    r.setProperty('--border-l',`hsla(${h},${s},40%,0.35)`);
-    r.setProperty('--text','#1a1030');
-    r.setProperty('--muted','#6b5f8a');
-    r.setProperty('--card-bg',`hsla(${h},40%,88%,.85)`);
-    r.setProperty('--card-bg-lo',`hsla(${h},40%,88%,.6)`);
-    r.setProperty('--card-alpha-hi',`hsla(${h},40%,88%,.95)`);
-    r.setProperty('--bg-dark',`hsla(${h},30%,92%,.97)`);
-    r.setProperty('--bg-dark2',`hsla(${h},30%,92%,.98)`);
-    r.setProperty('--orb2',`hsl(${h},50%,78%)`);
-    r.setProperty('--orb3',`hsl(${h},45%,82%)`);
-    document.querySelector('meta[name="theme-color"]')?.setAttribute('content','#f0eef8');
-  } else {
-    r.setProperty('--text','#F0E8FF');
-    r.setProperty('--muted','#9B8FBB');
-    r.setProperty('--purple',`hsl(${h},${s},46%)`);
-    r.setProperty('--purple-l',`hsl(${h},${s},57%)`);
-    r.setProperty('--purple-xl',`hsl(${h},${s},72%)`);
-    r.setProperty('--purple-d',`hsl(${h},${s},30%)`);
-    r.setProperty('--bg',`hsl(${h},55%,8%)`);
-    r.setProperty('--bg2',`hsl(${h},52%,11%)`);
-    r.setProperty('--surface',`hsl(${h},50%,14%)`);
-    r.setProperty('--card',`hsl(${h},48%,17%)`);
-    r.setProperty('--border',`hsla(${h},${s},60%,0.2)`);
-    r.setProperty('--border-l',`hsla(${h},${s},60%,0.4)`);
-    r.setProperty('--card-bg',`hsla(${h},55%,22%,.72)`);
-    r.setProperty('--card-bg-lo',`hsla(${h},55%,22%,.5)`);
-    r.setProperty('--card-alpha-hi',`hsla(${h},55%,22%,.92)`);
-    r.setProperty('--bg-dark',`hsla(${h},58%,7%,.97)`);
-    r.setProperty('--bg-dark2',`hsla(${h},58%,7%,.98)`);
-    r.setProperty('--orb2',`hsl(${h},65%,28%)`);
-    r.setProperty('--orb3',`hsl(${h},55%,36%)`);
-    document.querySelector('meta[name="theme-color"]')?.setAttribute('content',`hsl(${h},55%,8%)`);
-  }
+  r.setProperty('--text','#F0E8FF');
+  r.setProperty('--muted','#9B8FBB');
+  r.setProperty('--purple',`hsl(${h},${s},46%)`);
+  r.setProperty('--purple-l',`hsl(${h},${s},57%)`);
+  r.setProperty('--purple-xl',`hsl(${h},${s},72%)`);
+  r.setProperty('--purple-d',`hsl(${h},${s},30%)`);
+  r.setProperty('--bg',`hsl(${h},55%,8%)`);
+  r.setProperty('--bg2',`hsl(${h},52%,11%)`);
+  r.setProperty('--surface',`hsl(${h},50%,14%)`);
+  r.setProperty('--card',`hsl(${h},48%,17%)`);
+  r.setProperty('--border',`hsla(${h},${s},60%,0.2)`);
+  r.setProperty('--border-l',`hsla(${h},${s},60%,0.4)`);
+  r.setProperty('--card-bg',`hsla(${h},55%,22%,.72)`);
+  r.setProperty('--card-bg-lo',`hsla(${h},55%,22%,.5)`);
+  r.setProperty('--card-alpha-hi',`hsla(${h},55%,22%,.92)`);
+  r.setProperty('--bg-dark',`hsla(${h},58%,7%,.97)`);
+  r.setProperty('--bg-dark2',`hsla(${h},58%,7%,.98)`);
+  r.setProperty('--orb2',`hsl(${h},65%,28%)`);
+  r.setProperty('--orb3',`hsl(${h},55%,36%)`);
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content',`hsl(${h},55%,8%)`);
   localStorage.setItem('oxygen_theme',idx);
 }
 function loadTheme(){const s=localStorage.getItem('oxygen_theme');if(s!==null)applyTheme(parseInt(s));}
@@ -1956,7 +1942,7 @@ window.pickTheme=idx=>{
   applyTheme(idx);
   document.querySelectorAll('.theme-swatch').forEach((el,i)=>el.classList.toggle('active',i===idx));
   const t=THEMES[idx];
-  toast(t.mode==='light'?'☀️ Světlý mód':t.mode==='dark'&&idx===7?'🌑 Tmavý mód':'🎨 Téma: '+t.name);
+  toast('🎨 Téma: '+t.name);
 };
 
 // ── STREAK ────────────────────────────────────────────────────────────────
@@ -2230,17 +2216,37 @@ window.showUserProfile=(username)=>{
     </div>
     ${streak>0?`<div style="background:linear-gradient(135deg,rgba(255,209,102,.1),rgba(255,209,102,.04));border:1px solid rgba(255,209,102,.25);border-radius:12px;padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;gap:10px"><span style="font-size:1.6rem">🔥</span><div><span style="font-family:'Cinzel',serif;font-size:1.4rem;color:var(--gold)">${streak}</span> <span style="font-size:.75rem;color:var(--gold);opacity:.8">${streak===1?'den':'dnů'} streak</span><div style="font-size:.7rem;color:var(--muted);margin-top:2px">Nejlepší: ${bestFor} ${bestFor===1?'den':'dnů'}</div></div></div>`:''}
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:6px">
-      <div class="scard"><div class="snum" style="font-size:1.4rem">${pC+pChk}</div><div class="slbl">Modliteb</div></div>
-      <div class="scard"><div class="snum" style="font-size:1.4rem">${rC}</div><div class="slbl">Žádostí</div></div>
-      <div class="scard"><div class="snum" style="font-size:1.4rem">${ansC}</div><div class="slbl">Vyslyšených</div></div>
-      <div class="scard"><div class="snum" style="font-size:1.4rem">${wC}</div><div class="slbl">Stráží</div></div>
-      <div class="scard"><div class="snum" style="font-size:1.4rem">${dC}</div><div class="slbl">Zápisů</div></div>
-      <div class="scard"><div class="snum" style="font-size:1.4rem">${streak}</div><div class="slbl">Streak</div></div>
+      <div class="scard"><div class="snum" style="font-size:1.3rem">${pC+pChk}</div><div class="slbl">Modliteb</div></div>
+      <div class="scard"><div class="snum" style="font-size:1.3rem">${rC}</div><div class="slbl">Žádostí</div></div>
+      <div class="scard"><div class="snum" style="font-size:1.3rem">${ansC}</div><div class="slbl">Vyslyšených</div></div>
+      <div class="scard"><div class="snum" style="font-size:1.3rem">${wC}</div><div class="slbl">Stráží</div></div>
+      <div class="scard"><div class="snum" style="font-size:1.3rem">${dC}</div><div class="slbl">Zápisů</div></div>
+      <div class="scard"><div class="snum" style="font-size:1.3rem">${streak}</div><div class="slbl">Streak 🔥</div></div>
     </div>
   </div>`;
   m.addEventListener('click',e=>{if(e.target===m)m.remove();});
   document.body.appendChild(m);
 };
+
+
+// ── IN-APP CONFIRM DIALOG ──────────────────────────────────────────────────
+function confirmDialog(msg, onYes, onNo){
+  document.getElementById('confirmModal')?.remove();
+  const m=document.createElement('div');
+  m.id='confirmModal';
+  m.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:9000;display:flex;align-items:center;justify-content:center;padding:20px;animation:fu .18s ease';
+  m.innerHTML=`<div style="background:var(--surface);border:1px solid var(--border-l);border-radius:16px;padding:24px 26px;max-width:340px;width:100%;box-shadow:0 24px 60px rgba(0,0,0,.5);animation:fu .2s ease">
+    <div style="font-size:1rem;color:var(--text);margin-bottom:18px;line-height:1.5">${esc(msg)}</div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="bs b-ghost" id="confirmNo">Zrušit</button>
+      <button class="bs b-del" id="confirmYes">Smazat</button>
+    </div>
+  </div>`;
+  document.body.appendChild(m);
+  m.querySelector('#confirmYes').onclick=()=>{m.remove();onYes();};
+  m.querySelector('#confirmNo').onclick=()=>{m.remove();if(onNo)onNo();};
+  m.addEventListener('click',e=>{if(e.target===m){m.remove();if(onNo)onNo();}});
+}
 
 restoreSession();
 </script>
