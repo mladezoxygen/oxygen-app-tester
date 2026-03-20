@@ -433,13 +433,13 @@ input:checked+.slider::before{transform:translateX(18px)}
 
 /* STREAK */
 /* STREAK */
-@keyframes streak-in{from{opacity:0;transform:translateY(16px) scale(.95)}to{opacity:1;transform:translateY(0) scale(1)}}
-@keyframes streak-bounce{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-5px) scale(1.12)}}
-@keyframes streak-glow{0%,100%{box-shadow:0 4px 24px rgba(255,209,102,.15)}50%{box-shadow:0 6px 32px rgba(255,209,102,.35)}}
-.streak-card{background:linear-gradient(135deg,rgba(255,209,102,.13),rgba(255,209,102,.05));border:1px solid rgba(255,209,102,.35);border-radius:16px;padding:18px 22px;margin-bottom:14px;display:flex;align-items:center;gap:16px;animation:streak-in .45s cubic-bezier(.22,.68,0,1.2) both,streak-glow 3s ease 1s infinite}
-.streak-fire{font-size:2.4rem;line-height:1;animation:streak-bounce 2s ease infinite}
+@keyframes streak-in{from{opacity:0;transform:translateY(14px) scale(.96)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes streak-bounce{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-3px) scale(1.06)}}
+@keyframes streak-glow{0%,100%{box-shadow:0 2px 12px rgba(255,209,102,.08)}50%{box-shadow:0 4px 20px rgba(255,209,102,.18)}}
+.streak-card{background:linear-gradient(135deg,rgba(255,209,102,.1),rgba(255,209,102,.04));border:1px solid rgba(255,209,102,.25);border-radius:16px;padding:18px 22px;margin-bottom:14px;display:flex;align-items:center;gap:16px;animation:streak-in .45s cubic-bezier(.22,.68,0,1.2) both,streak-glow 4s ease 1.5s infinite}
+.streak-fire{font-size:2.2rem;line-height:1;animation:streak-bounce 2.5s ease infinite}
 .streak-num{font-family:'Cinzel',serif;font-size:2.4rem;color:var(--gold);font-weight:700;line-height:1}
-.streak-lbl{font-size:.76rem;color:var(--gold);opacity:.85;text-transform:uppercase;letter-spacing:.07em;margin-top:3px}
+.streak-lbl{font-size:.76rem;color:var(--gold);opacity:.75;text-transform:uppercase;letter-spacing:.07em;margin-top:3px}
 .streak-best{font-size:.72rem;color:var(--muted);margin-top:5px}
 
 /* COUNTDOWN */
@@ -1076,7 +1076,7 @@ async function restoreSession(){
   const un=localStorage.getItem('oxygen_un');if(!un)return;
   try{const snap=await getDoc(doc(db,'users',un));if(snap.exists()){CU=snap.data();if(CU.notifSettings)notifSettings=CU.notifSettings;enterApp();}else localStorage.removeItem('oxygen_un');}catch(e){}
 }
-window.doLogout=()=>{CU=null;localStorage.removeItem('oxygen_un');unsubs.forEach(u=>u());unsubs=[];location.reload();};
+window.doLogout=()=>{CU=null;_prayerLoaded=false;_prayerDays=new Set();localStorage.removeItem('oxygen_un');unsubs.forEach(u=>u());unsubs=[];location.reload();};
 
 function enterApp(){
   document.getElementById('authWrap').style.display='none';
@@ -1148,6 +1148,7 @@ function startListeners(){
   // prayerLog – real-time streak (načte data okamžitě při startu)
   unsubs.push(onSnapshot(query(collection(db,'prayerLog')),snap=>{
     _prayerDays=new Set(snap.docs.filter(d=>d.data().username===CU.username).map(d=>d.data().date));
+    _prayerLoaded=true;
     renderStreakDash();renderCountdownDash();
     if(document.getElementById('sec-my-stats')?.classList.contains('on'))renderMyStats();
   }));
@@ -1889,6 +1890,7 @@ async function logPrayerDay(){
 }
 
 let _prayerDays=new Set(); // dates "YYYY-MM-DD" for current user
+let _prayerLoaded=false;
 async function loadPrayerLog(){
   if(!CU)return;
   try{
@@ -1930,6 +1932,7 @@ function calcStreak(){
 }
 
 function renderStreakDash(){
+  if(!_prayerLoaded)return; // wait for data before showing anything
   const {streak,best}=calcStreak();
   const el=document.getElementById('dashStreakRow');
   if(!el)return;
