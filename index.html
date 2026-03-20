@@ -988,42 +988,42 @@ function navigate(id){
 
 // ── LISTENERS ─────────────────────────────────────────────────────────────
 let _fl={req:true,chat:true};
-// Track already-rendered IDs to avoid re-animating on Firestore pending→confirmed double-fire
-const _rendered={req:new Set(),chk:new Set(),watch:new Set(),anon:new Set(),diary:new Set()};
+// DOM-based diffing: get IDs already rendered in a container
+function getRenderedIds(containerId,selector,attr){
+  const el=document.getElementById(containerId);
+  if(!el)return new Set();
+  return new Set([...el.querySelectorAll(selector)].map(e=>e.getAttribute(attr)).filter(Boolean));
+}
 function startListeners(){
   unsubs.push(onSnapshot(query(collection(db,'requests'),orderBy('ts','desc')),snap=>{
     const prev=window._req||[];window._req=snap.docs.map(d=>({...d.data(),_id:d.id}));
-    const newIds=new Set(window._req.filter(r=>!_rendered.req.has(r._id)).map(r=>r._id));
-    window._req.forEach(r=>_rendered.req.add(r._id));
-    if(!_fl.req){const nn=window._req.filter(r=>newIds.has(r._id)&&!prev.find(p=>p._id===r._id));nn.forEach(r=>{if(notifSettings.newRequest)addNotif('🙏 Nová žádost o modlitbu',r.name+': '+r.text.slice(0,55),'requests');});}
+    const prevIds=getRenderedIds('reqList','[data-rid]','data-rid');
+    if(!_fl.req){const nn=window._req.filter(r=>!prevIds.has(r._id)&&!prev.find(p=>p._id===r._id));nn.forEach(r=>{if(notifSettings.newRequest)addNotif('🙏 Nová žádost o modlitbu',r.name+': '+r.text.slice(0,55),'requests');});}
+    const newIds=new Set(window._req.filter(r=>!prevIds.has(r._id)).map(r=>r._id));
     _fl.req=false;renderReqs(newIds);updateBadges();
   }));
   unsubs.push(onSnapshot(query(collection(db,'checklist'),orderBy('ts','desc')),snap=>{
-    const prevIds=new Set((window._chk||[]).map(x=>x._id));
+    const prevIds=getRenderedIds('chkList','[data-cid]','data-cid');
     window._chk=snap.docs.map(d=>({...d.data(),_id:d.id}));
     const newIds=new Set(window._chk.filter(x=>!prevIds.has(x._id)).map(x=>x._id));
-    window._chk.forEach(x=>_rendered.chk.add(x._id));
     renderChk(newIds);
   }));
   unsubs.push(onSnapshot(query(collection(db,'watch'),orderBy('ts','asc')),snap=>{
-    const prevIds=new Set((window._watch||[]).map(x=>x._id));
+    const prevIds=getRenderedIds('watchList','[data-wid]','data-wid');
     window._watch=snap.docs.map(d=>({...d.data(),_id:d.id}));
     const newIds=new Set(window._watch.filter(x=>!prevIds.has(x._id)).map(x=>x._id));
-    window._watch.forEach(x=>_rendered.watch.add(x._id));
     renderWatch(newIds);renderCalendar();renderDash();renderBanners();
   }));
   unsubs.push(onSnapshot(query(collection(db,'anon'),orderBy('ts','desc')),snap=>{
-    const prevIds=new Set((window._anon||[]).map(x=>x._id));
+    const prevIds=getRenderedIds('anonInbox','[data-aid]','data-aid');
     window._anon=snap.docs.map(d=>({...d.data(),_id:d.id}));
     const newIds=new Set(window._anon.filter(x=>!prevIds.has(x._id)).map(x=>x._id));
-    window._anon.forEach(x=>_rendered.anon.add(x._id));
     renderAnon(newIds);updateBadges();const el=document.getElementById('aAnon');if(el&&el.style.display!=='none')renderAdminAnon();
   }));
   unsubs.push(onSnapshot(query(collection(db,'diary'),orderBy('ts','desc')),snap=>{
-    const prevIds=new Set((window._diary||[]).map(x=>x._id));
+    const prevIds=getRenderedIds('diaryList','[data-did]','data-did');
     window._diary=snap.docs.map(d=>({...d.data(),_id:d.id}));
     const newIds=new Set(window._diary.filter(x=>!prevIds.has(x._id)).map(x=>x._id));
-    window._diary.forEach(x=>_rendered.diary.add(x._id));
     renderDiary(newIds);updateBadges();
   }));
   unsubs.push(onSnapshot(collection(db,'users'),snap=>{window._users={};snap.docs.forEach(d=>{window._users[d.id]=d.data();});updateBadges();}));
@@ -1282,7 +1282,7 @@ function renderWatch(newIds=new Set()){
     const isFuture=w.startDate&&new Date(w.startDate)>today;const isPast=w.endDate&&new Date(w.endDate)<today;const isCurr=!isFuture&&!isPast;
     const canDel=isAdmin()||w.createdBy===CU.username;
     const gcalUrl=makeGCalUrl(w);
-    return`<div class="wc ${newIds.has(w._id)?"is-new":""} ${isCurr?'curr':isFuture?'future':''}">
+    return`<div class="wc ${newIds.has(w._id)?'is-new':''} ${isCurr?'curr':isFuture?'future':''}" data-wid="${w._id}">
       <div style="display:flex;justify-content:space-between;align-items:flex-start">
         <div><div style="font-family:'Cinzel',serif;font-size:.77rem;color:${isCurr?'var(--gold)':isFuture?'var(--purple-xl)':'var(--muted)'}">✦ ${isCurr?'Aktuální stráž':isFuture?'Plánovaná stráž':'Minulá stráž'}</div><div style="font-weight:800;font-size:.92rem;color:var(--white);margin-top:2px">${esc(w.person)}</div><div style="color:var(--muted);font-size:.76rem;margin-top:1px">${esc(w.date)}</div></div>
         <div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap">
@@ -1364,7 +1364,7 @@ function renderDiary(newIds=new Set()){
     const readers=e.readBy||[];
     const readerNames=readers.map(un=>{const u2=allU[un];return u2?.emoji?u2.emoji+' '+(u2.name.split(' ')[0]):u2?.name?.split(' ')[0]||un;});
     const readHTML=readers.length?`<div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:3px;align-items:center"><span style="font-size:.68rem;color:var(--muted)">👁 Četl/a: </span>${readerNames.map(n=>`<span style="font-size:.7rem;background:rgba(255,255,255,.06);border:1px solid var(--border);border-radius:20px;padding:1px 7px;color:var(--muted)">${esc(n)}</span>`).join('')}</div>`:'';
-    return`<div class="de ${newIds.has(e._id)?'is-new':''}" id="de-${e._id}">
+    return`<div class="de ${newIds.has(e._id)?'is-new':''}" id="de-${e._id}" data-did="${e._id}">
       <div style="display:flex;justify-content:space-between;align-items:flex-start">
         <div><div class="da">${u?.emoji?`<span style="font-size:1rem;margin-right:3px">${u.emoji}</span>`:''} ✦ ${esc(e.author)}</div><div class="dd">${fmtTs(e.ts)}</div></div>
         ${canDel?`<button class="bs b-del" onclick="delDiary('${e._id}')">🗑</button>`:''}
