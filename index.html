@@ -1433,8 +1433,10 @@ window.calClick=(y,mo,d,e)=>{
   const popup=document.createElement('div');popup.className='cal-popup';calPopup=popup;
   if(existing){
     const gcalUrl=makeGCalUrl(existing);
-    popup.innerHTML=`<button class="cal-popup-close" onclick="document.querySelector('.cal-popup').remove();calPopup=null">✕</button><h3>${label}</h3><div style="color:var(--text);font-size:.88rem;margin-bottom:10px">Stráž: <strong>${esc(existing.person)}</strong><br>${esc(existing.date)}</div><div style="display:flex;gap:6px;flex-wrap:wrap">${gcalUrl?`<a href="${gcalUrl}" target="_blank" rel="noopener" class="bs b-gcal" style="text-decoration:none">📅 Google Kalendář</a>`:''} ${(existing.createdBy===CU.username||isAdmin())?`<button class="bs b-del" onclick="delWatch('${existing._id}');document.querySelector('.cal-popup').remove();calPopup=null">🗑 Smazat stráž</button>`:''}</div>`;  }else{
-    popup.innerHTML=`<button class="cal-popup-close" onclick="document.querySelector('.cal-popup').remove();calPopup=null">✕</button><h3>Přidat stráž</h3><div style="color:var(--muted);font-size:.79rem;margin-bottom:10px">${label}</div><div class="fg"><label>Kdo</label><input type="text" id="cpP" value="${CU.name}"></div><div class="fg"><label>Do data</label><input type="date" id="cpE" value="${iso}"></div><div class="fg"><label>Témata (čárkou)</label><input type="text" id="cpT" placeholder="Mládež, vedení, …"></div><button class="bp" style="padding:9px" onclick="saveCalWatch('${iso}')">Uložit</button>`;
+    const extraNames=(existing.coPersons||[]).length?`<div style="font-size:.8rem;color:var(--muted);margin-top:2px">+ ${(existing.coPersons||[]).map(n=>esc(n)).join(', ')}</div>`:'';
+    popup.innerHTML=`<button class="cal-popup-close" onclick="document.querySelector('.cal-popup').remove();calPopup=null">✕</button><h3>${label}</h3><div style="color:var(--text);font-size:.88rem;margin-bottom:10px">Stráž: <strong>${esc(existing.person)}</strong>${extraNames}<br><span style="color:var(--muted);font-size:.8rem">${esc(existing.date)}</span></div><div style="font-size:.79rem;color:var(--red);margin-bottom:10px">⚠️ Toto datum je již obsazeno</div><div style="display:flex;gap:6px;flex-wrap:wrap">${gcalUrl?`<a href="${gcalUrl}" target="_blank" rel="noopener" class="bs b-gcal" style="text-decoration:none">📅 Google Kalendář</a>`:''} ${(existing.createdBy===CU.username||isAdmin())?`<button class="bs b-del" onclick="delWatch('${existing._id}');document.querySelector('.cal-popup').remove();calPopup=null">🗑 Smazat stráž</button>`:''}</div>`;
+  }else{
+    popup.innerHTML=`<button class="cal-popup-close" onclick="document.querySelector('.cal-popup').remove();calPopup=null">✕</button><h3>Přidat stráž</h3><div style="color:var(--muted);font-size:.79rem;margin-bottom:10px">${label}</div><div class="fg"><label>Kdo (hlavní strážce)</label><input type="text" id="cpP" value="${CU.name}"></div><div class="fg"><label>Další jména <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted)">(nepovinné, čárkou)</span></label><input type="text" id="cpCo" placeholder="Jana, Pavel, …"></div><div class="fg"><label>Do data</label><input type="date" id="cpE" value="${iso}"></div><div class="fg"><label>Témata (čárkou)</label><input type="text" id="cpT" placeholder="Mládež, vedení, …"></div><button class="bp" style="padding:9px" onclick="saveCalWatch('${iso}')">Uložit</button>`;
   }
   const rect=e.currentTarget.getBoundingClientRect();
   popup.style.top=Math.min(rect.bottom+window.scrollY+6,window.innerHeight+window.scrollY-320)+'px';
@@ -1445,12 +1447,14 @@ window.calClick=(y,mo,d,e)=>{
 };
 window.saveCalWatch=async iso=>{
   const person=document.getElementById('cpP')?.value.trim()||CU.name;
+  const coStr=document.getElementById('cpCo')?.value.trim()||'';
+  const coPersons=coStr.split(',').map(s=>s.trim()).filter(Boolean);
   const endVal=document.getElementById('cpE')?.value;
   const topStr=document.getElementById('cpT')?.value.trim()||'';
   const topics=topStr.split(',').map(s=>s.trim()).filter(Boolean);
   const sd=new Date(iso);const ed=endVal?new Date(endVal):sd;
   const dateLabel=(()=>{const day=sd.getDate();const mon=sd.getMonth()+1;const dayE=ed.getDate();const monE=ed.getMonth()+1;return endVal&&endVal!==iso?`${day}. ${mon}. – ${dayE}. ${monE}. ${ed.getFullYear()}`:`${day}. ${mon}. ${sd.getFullYear()}`;})();
-  try{await addDoc(collection(db,'watch'),{person,date:dateLabel,startDate:iso,endDate:endVal||iso,topics,createdBy:CU.username,ts:serverTimestamp()});document.querySelector('.cal-popup')?.remove();calPopup=null;toast('⌚ Stráž přidána');}catch(e){toast('Chyba: '+e.message);}
+  try{await addDoc(collection(db,'watch'),{person,coPersons,date:dateLabel,startDate:iso,endDate:endVal||iso,topics,createdBy:CU.username,ts:serverTimestamp()});document.querySelector('.cal-popup')?.remove();calPopup=null;toast('⌚ Stráž přidána');}catch(e){toast('Chyba: '+e.message);}
 };
 function makeGCalUrl(w){
   if(!w.startDate)return null;
@@ -1473,7 +1477,7 @@ function renderWatch(){
     const gcalUrl=makeGCalUrl(w);
     return`<div class="wc ${isCurr?'curr':isFuture?'future':''}">
       <div style="display:flex;justify-content:space-between;align-items:flex-start">
-        <div><div style="font-family:'Cinzel',serif;font-size:.77rem;color:${isCurr?'var(--gold)':isFuture?'var(--purple-xl)':'var(--muted)'}">✦ ${isCurr?'Aktuální stráž':isFuture?'Plánovaná stráž':'Minulá stráž'}</div><div style="font-weight:800;font-size:.92rem;color:var(--white);margin-top:2px">${esc(w.person)}</div><div style="color:var(--muted);font-size:.76rem;margin-top:1px">${esc(w.date)}</div></div>
+        <div><div style="font-family:'Cinzel',serif;font-size:.77rem;color:${isCurr?'var(--gold)':isFuture?'var(--purple-xl)':'var(--muted)'}">✦ ${isCurr?'Aktuální stráž':isFuture?'Plánovaná stráž':'Minulá stráž'}</div><div style="font-weight:800;font-size:.92rem;color:var(--white);margin-top:2px">${esc(w.person)}</div>${(w.coPersons||[]).length?`<div style="font-size:.77rem;color:var(--muted);margin-top:1px">+ ${(w.coPersons||[]).map(n=>esc(n)).join(', ')}</div>`:''}<div style="color:var(--muted);font-size:.76rem;margin-top:1px">${esc(w.date)}</div></div>
         <div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap">
           ${gcalUrl?`<a href="${gcalUrl}" target="_blank" rel="noopener" class="bs b-gcal" style="text-decoration:none">📅 Google Kalendář</a>`:''}
           ${canDel?`<button class="bs b-del" onclick="delWatch('${w._id}')">🗑</button>`:''}
@@ -2080,20 +2084,9 @@ function renderStreakDash(){
 }
 
 function renderCountdownDash(){
+  // Countdown removed – upcoming watches are shown in the watch card on dashboard
   const el=document.getElementById('dashCountdown');
-  if(!el)return;
-  const watch=window._watch||[];
-  const today=new Date();today.setHours(0,0,0,0);
-  // Find next watch for current user
-  const myNext=watch.filter(w=>w.createdBy===CU?.username&&w.startDate).map(w=>({...w,sd:new Date(w.startDate)})).filter(w=>{w.sd.setHours(0,0,0,0);return w.sd>=today;}).sort((a,b)=>a.sd-b.sd)[0];
-  if(!myNext){el.innerHTML='';return;}
-  const diff=Math.round((myNext.sd-today)/(1000*60*60*24));
-  const label=diff===0?'Dnes máš stráž! 🙏':diff===1?'Zítra máš stráž':`Za ${diff} dní máš stráž`;
-  el.innerHTML=`<div class="countdown-card">
-    <div class="countdown-num">${diff===0?'⌚':diff}</div>
-    <div><div class="countdown-title">${label}</div>
-    <div class="countdown-lbl">${esc(myNext.date)} · ${(myNext.topics||[]).join(', ')||'Žádná témata'}</div></div>
-  </div>`;
+  if(el)el.innerHTML='';
 }
 
 // ── PERSONAL STATS ────────────────────────────────────────────────────────
