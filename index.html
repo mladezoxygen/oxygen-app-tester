@@ -1283,7 +1283,7 @@ function renderReqs(){
     const pHTML=pNames.length?`<div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:3px;align-items:center"><span style="font-size:.7rem;color:var(--muted)">Modlil/a se: </span>${pNames.map(n=>`<span style="font-size:.71rem;background:rgba(123,47,190,.15);border:1px solid var(--border);border-radius:20px;padding:1px 7px;color:var(--purple-xl)">${esc(n)}</span>`).join('')}</div>`:'';
     const publicBadge=isPublic?`<span class="tag" style="background:rgba(255,209,102,.15);color:var(--gold);border:1px solid rgba(255,209,102,.3)">🌐 Veřejná</span>`:'';
     return`<div class="pc ${r.answered?'answered':''}">
-      <div class="rh"><div class="rm2">${u?.emoji?`<span style="font-size:.95rem">${u.emoji}</span>`:''}<span class="rn">${esc(r.name)}</span>${publicBadge}<span class="tag t-${r.cat}">${r.cat}</span><span class="tag" style="background:rgba(255,255,255,.07);color:var(--muted);font-size:.65rem">${(r.reqType||"jednorázová")==="opakovaná"?"🔄 Opakovaná":(r.reqType||"jednorázová")==="dlouhodobá"?"📅 Dlouhodobá":"🕯 Jednorázová"}</span></div><div class="rd">${fmtTs(r.ts)}</div></div>
+      <div class="rh"><div class="rm2">${u?.emoji?`<span style="font-size:.95rem">${u.emoji}</span>`:''}<span class="rn" style="cursor:pointer" onclick="showUserProfile('${r.createdBy}')">${esc(r.name)}</span>${publicBadge}<span class="tag t-${r.cat}">${r.cat}</span><span class="tag" style="background:rgba(255,255,255,.07);color:var(--muted);font-size:.65rem">${(r.reqType||"jednorázová")==="opakovaná"?"🔄 Opakovaná":(r.reqType||"jednorázová")==="dlouhodobá"?"📅 Dlouhodobá":"🕯 Jednorázová"}</span></div><div class="rd">${fmtTs(r.ts)}</div></div>
       <p class="rt">${esc(r.text)}</p>
       ${pHTML}
       <div class="rf">
@@ -1291,6 +1291,7 @@ function renderReqs(){
         <span class="pc-cnt">${(r.prayedBy||[]).length}×</span>
         ${canAns?`<button class="bs b-ans${r.answered?' on':''}" onclick="toggleAns('${r._id}')">${r.answered?'↩ Odznačit':'✓ Vyslyšeno'}</button>`:''}
         ${!canAns&&r.answered?`<span class="ab">✓ Vyslyšeno</span>`:''}
+        ${r.answered&&r.answerStory?`<div style="margin-top:8px;padding:8px 12px;background:rgba(6,214,160,.08);border-left:3px solid var(--green);border-radius:0 8px 8px 0;font-size:.82rem;color:var(--text)"><span style="font-size:.7rem;font-weight:800;color:var(--green);display:block;margin-bottom:3px">🙏 Jak Bůh odpověděl:</span>${esc(r.answerStory)}</div>`:''}
         ${canDel?`<button class="bs b-del" style="margin-left:auto" onclick="delReq('${r._id}')">🗑</button>`:''}
       </div>
       ${cmtsHTML('requests',r._id,'false',r.createdBy)}
@@ -1298,7 +1299,51 @@ function renderReqs(){
   }).join('');
 }
 window.togglePray=async id=>{const r=(window._req||[]).find(x=>x._id===id);if(!r)return;const p=(r.prayedBy||[]).includes(CU.username);try{await updateDoc(doc(db,'requests',id),{prayedBy:p?arrayRemove(CU.username):arrayUnion(CU.username)});if(!p)logPrayerDay();toast(p?'Modlitba odebrána':'✝ Modlíš se spolu s týmem!');}catch(e){toast('Chyba: '+e.message);}};
-window.toggleAns=async id=>{const r=(window._req||[]).find(x=>x._id===id);if(!r)return;if(r.createdBy!==CU.username&&!isAdmin()){toast('Jen autor může měnit stav.');return;}try{await updateDoc(doc(db,'requests',id),{answered:!r.answered});toast(r.answered?'Vráceno jako aktivní':'✓ Sláva Bohu!');}catch(e){toast('Chyba: '+e.message);}};
+window.toggleAns=async id=>{
+  const r=(window._req||[]).find(x=>x._id===id);if(!r)return;
+  if(r.createdBy!==CU.username&&!canMgr()){toast('Nemáš oprávnění.');return;}
+  if(r.answered){
+    // Unmark answered
+    try{await updateDoc(doc(db,'requests',id),{answered:false,answerStory:''});toast('Vráceno jako aktivní');}catch(e){toast('Chyba: '+e.message);}
+    return;
+  }
+  // Show story modal before marking answered
+  showAnswerStoryModal(id,r);
+};
+
+window.showAnswerStoryModal=(id,r)=>{
+  document.getElementById('answerStoryModal')?.remove();
+  const m=document.createElement('div');m.className='modal-bg';m.id='answerStoryModal';
+  m.innerHTML=`<div class="modal" onclick="event.stopPropagation()" style="max-width:440px">
+    <button class="modal-close" onclick="document.getElementById('answerStoryModal').remove()">✕</button>
+    <h2 style="margin-bottom:6px">✓ Sláva Bohu!</h2>
+    <p style="color:var(--muted);font-size:.84rem;margin-bottom:16px">Jak Bůh odpověděl na tuto žádost? <span style="opacity:.7">(nepovinné)</span></p>
+    <div class="fg" style="margin-bottom:14px">
+      <label>Žádost</label>
+      <div style="padding:9px 13px;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:9px;font-size:.85rem;color:var(--muted)">${esc(r.text).slice(0,120)}${r.text.length>120?'…':''}</div>
+    </div>
+    <div class="fg" style="margin-bottom:16px">
+      <label>Příběh vyslyšení <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted)">(nepovinné)</span></label>
+      <textarea id="answerStoryText" placeholder="Napiš jak Bůh odpověděl, co se stalo, za co jsi vděčný/á…" style="min-height:100px" maxlength="1000"></textarea>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="bp" onclick="saveAnswerStory('${id}')" style="flex:1">✓ Označit jako vyslyšeno</button>
+      <button class="bs b-ghost" onclick="document.getElementById('answerStoryModal').remove()">Zrušit</button>
+    </div>
+  </div>`;
+  m.addEventListener('click',e=>{if(e.target===m)m.remove();});
+  document.body.appendChild(m);
+  setTimeout(()=>document.getElementById('answerStoryText')?.focus(),100);
+};
+
+window.saveAnswerStory=async id=>{
+  const story=document.getElementById('answerStoryText')?.value.trim()||'';
+  try{
+    await updateDoc(doc(db,'requests',id),{answered:true,answerStory:story,answeredBy:CU.username,answeredAt:serverTimestamp()});
+    document.getElementById('answerStoryModal')?.remove();
+    toast('✓ Sláva Bohu! '+( story?'Příběh uložen 🙏':''));
+  }catch(e){toast('Chyba: '+e.message);}
+};
 window.delReq=async id=>{const r=(window._req||[]).find(x=>x._id===id);if(!r)return;if(!isAdmin()&&r.createdBy!==CU.username){toast('Nemáš oprávnění.');return;}if(!confirm('Opravdu smazat?'))return;try{await deleteDoc(doc(db,'requests',id));toast('Smazáno');}catch(e){toast('Chyba: '+e.message);}};
 
 // ── CHECKLIST ─────────────────────────────────────────────────────────────
@@ -1669,7 +1714,7 @@ function renderStats(){
     const userStreak=calcStreakFor(u.username);
     const streakBadge=userStreak>0?`<span style="font-size:.72rem;color:var(--gold);margin-left:4px">🔥${userStreak}</span>`:`<span style="font-size:.72rem;color:var(--muted);margin-left:4px">🔥0</span>`;
     const avEl=u.emoji?`<div class="usc-av ea">${u.emoji}</div>`:`<div class="usc-av">${ini(u.name)}</div>`;
-    return`<div class="usc">${avEl}<div class="usc-info"><div class="usc-name">${esc(u.name)} <span class="tag ${u.role==='admin'?'t-rodina':u.role==='modlitebnik'?'t-duchovní':'t-jiné'}">${u.role}</span>${streakBadge}</div><div class="usc-stats"><div><div class="usc-sn">${pC}</div><div class="usc-sl">Modliteb</div></div><div><div class="usc-sn">${rC}</div><div class="usc-sl">Žádostí</div></div><div><div class="usc-sn">${wC}</div><div class="usc-sl">Stráží</div></div><div><div class="usc-sn">${dC}</div><div class="usc-sl">Zápisů</div></div></div></div></div>`;
+    return`<div class="usc">${avEl}<div class="usc-info"><div class="usc-name" style="cursor:pointer" onclick="showUserProfile('${u.username}')">${esc(u.name)} <span class="tag ${u.role==='admin'?'t-rodina':u.role==='modlitebnik'?'t-duchovní':'t-jiné'}">${u.role}</span>${streakBadge}</div><div class="usc-stats"><div><div class="usc-sn">${pC}</div><div class="usc-sl">Modliteb</div></div><div><div class="usc-sn">${rC}</div><div class="usc-sl">Žádostí</div></div><div><div class="usc-sn">${wC}</div><div class="usc-sl">Stráží</div></div><div><div class="usc-sn">${dC}</div><div class="usc-sl">Zápisů</div></div></div></div></div>`;
   }).join('');
 }
 function mkC(id,labels,data,bc,bgc,cfg,type){
@@ -1693,7 +1738,7 @@ window.showProfile=()=>{
     </div>
     <div class="lbl" style="margin-bottom:8px">🎨 Barva tématu</div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px">
-      ${THEMES.map((t,i)=>`<div class="theme-swatch ${i===_activeTheme?'active':''}" onclick="pickTheme(${i})" title="${t.name}" style="background:hsl(${t.h},${t.s},46%)"></div>`).join('')}
+      ${THEMES.map((t,i)=>t.mode==='light'?`<div class="theme-swatch ${i===_activeTheme?'active':''}" onclick="pickTheme(${i})" title="Světlý mód" style="background:linear-gradient(135deg,#f0eef8,#d4cfe8);border:2px solid #b0a8d0"></div>`:t.mode==='dark'?`<div class="theme-swatch ${i===_activeTheme?'active':''}" onclick="pickTheme(${i})" title="Tmavý mód (výchozí)" style="background:linear-gradient(135deg,#1A0833,#4A1882)"></div>`:`<div class="theme-swatch ${i===_activeTheme?'active':''}" onclick="pickTheme(${i})" title="${t.name}" style="background:hsl(${t.h},${t.s},46%)"></div>`).join('')}
     </div>
     <div class="lbl">Emoji profilovka</div>
     <div class="ep">${EMOJIS.map(e=>`<div class="ep-e ${e===_selEmoji?'sel':''}" onclick="selEm('${e}',this)">${e}</div>`).join('')}<div class="ep-e ${!_selEmoji?'sel':''}" onclick="selEm('',this)" title="Bez emoji (iniciály)">🔤</div></div>
@@ -1749,7 +1794,7 @@ window.delUser=async un=>{if(!confirm('Smazat uživatele?'))return;try{await del
 // ── EXPORT ────────────────────────────────────────────────────────────────
 const cr=cells=>cells.map(c=>'"'+String(c||'').replace(/"/g,'""')+'"').join(',');
 const dl=(name,rows)=>{const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,\uFEFF'+encodeURIComponent(rows.join('\r\n'));a.download=name;a.click();};
-window.exportRequests=()=>{const r=[cr(['Jméno','Kategorie','Typ','Žádost','Čas','Modlitby','Vyslyšeno'])];(window._req||[]).forEach(x=>r.push(cr([x.name,x.cat,x.reqType||'jednorázová',x.text,fmtTs(x.ts),(x.prayedBy||[]).length,x.answered?'Ano':'Ne'])));dl('oxygen-zadosti.csv',r);toast('📥 Export stažen');};
+window.exportRequests=()=>{const r=[cr(['Jméno','Kategorie','Typ','Žádost','Čas','Modlitby','Vyslyšeno','Příběh vyslyšení'])];(window._req||[]).forEach(x=>r.push(cr([x.name,x.cat,x.reqType||'jednorázová',x.text,fmtTs(x.ts),(x.prayedBy||[]).length,x.answered?'Ano':'Ne',x.answerStory||''])));dl('oxygen-zadosti.csv',r);toast('📥 Export stažen');};
 window.exportChecklist=()=>{const r=[cr(['Téma','Přidal/a','Čas','Stav'])];(window._chk||[]).forEach(x=>r.push(cr([x.text,x.author,fmtTs(x.ts),x.done?'Splněno':'Aktivní'])));dl('oxygen-seznam.csv',r);toast('📥 Export stažen');};
 window.exportDiary=()=>{const r=[cr(['Autor','Čas','Zápis','Verš'])];(window._diary||[]).forEach(x=>r.push(cr([x.author,fmtTs(x.ts),x.text,x.scripture||''])));dl('oxygen-denik.csv',r);toast('📥 Export stažen');};
 window.exportWatch=()=>{const r=[cr(['Strážce','Datum','Témata'])];(window._watch||[]).forEach(x=>r.push(cr([x.person,x.date,(x.topics||[]).join('; ')])));dl('oxygen-straz.csv',r);toast('📥 Export stažen');};
@@ -1850,6 +1895,8 @@ const THEMES=[
   {name:'Červená',h:350,s:'70%'},
   {name:'Oranžová',h:28,s:'80%'},
   {name:'Růžová',h:320,s:'65%'},
+  {name:'Tmavé',h:270,s:'70%',mode:'dark'},
+  {name:'Světlé',h:270,s:'60%',mode:'light'},
 ];
 let _activeTheme=0;
 function applyTheme(idx){
@@ -1857,30 +1904,60 @@ function applyTheme(idx){
   const t=THEMES[idx];
   const r=document.documentElement.style;
   const h=t.h,s=t.s;
-  r.setProperty('--purple',`hsl(${h},${s},46%)`);
-  r.setProperty('--purple-l',`hsl(${h},${s},57%)`);
-  r.setProperty('--purple-xl',`hsl(${h},${s},72%)`);
-  r.setProperty('--purple-d',`hsl(${h},${s},30%)`);
-  r.setProperty('--bg',`hsl(${h},55%,8%)`);
-  r.setProperty('--bg2',`hsl(${h},52%,11%)`);
-  r.setProperty('--surface',`hsl(${h},50%,14%)`);
-  r.setProperty('--card',`hsl(${h},48%,17%)`);
-  r.setProperty('--border',`hsla(${h},${s},60%,0.2)`);
-  r.setProperty('--border-l',`hsla(${h},${s},60%,0.4)`);
-  // Card backgrounds derived from hue
-  r.setProperty('--card-bg',`hsla(${h},55%,22%,.72)`);
-  r.setProperty('--card-bg-lo',`hsla(${h},55%,22%,.5)`);
-  r.setProperty('--card-alpha-hi',`hsla(${h},55%,22%,.92)`);
-  r.setProperty('--bg-dark',`hsla(${h},58%,7%,.97)`);
-  r.setProperty('--bg-dark2',`hsla(${h},58%,7%,.98)`);
-  r.setProperty('--orb2',`hsl(${h},65%,28%)`);
-  r.setProperty('--orb3',`hsl(${h},55%,36%)`);
-  document.querySelector('meta[name="theme-color"]')?.setAttribute('content',`hsl(${h},55%,8%)`);
+  document.documentElement.setAttribute('data-mode',t.mode||'dark');
+  if(t.mode==='light'){
+    r.setProperty('--purple',`hsl(${h},${s},40%)`);
+    r.setProperty('--purple-l',`hsl(${h},${s},50%)`);
+    r.setProperty('--purple-xl',`hsl(${h},${s},35%)`);
+    r.setProperty('--purple-d',`hsl(${h},${s},28%)`);
+    r.setProperty('--bg','#f0eef8');
+    r.setProperty('--bg2','#e6e2f5');
+    r.setProperty('--surface','#ddd8f0');
+    r.setProperty('--card','#d4cfe8');
+    r.setProperty('--border',`hsla(${h},${s},40%,0.18)`);
+    r.setProperty('--border-l',`hsla(${h},${s},40%,0.35)`);
+    r.setProperty('--text','#1a1030');
+    r.setProperty('--muted','#6b5f8a');
+    r.setProperty('--card-bg',`hsla(${h},40%,88%,.85)`);
+    r.setProperty('--card-bg-lo',`hsla(${h},40%,88%,.6)`);
+    r.setProperty('--card-alpha-hi',`hsla(${h},40%,88%,.95)`);
+    r.setProperty('--bg-dark',`hsla(${h},30%,92%,.97)`);
+    r.setProperty('--bg-dark2',`hsla(${h},30%,92%,.98)`);
+    r.setProperty('--orb2',`hsl(${h},50%,78%)`);
+    r.setProperty('--orb3',`hsl(${h},45%,82%)`);
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content','#f0eef8');
+  } else {
+    r.setProperty('--text','#F0E8FF');
+    r.setProperty('--muted','#9B8FBB');
+    r.setProperty('--purple',`hsl(${h},${s},46%)`);
+    r.setProperty('--purple-l',`hsl(${h},${s},57%)`);
+    r.setProperty('--purple-xl',`hsl(${h},${s},72%)`);
+    r.setProperty('--purple-d',`hsl(${h},${s},30%)`);
+    r.setProperty('--bg',`hsl(${h},55%,8%)`);
+    r.setProperty('--bg2',`hsl(${h},52%,11%)`);
+    r.setProperty('--surface',`hsl(${h},50%,14%)`);
+    r.setProperty('--card',`hsl(${h},48%,17%)`);
+    r.setProperty('--border',`hsla(${h},${s},60%,0.2)`);
+    r.setProperty('--border-l',`hsla(${h},${s},60%,0.4)`);
+    r.setProperty('--card-bg',`hsla(${h},55%,22%,.72)`);
+    r.setProperty('--card-bg-lo',`hsla(${h},55%,22%,.5)`);
+    r.setProperty('--card-alpha-hi',`hsla(${h},55%,22%,.92)`);
+    r.setProperty('--bg-dark',`hsla(${h},58%,7%,.97)`);
+    r.setProperty('--bg-dark2',`hsla(${h},58%,7%,.98)`);
+    r.setProperty('--orb2',`hsl(${h},65%,28%)`);
+    r.setProperty('--orb3',`hsl(${h},55%,36%)`);
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content',`hsl(${h},55%,8%)`);
+  }
   localStorage.setItem('oxygen_theme',idx);
 }
 function loadTheme(){const s=localStorage.getItem('oxygen_theme');if(s!==null)applyTheme(parseInt(s));}
 loadTheme();
-window.pickTheme=idx=>{applyTheme(idx);document.querySelectorAll('.theme-swatch').forEach((el,i)=>el.classList.toggle('active',i===idx));toast('🎨 Téma změněno');};
+window.pickTheme=idx=>{
+  applyTheme(idx);
+  document.querySelectorAll('.theme-swatch').forEach((el,i)=>el.classList.toggle('active',i===idx));
+  const t=THEMES[idx];
+  toast(t.mode==='light'?'☀️ Světlý mód':t.mode==='dark'&&idx===7?'🌑 Tmavý mód':'🎨 Téma: '+t.name);
+};
 
 // ── STREAK ────────────────────────────────────────────────────────────────
 // logPrayerDay – called when user clicks "Modlím se" – saves today's date to prayerLog
@@ -2114,6 +2191,56 @@ window.installPwa=async()=>{
 };
 window.dismissPwa=()=>{document.getElementById('pwaBanner')?.remove();localStorage.setItem('oxygen_pwa_dismissed','1');};
 
+
+
+// ── USER PROFILE ──────────────────────────────────────────────────────────
+window.showUserProfile=(username)=>{
+  if(username===CU.username){showProfile();return;}
+  const u=userByUn(username);if(!u)return;
+  const reqs=window._req||[],diary=window._diary||[],watch=window._watch||[],chk=window._chk||[];
+  const pC=reqs.reduce((a,r)=>a+((r.prayedBy||[]).includes(username)?1:0),0);
+  const pChk=chk.filter(c=>(c.prayedBy||[]).includes(username)).length;
+  const rC=reqs.filter(r=>r.createdBy===username).length;
+  const wC=watch.filter(w=>w.createdBy===username).length;
+  const dC=diary.filter(d=>d.createdBy===username).length;
+  const ansC=reqs.filter(r=>r.createdBy===username&&r.answered).length;
+  const streak=calcStreakFor(username);
+  const {best}=calcStreak(); // reuse for best calculation
+  const bestFor=(()=>{
+    const logs=window._allPrayerLog||[];
+    const days=[...new Set(logs.filter(d=>d.username===username).map(d=>d.date))].sort();
+    let best=0,cur=0;
+    for(let i=0;i<days.length;i++){
+      if(i===0)cur=1;else{const diff=Math.round((new Date(days[i])-new Date(days[i-1]))/(86400000));cur=diff===1?cur+1:1;}
+      best=Math.max(best,cur);
+    }
+    return best;
+  })();
+  const rm={admin:'Admin',modlitebnik:'Modlitebník',mladeznik:'Mládežník'};
+  const rc={admin:'ra',modlitebnik:'rm',mladeznik:'rml'};
+  document.getElementById('userProfileModal')?.remove();
+  const m=document.createElement('div');m.className='modal-bg';m.id='userProfileModal';
+  m.innerHTML=`<div class="modal" onclick="event.stopPropagation()" style="max-width:400px">
+    <button class="modal-close" onclick="document.getElementById('userProfileModal').remove()">✕</button>
+    <div style="text-align:center;margin-bottom:22px">
+      <div style="width:68px;height:68px;border-radius:50%;background:${u.emoji?'var(--surface)':'linear-gradient(135deg,var(--purple),var(--purple-d))'};display:flex;align-items:center;justify-content:center;font-size:${u.emoji?'2rem':'1.1rem'};font-weight:800;color:#fff;margin:0 auto 10px;box-shadow:0 6px 24px rgba(0,0,0,.3)">${u.emoji||ini(u.name)}</div>
+      <div style="font-family:'Cinzel',serif;font-size:1.2rem;color:var(--white)">${esc(u.name)}</div>
+      <div style="color:var(--muted);font-size:.8rem;margin-top:2px">@${esc(username)}</div>
+      <span class="urole ${rc[u.role]||'rml'}" style="margin-top:6px;display:inline-block">${rm[u.role]||u.role}</span>
+    </div>
+    ${streak>0?`<div style="background:linear-gradient(135deg,rgba(255,209,102,.1),rgba(255,209,102,.04));border:1px solid rgba(255,209,102,.25);border-radius:12px;padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;gap:10px"><span style="font-size:1.6rem">🔥</span><div><span style="font-family:'Cinzel',serif;font-size:1.4rem;color:var(--gold)">${streak}</span> <span style="font-size:.75rem;color:var(--gold);opacity:.8">${streak===1?'den':'dnů'} streak</span><div style="font-size:.7rem;color:var(--muted);margin-top:2px">Nejlepší: ${bestFor} ${bestFor===1?'den':'dnů'}</div></div></div>`:''}
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:6px">
+      <div class="scard"><div class="snum" style="font-size:1.4rem">${pC+pChk}</div><div class="slbl">Modliteb</div></div>
+      <div class="scard"><div class="snum" style="font-size:1.4rem">${rC}</div><div class="slbl">Žádostí</div></div>
+      <div class="scard"><div class="snum" style="font-size:1.4rem">${ansC}</div><div class="slbl">Vyslyšených</div></div>
+      <div class="scard"><div class="snum" style="font-size:1.4rem">${wC}</div><div class="slbl">Stráží</div></div>
+      <div class="scard"><div class="snum" style="font-size:1.4rem">${dC}</div><div class="slbl">Zápisů</div></div>
+      <div class="scard"><div class="snum" style="font-size:1.4rem">${streak}</div><div class="slbl">Streak</div></div>
+    </div>
+  </div>`;
+  m.addEventListener('click',e=>{if(e.target===m)m.remove();});
+  document.body.appendChild(m);
+};
 
 restoreSession();
 </script>
