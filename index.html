@@ -1434,8 +1434,11 @@ window.calClick=(y,mo,d,e)=>{
   const popup=document.createElement('div');popup.className='cal-popup';calPopup=popup;
   if(existing){
     const gcalUrl=makeGCalUrl(existing);
+    const allInWatch=[existing.person,...(existing.coPersons||[])];
+    const alreadyIn=allInWatch.some(n=>n===CU.name);
     const extraNames=(existing.coPersons||[]).length?`<div style="font-size:.8rem;color:var(--muted);margin-top:2px">+ ${(existing.coPersons||[]).map(n=>esc(n)).join(', ')}</div>`:'';
-    popup.innerHTML=`<button class="cal-popup-close" onclick="document.querySelector('.cal-popup').remove();calPopup=null">✕</button><h3>${label}</h3><div style="color:var(--text);font-size:.88rem;margin-bottom:10px">Stráž: <strong>${esc(existing.person)}</strong>${extraNames}<br><span style="color:var(--muted);font-size:.8rem">${esc(existing.date)}</span></div><div style="font-size:.79rem;color:var(--red);margin-bottom:10px">⚠️ Toto datum je již obsazeno</div><div style="display:flex;gap:6px;flex-wrap:wrap">${gcalUrl?`<a href="${gcalUrl}" target="_blank" rel="noopener" class="bs b-gcal" style="text-decoration:none">📅 Google Kalendář</a>`:''} ${(existing.createdBy===CU.username||isAdmin())?`<button class="bs b-del" onclick="delWatch('${existing._id}');document.querySelector('.cal-popup').remove();calPopup=null">🗑 Smazat stráž</button>`:''}</div>`;
+    const joinBtn=!alreadyIn?`<button class="bs b-ok" onclick="joinWatch('${existing._id}');document.querySelector('.cal-popup').remove();calPopup=null">+ Přidat se ke stráži</button>`:`<span class="bs b-pray on" style="cursor:default">✓ Jsi v této stráži</span>`;
+    popup.innerHTML=`<button class="cal-popup-close" onclick="document.querySelector('.cal-popup').remove();calPopup=null">✕</button><h3>${label}</h3><div style="color:var(--text);font-size:.88rem;margin-bottom:10px">Stráž: <strong>${esc(existing.person)}</strong>${extraNames}<br><span style="color:var(--muted);font-size:.8rem">${esc(existing.date)}</span></div><div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">${joinBtn}</div><div style="display:flex;gap:6px;flex-wrap:wrap">${gcalUrl?`<a href="${gcalUrl}" target="_blank" rel="noopener" class="bs b-gcal" style="text-decoration:none">📅 Google Kalendář</a>`:''} ${(existing.createdBy===CU.username||isAdmin())?`<button class="bs b-del" onclick="delWatch('${existing._id}');document.querySelector('.cal-popup').remove();calPopup=null">🗑 Smazat stráž</button>`:''}</div>`;
   }else{
     popup.innerHTML=`<button class="cal-popup-close" onclick="document.querySelector('.cal-popup').remove();calPopup=null">✕</button><h3>Přidat stráž</h3><div style="color:var(--muted);font-size:.79rem;margin-bottom:10px">${label}</div><div class="fg"><label>Kdo (hlavní strážce)</label><input type="text" id="cpP" value="${CU.name}"></div><div class="fg"><label>Další jména <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted)">(nepovinné, čárkou)</span></label><input type="text" id="cpCo" placeholder="Jana, Pavel, …"></div><div class="fg"><label>Do data</label><input type="date" id="cpE" value="${iso}"></div><div class="fg"><label>Témata (čárkou)</label><input type="text" id="cpT" placeholder="Mládež, vedení, …"></div><button class="bp" style="padding:9px" onclick="saveCalWatch('${iso}')">Uložit</button>`;
   }
@@ -1461,11 +1464,16 @@ function makeGCalUrl(w){
   if(!w.startDate)return null;
   const sd=new Date(w.startDate);
   const ed=w.endDate?new Date(w.endDate):sd;
-  // GCal needs dates in YYYYMMDD format; end date is exclusive so add 1 day
   const fmt=d=>{const y=d.getFullYear();const m=String(d.getMonth()+1).padStart(2,'0');const day=String(d.getDate()).padStart(2,'0');return y+m+day;};
   const edExcl=new Date(ed);edExcl.setDate(edExcl.getDate()+1);
-  const title=encodeURIComponent('Modlitební stráž – '+(w.person||''));
-  const details=encodeURIComponent((w.topics||[]).length?'Témata: '+(w.topics||[]).join(', '):'Modlitební stráž Oxygen');
+  const allPeople=[w.person||'',...(w.coPersons||[])].filter(Boolean);
+  const peopleStr=allPeople.join(', ');
+  const title=encodeURIComponent('Modlitební stráž – '+peopleStr);
+  const topicsLine=(w.topics||[]).length?'Témata: '+(w.topics||[]).join(', ')+'
+':'';
+  const peopleLine=allPeople.length>1?'Stráž: '+peopleStr+'
+':'';
+  const details=encodeURIComponent(peopleLine+topicsLine||'Modlitební stráž Oxygen');
   return`https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${fmt(sd)}/${fmt(edExcl)}&details=${details}`;
 }
 let _watchFilter='active';
@@ -1505,6 +1513,13 @@ function renderWatch(){
     </div>`;
   }).join('');
 }
+window.joinWatch=async id=>{
+  const w=(window._watch||[]).find(x=>x._id===id);if(!w)return;
+  const already=[w.person,...(w.coPersons||[])].some(n=>n===CU.name);
+  if(already){toast('Už jsi v této stráži');return;}
+  const updated=[...(w.coPersons||[]),CU.name];
+  try{await updateDoc(doc(db,'watch',id),{coPersons:updated});toast('✓ Přidán/a ke stráži!');}catch(e){toast('Chyba: '+e.message);}
+};
 window.delWatch=async id=>{const w=(window._watch||[]).find(x=>x._id===id);if(!w)return;if(!isAdmin()&&w.createdBy!==CU.username){toast('Nemáš oprávnění.');return;}confirmDialog('Smazat modlitební stráž?',async()=>{try{await deleteDoc(doc(db,'watch',id));toast('Smazáno');}catch(e){toast('Chyba: '+e.message);}})};
 
 // ── ANON ──────────────────────────────────────────────────────────────────
