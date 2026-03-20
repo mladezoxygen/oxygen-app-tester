@@ -821,6 +821,18 @@ const esc=s=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 const isAdmin=()=>CU?.role==='admin';
 const canMgr=()=>['admin','modlitebnik'].includes(CU?.role);
+// Helper: check if a username is involved in a watch (as main person or co-person)
+const watchCountFor=(watchList,username)=>{
+  const allU=window._users||{};
+  const u=allU[username];
+  const name=u?.name||'';
+  return watchList.filter(w=>{
+    if(w.createdBy===username)return true;
+    if(name&&w.person&&w.person.trim().toLowerCase()===name.toLowerCase())return true;
+    if(name&&(w.coPersons||[]).some(n=>n.trim().toLowerCase()===name.toLowerCase()))return true;
+    return false;
+  }).length;
+};
 const ini=n=>n?n.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2):'?';
 const userByUn=un=>window._users?.[un];
 
@@ -1436,11 +1448,34 @@ window.calClick=(y,mo,d,e)=>{
     const gcalUrl=makeGCalUrl(existing);
     const allInWatch=[existing.person,...(existing.coPersons||[])];
     const alreadyIn=allInWatch.some(n=>n===CU.name);
-    const extraNames=(existing.coPersons||[]).length?`<div style="font-size:.8rem;color:var(--muted);margin-top:2px">+ ${(existing.coPersons||[]).map(n=>esc(n)).join(', ')}</div>`:'';
-    const joinBtn=!alreadyIn?`<button class="bs b-ok" onclick="joinWatch('${existing._id}');document.querySelector('.cal-popup').remove();calPopup=null">+ Přidat se ke stráži</button>`:`<span class="bs b-pray on" style="cursor:default">✓ Jsi v této stráži</span>`;
-    popup.innerHTML=`<button class="cal-popup-close" onclick="document.querySelector('.cal-popup').remove();calPopup=null">✕</button><h3>${label}</h3><div style="color:var(--text);font-size:.88rem;margin-bottom:10px">Stráž: <strong>${esc(existing.person)}</strong>${extraNames}<br><span style="color:var(--muted);font-size:.8rem">${esc(existing.date)}</span></div><div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">${joinBtn}</div><div style="display:flex;gap:6px;flex-wrap:wrap">${gcalUrl?`<a href="${gcalUrl}" target="_blank" rel="noopener" class="bs b-gcal" style="text-decoration:none">📅 Google Kalendář</a>`:''} ${(existing.createdBy===CU.username||isAdmin())?`<button class="bs b-del" onclick="delWatch('${existing._id}');document.querySelector('.cal-popup').remove();calPopup=null">🗑 Smazat stráž</button>`:''}</div>`;
+    const extraNames=(existing.coPersons||[]).length
+      ? '<div style="font-size:.8rem;color:var(--muted);margin-top:2px">+ '+(existing.coPersons||[]).map(n=>esc(n)).join(', ')+'</div>'
+      : '';
+    const joinBtn=alreadyIn
+      ? '<span class="bs b-pray on" style="cursor:default">✓ Jsi v této stráži</span>'
+      : '<button class="bs b-ok" onclick="joinWatch(\''+existing._id+'\');document.querySelector(\'.cal-popup\').remove();calPopup=null">+ Přidat se ke stráži</button>';
+    const gcalBtn=gcalUrl
+      ? '<a href="'+gcalUrl+'" target="_blank" rel="noopener" class="bs b-gcal" style="text-decoration:none">📅 Google Kalendář</a>'
+      : '';
+    const delBtn=(existing.createdBy===CU.username||isAdmin())
+      ? '<button class="bs b-del" onclick="delWatch(\''+existing._id+'\');document.querySelector(\'.cal-popup\').remove();calPopup=null">🗑 Smazat stráž</button>'
+      : '';
+    popup.innerHTML=
+      '<button class="cal-popup-close" onclick="document.querySelector(\'.cal-popup\').remove();calPopup=null">✕</button>'
+      +'<h3>'+label+'</h3>'
+      +'<div style="color:var(--text);font-size:.88rem;margin-bottom:10px">Stráž: <strong>'+esc(existing.person)+'</strong>'+extraNames+'<br><span style="color:var(--muted);font-size:.8rem">'+esc(existing.date)+'</span></div>'
+      +'<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">'+joinBtn+'</div>'
+      +'<div style="display:flex;gap:6px;flex-wrap:wrap">'+gcalBtn+' '+delBtn+'</div>';
   }else{
-    popup.innerHTML=`<button class="cal-popup-close" onclick="document.querySelector('.cal-popup').remove();calPopup=null">✕</button><h3>Přidat stráž</h3><div style="color:var(--muted);font-size:.79rem;margin-bottom:10px">${label}</div><div class="fg"><label>Kdo (hlavní strážce)</label><input type="text" id="cpP" value="${CU.name}"></div><div class="fg"><label>Další jména <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted)">(nepovinné, čárkou)</span></label><input type="text" id="cpCo" placeholder="Jana, Pavel, …"></div><div class="fg"><label>Do data</label><input type="date" id="cpE" value="${iso}"></div><div class="fg"><label>Témata (čárkou)</label><input type="text" id="cpT" placeholder="Mládež, vedení, …"></div><button class="bp" style="padding:9px" onclick="saveCalWatch('${iso}')">Uložit</button>`;
+    popup.innerHTML=
+      '<button class="cal-popup-close" onclick="document.querySelector(\'.cal-popup\').remove();calPopup=null">✕</button>'
+      +'<h3>Přidat stráž</h3>'
+      +'<div style="color:var(--muted);font-size:.79rem;margin-bottom:10px">'+label+'</div>'
+      +'<div class="fg"><label>Kdo (hlavní strážce)</label><input type="text" id="cpP" value="'+esc(CU.name)+'"></div>'
+      +'<div class="fg"><label>Další jména <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted)">(nepovinné, čárkou)</span></label><input type="text" id="cpCo" placeholder="Jana, Pavel, …"></div>'
+      +'<div class="fg"><label>Do data</label><input type="date" id="cpE" value="'+iso+'"></div>'
+      +'<div class="fg"><label>Témata (čárkou)</label><input type="text" id="cpT" placeholder="Mládež, vedení, …"></div>'
+      +'<button class="bp" style="padding:9px" onclick="saveCalWatch(\''+iso+'\')">Uložit</button>';
   }
   const rect=e.currentTarget.getBoundingClientRect();
   popup.style.top=Math.min(rect.bottom+window.scrollY+6,window.innerHeight+window.scrollY-320)+'px';
@@ -1449,6 +1484,7 @@ window.calClick=(y,mo,d,e)=>{
   const close=ev=>{if(!popup.contains(ev.target)&&!ev.target.classList.contains('cal-day')){popup.remove();calPopup=null;document.removeEventListener('click',close);}};
   setTimeout(()=>document.addEventListener('click',close),100);
 };
+
 window.saveCalWatch=async iso=>{
   const person=document.getElementById('cpP')?.value.trim()||CU.name;
   const coStr=document.getElementById('cpCo')?.value.trim()||'';
@@ -1458,7 +1494,11 @@ window.saveCalWatch=async iso=>{
   const topics=topStr.split(',').map(s=>s.trim()).filter(Boolean);
   const sd=new Date(iso);const ed=endVal?new Date(endVal):sd;
   const dateLabel=(()=>{const day=sd.getDate();const mon=sd.getMonth()+1;const dayE=ed.getDate();const monE=ed.getMonth()+1;return endVal&&endVal!==iso?`${day}. ${mon}. – ${dayE}. ${monE}. ${ed.getFullYear()}`:`${day}. ${mon}. ${sd.getFullYear()}`;})();
-  try{await addDoc(collection(db,'watch'),{person,coPersons,date:dateLabel,startDate:iso,endDate:endVal||iso,topics,createdBy:CU.username,ts:serverTimestamp()});document.querySelector('.cal-popup')?.remove();calPopup=null;toast('⌚ Stráž přidána');}catch(e){toast('Chyba: '+e.message);}
+  // Resolve createdBy: if main person matches an existing user's name, use their username
+  const allUsers=Object.values(window._users||{});
+  const matchedUser=allUsers.find(u=>u.name&&u.name.trim().toLowerCase()===person.toLowerCase());
+  const resolvedCreatedBy=matchedUser?matchedUser.username:CU.username;
+  try{await addDoc(collection(db,'watch'),{person,coPersons,date:dateLabel,startDate:iso,endDate:endVal||iso,topics,createdBy:resolvedCreatedBy,addedBy:CU.username,ts:serverTimestamp()});document.querySelector('.cal-popup')?.remove();calPopup=null;toast('⌚ Stráž přidána');}catch(e){toast('Chyba: '+e.message);}
 };
 function makeGCalUrl(w){
   if(!w.startDate)return null;
@@ -1766,7 +1806,8 @@ function renderStats(){
     const pC=reqs.reduce((a,r)=>a+((r.prayedBy||[]).includes(u.username)?1:0),0);
     const rC=reqs.filter(r=>r.createdBy===u.username).length;
     const _tod=new Date();_tod.setHours(0,0,0,0);
-    const wC=watch.filter(w=>w.createdBy===u.username&&w.endDate&&(()=>{const ed=new Date(w.endDate);ed.setHours(23,59,59,999);return ed<_tod;})()).length;
+    const wPast=watch.filter(w=>w.endDate&&(()=>{const ed=new Date(w.endDate);ed.setHours(23,59,59,999);return ed<_tod;})());
+    const wC=watchCountFor(wPast,u.username);
     const dC=diary.filter(d=>d.createdBy===u.username).length;
     const userStreak=calcStreakFor(u.username);
     const streakBadge=userStreak>0?`<span style="font-size:.72rem;color:var(--gold);margin-left:4px">🔥${userStreak}</span>`:`<span style="font-size:.72rem;color:var(--muted);margin-left:4px">🔥0</span>`;
@@ -1814,7 +1855,7 @@ window.showProfile=()=>{
       <div class="scard"><div class="snum">${pC}</div><div class="slbl">Modliteb</div></div>
       <div class="scard"><div class="snum">${reqs.filter(r=>r.createdBy===CU.username).length}</div><div class="slbl">Žádostí</div></div>
       <div class="scard"><div class="snum">${reqs.filter(r=>r.createdBy===CU.username&&r.answered).length}</div><div class="slbl">Vyslyšených</div></div>
-      <div class="scard"><div class="snum">${watch.filter(w=>w.createdBy===CU.username).length}</div><div class="slbl">Stráží</div></div>
+      <div class="scard"><div class="snum">${watchCountFor(watch,CU.username)}</div><div class="slbl">Stráží</div></div>
       <div class="scard"><div class="snum">${diary.filter(d=>d.createdBy===CU.username).length}</div><div class="slbl">Zápisů</div></div>
       ${(()=>{const {streak}=calcStreak();return`<div class="scard-streak"><div class="snum"><span class="scard-streak-fire">🔥</span> ${streak}</div><div class="slbl">Streak</div></div>`;})()}
     </div>
@@ -2134,7 +2175,7 @@ function renderMyStats(){
   const prayedReqs=reqs.filter(r=>(r.prayedBy||[]).includes(CU.username)).length;
   const prayedChk=chk.filter(c=>(c.prayedBy||[]).includes(CU.username)).length;
   const myReqs=reqs.filter(r=>r.createdBy===CU.username).length;
-  const myWatches=watch.filter(w=>w.createdBy===CU.username).length;
+  const myWatches=watchCountFor(watch,CU.username);
   const myDiary=diary.filter(d=>d.createdBy===CU.username).length;
   const myAnswered=reqs.filter(r=>r.createdBy===CU.username&&r.answered).length;
 
@@ -2261,7 +2302,7 @@ window.showUserProfile=(username)=>{
   const pC=reqs.reduce((a,r)=>a+((r.prayedBy||[]).includes(username)?1:0),0);
   const pChk=chk.filter(c=>(c.prayedBy||[]).includes(username)).length;
   const rC=reqs.filter(r=>r.createdBy===username).length;
-  const wC=watch.filter(w=>w.createdBy===username).length;
+  const wC=watchCountFor(watch,username);
   const dC=diary.filter(d=>d.createdBy===username).length;
   const ansC=reqs.filter(r=>r.createdBy===username&&r.answered).length;
   const streak=calcStreakFor(username);
