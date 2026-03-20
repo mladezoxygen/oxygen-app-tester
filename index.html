@@ -1562,6 +1562,51 @@ function cpRefreshChips(){
   });
 }
 
+let _watchFilter='active';
+window.setWF=(f,btn)=>{_watchFilter=f;document.querySelectorAll('#watchTabs .tab').forEach(b=>b.classList.remove('on'));btn.classList.add('on');renderWatch();};
+function renderWatch(){
+  const all=window._watch||[];const el=document.getElementById('watchList');
+  if(!all.length){el.innerHTML='<div class="empty"><div class="ei">⌚</div><p>Klikni na den v kalendáři pro přidání stráže</p></div>';return;}
+  const today=new Date();today.setHours(0,0,0,0);
+  const classify=w=>{
+    const sd=w.startDate?new Date(w.startDate):null;if(sd)sd.setHours(0,0,0,0);
+    const ed=w.endDate?new Date(w.endDate):sd?new Date(sd):null;if(ed)ed.setHours(23,59,59,999);
+    const isFuture=sd&&sd>today;const isPast=ed&&ed<today;const isCurr=!isFuture&&!isPast;
+    return{isFuture,isPast,isCurr};
+  };
+  const active=[...all].filter(w=>{const{isFuture,isCurr}=classify(w);return isCurr||isFuture;})
+    .sort((a,b)=>(a.startDate||'').localeCompare(b.startDate||''));
+  const past=[...all].filter(w=>classify(w).isPast)
+    .sort((a,b)=>(b.startDate||'').localeCompare(a.startDate||''));
+  const list=_watchFilter==='past'?past:active;
+  if(!list.length){
+    el.innerHTML='<div class="empty"><div class="ei">'+(_watchFilter==='past'?'📦':'⌚')+'</div><p>'+(_watchFilter==='past'?'Žádné minulé stráže':'Žádné nadcházející stráže')+'</p></div>';
+    return;
+  }
+  el.innerHTML=list.map(w=>{
+    const{isFuture,isCurr}=classify(w);
+    const canDel=isAdmin()||(w.guardianUsername||w.createdBy)===CU.username||w.addedBy===CU.username;
+    const gcalUrl=makeGCalUrl(w);
+    const allU=window._users||{};
+    const coNames=(w.coPersons||[]).map(un=>{const u=allU[un];return esc(u?.name||un);}).join(', ');
+    return`<div class="wc ${isCurr?'curr':isFuture?'future':''}">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div>
+          <div style="font-family:'Cinzel',serif;font-size:.77rem;color:${isCurr?'var(--gold)':isFuture?'var(--purple-xl)':'var(--muted)'}">✦ ${isCurr?'Aktuální stráž':isFuture?'Plánovaná stráž':'Minulá stráž'}</div>
+          <div style="font-weight:800;font-size:.92rem;color:var(--white);margin-top:2px">${esc(w.person)}</div>
+          ${coNames?`<div style="font-size:.77rem;color:var(--muted);margin-top:1px">+ ${coNames}</div>`:''}
+          <div style="color:var(--muted);font-size:.76rem;margin-top:1px">${esc(w.date)}</div>
+        </div>
+        <div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap">
+          ${gcalUrl?`<a href="${gcalUrl}" target="_blank" rel="noopener" class="bs b-gcal" style="text-decoration:none">📅 Google Kalendář</a>`:''}
+          ${canDel?`<button class="bs b-del" onclick="delWatch('${w._id}')">🗑</button>`:''}
+        </div>
+      </div>
+      <div class="wt">${(w.topics||[]).map(t=>`<span class="wtag">${esc(t)}</span>`).join('')}</div>
+    </div>`;
+  }).join('');
+}
+
 window.joinWatch=async id=>{
   const w=(window._watch||[]).find(x=>x._id===id);if(!w)return;
   if(w.endDate){const ed=new Date(w.endDate);ed.setHours(23,59,59,999);if(ed<new Date()){toast('Tato stráž již proběhla.');return;}}
