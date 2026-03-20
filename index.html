@@ -1258,7 +1258,7 @@ window.sendCmt=async(cn,docId,isAnon,createdBy)=>{
   try{await addDoc(collection(db,cn+'_comments'),{parentId:docId,text,author:CU.username,authorName:CU.name,ts:serverTimestamp()});inp.value='';await refreshCmts(cn,docId,isAnon==='true',createdBy);if(notifSettings.newComment)addNotif('💬 Nový komentář',CU.name+': '+text.slice(0,55),cn==='diary'?'diary':'requests');}
   catch(e){toast('Chyba: '+e.message);}
 };
-window.delCmt=async(cn,id,docId,isAnon,createdBy)=>{confirmDialog('Smazat komentář?',async()=>{try{await deleteDoc(doc(db,cn+'_comments',id));await refreshCmts(cn,docId,isAnon==='true',createdBy);toast('Komentář smazán');}catch(e){toast('Chyba: '+e.message);}};
+window.delCmt=async(cn,id,docId,isAnon,createdBy)=>{confirmDialog('Smazat komentář?',async()=>{try{await deleteDoc(doc(db,cn+'_comments',id));await refreshCmts(cn,docId,isAnon==='true',createdBy);toast('Komentář smazán');}catch(e){toast('Chyba: '+e.message);}});};
 
 // ── REQUESTS ──────────────────────────────────────────────────────────────
 window.addRequest=async()=>{
@@ -1887,7 +1887,7 @@ function startOnline(){
       const av=u.emoji
         ?'<div class="online-av-sm ea">'+u.emoji+'</div>'
         :'<div class="online-av-sm">'+ini(u.name)+'</div>';
-      return'<div class="online-person joining" data-uname="'+u.username+'" onclick="showUserProfile(''+u.username+'')" title="Zobrazit profil">'+av
+      return'<div class="online-person joining" data-uname="'+u.username+'" onclick="showUserProfile(&quot;'+u.username+'&quot;)" title="Zobrazit profil">'+av
         +'<div style="min-width:0"><div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap">'
         +'<span style="font-size:.78rem">'+esc(u.name)+(isMe?' <span style="color:var(--muted);font-size:.68rem">(ty)</span>':'')+'</span>'
         +(roleLabel?'<span class="urole '+roleCls+'" style="font-size:.62rem;padding:1px 5px">'+roleLabel+'</span>':'')
