@@ -1495,28 +1495,35 @@ window.calClick=(y,mo,d,e)=>{
       +'<div style="display:flex;gap:6px;flex-wrap:wrap">'+gcalBtn+' '+delBtn+'</div>';
 
   }else{
-    // Sestavit seznam uživatelů — radio pro strážce, checkboxy pro další
+    // Sestavit seznam uživatelů – strážce (radio) + další (checkboxy)
     const users=Object.values(window._users||{}).filter(u=>u.role!=='pending').sort((a,b)=>a.name.localeCompare(b.name));
-    const userRows=users.map(u=>{
+    const guardianRows=users.map(u=>{
       const av=u.emoji?'<div class="cp-user-av ea">'+u.emoji+'</div>':'<div class="cp-user-av">'+ini(u.name)+'</div>';
-      const isMe=u.username===CU.username;
-      return'<label class="cp-user-row'+(isMe?' selected':'')+'" id="cpRow_'+u.username+'" onclick="cpToggleUser(\''+u.username+'\')" style="user-select:none">'
-        +'<div style="display:flex;align-items:center;gap:8px;flex:1">'+av+'<span class="cp-user-name">'+esc(u.name)+'</span></div>'
-        +'<span class="cp-user-badge" id="cpBadge_'+u.username+'">'+(isMe?'⭐':'')+'</span>'
+      const checked=u.username===CU.username?'checked':'';
+      return'<label class="cp-user-row'+(u.username===CU.username?' selected':'')+'" id="cpGRow_'+u.username+'" onclick="cpSelectGuardian(''+u.username+'')">'
+        +av+'<span class="cp-user-name">'+esc(u.name)+'</span>'
+        +'</label>';
+    }).join('');
+    const coRows=users.map(u=>{
+      return'<label class="cp-user-row" id="cpCRow_'+u.username+'" onclick="cpToggleCo(''+u.username+'')">'
+        +(u.emoji?'<div class="cp-user-av ea">'+u.emoji+'</div>':'<div class="cp-user-av">'+ini(u.name)+'</div>')
+        +'<span class="cp-user-name">'+esc(u.name)+'</span>'
+        +'<span class="cp-user-badge" id="cpCBadge_'+u.username+'"></span>'
         +'</label>';
     }).join('');
     popup.innerHTML=
-      '<button class="cal-popup-close" onclick="document.querySelector(\'.cal-popup\').remove();calPopup=null">✕</button>'
+      '<button class="cal-popup-close" onclick="document.querySelector('.cal-popup').remove();calPopup=null">✕</button>'
       +'<h3>Přidat stráž</h3>'
       +'<div style="color:var(--muted);font-size:.79rem;margin-bottom:8px">'+label+'</div>'
-      +'<div class="cp-section-lbl">Kdo se účastní <span style="font-weight:400;text-transform:none;color:var(--muted)">(první = strážce)</span></div>'
-      +'<div class="cp-user-list" id="cpUserList">'+userRows+'</div>'
-      +'<div style="font-size:.72rem;color:var(--muted);margin-bottom:8px" id="cpOrderHint">⭐ = hlavní strážce</div>'
-      +'<div class="fg" style="margin-bottom:8px"><label>Do data</label><input type="date" id="cpE" value="'+iso+'"></div>'
+      +'<div class="cp-section-lbl">Strážce</div>'
+      +'<div class="cp-user-list" id="cpGuardianList" style="max-height:120px">'+guardianRows+'</div>'
+      +'<div class="cp-section-lbl" style="margin-top:10px">Další účastníci <span style="font-weight:400;text-transform:none;color:var(--muted)">(nepovinné)</span></div>'
+      +'<div class="cp-user-list" id="cpCoList" style="max-height:120px">'+coRows+'</div>'
+      +'<div class="fg" style="margin-top:10px;margin-bottom:8px"><label>Do data</label><input type="date" id="cpE" value="'+iso+'"></div>'
       +'<div class="fg" style="margin-bottom:10px"><label>Témata (čárkou)</label><input type="text" id="cpT" placeholder="Mládež, vedení, …"></div>'
-      +'<button class="bp" style="padding:9px" onclick="saveCalWatch(\''+iso+'\')">Uložit</button>';
-    // Inicializuj výběr — já jsem strážce
-    window._cpSelected=[CU.username];
+      +'<button class="bp" style="padding:9px" onclick="saveCalWatch(''+iso+'')">Uložit</button>';
+    window._cpGuardian=CU.username;
+    window._cpCo=[];
   }
   const rect=e.currentTarget.getBoundingClientRect();
   popup.style.top=Math.min(rect.bottom+window.scrollY+6,window.innerHeight+window.scrollY-320)+'px';
@@ -1526,38 +1533,28 @@ window.calClick=(y,mo,d,e)=>{
   setTimeout(()=>document.addEventListener('click',close),100);
 };
 
-// Toggle výběru uživatele v popup formuláři
-window.cpToggleUser=un=>{
-  if(!window._cpSelected)window._cpSelected=[CU.username];
-  const idx=window._cpSelected.indexOf(un);
-  if(idx===-1){
-    window._cpSelected.push(un);
-  }else{
-    // Nelze odebrat pokud je to jediný vybraný
-    if(window._cpSelected.length===1){toast('Musí být aspoň jeden strážce');return;}
-    window._cpSelected.splice(idx,1);
-  }
-  // Překresli badge a selected stav
-  document.querySelectorAll('[id^="cpRow_"]').forEach(row=>{
-    const rowUn=row.id.replace('cpRow_','');
-    const pos=window._cpSelected.indexOf(rowUn);
-    const badge=document.getElementById('cpBadge_'+rowUn);
-    if(pos===-1){
-      row.classList.remove('selected');
-      if(badge)badge.textContent='';
-    }else{
-      row.classList.add('selected');
-      if(badge)badge.textContent=pos===0?'⭐':'✓';
-    }
+// Výběr strážce (radio)
+window.cpSelectGuardian=un=>{
+  window._cpGuardian=un;
+  document.querySelectorAll('[id^="cpGRow_"]').forEach(row=>{
+    row.classList.toggle('selected',row.id==='cpGRow_'+un);
   });
+};
+// Toggle co-person (checkbox)
+window.cpToggleCo=un=>{
+  if(!window._cpCo)window._cpCo=[];
+  const idx=window._cpCo.indexOf(un);
+  if(idx===-1){window._cpCo.push(un);}else{window._cpCo.splice(idx,1);}
+  const row=document.getElementById('cpCRow_'+un);
+  const badge=document.getElementById('cpCBadge_'+un);
+  if(row)row.classList.toggle('selected',window._cpCo.includes(un));
+  if(badge)badge.textContent=window._cpCo.includes(un)?'✓':'';
 };
 
 
 window.saveCalWatch=async iso=>{
-  const selected=window._cpSelected||[CU.username];
-  if(!selected.length){toast('Vyber aspoň jednoho strážce');return;}
-  const guardianUsername=selected[0];
-  const coPersons=selected.slice(1); // ostatní jsou co-persons
+  const guardianUsername=window._cpGuardian||CU.username;
+  const coPersons=window._cpCo||[];
   const guardianUser=window._users?.[guardianUsername];
   const person=guardianUser?.name||CU.name;
   const endVal=document.getElementById('cpE')?.value||iso;
@@ -1582,7 +1579,7 @@ window.saveCalWatch=async iso=>{
       topics,createdBy:guardianUsername,ts:serverTimestamp()
     });
     document.querySelector('.cal-popup')?.remove();calPopup=null;
-    window._cpSelected=null;
+    window._cpGuardian=null;window._cpCo=null;
     toast('⌚ Stráž přidána');
   }catch(e){toast('Chyba: '+e.message);}
 };
@@ -1594,7 +1591,10 @@ function makeGCalUrl(w){
   const fmt=d=>{const y=d.getFullYear();const m=String(d.getMonth()+1).padStart(2,'0');const day=String(d.getDate()).padStart(2,'0');return y+m+day;};
   const edExcl=new Date(ed);edExcl.setDate(edExcl.getDate()+1);
   const fn=n=>n?n.split(' ')[0]:n;
-  const allPeople=[w.person||'',...(w.coPersons||[])].filter(Boolean);
+  // coPersons jsou nyní usernames – přelož na jména
+  const allU=window._users||{};
+  const coNames=(w.coPersons||[]).map(un=>{const u=allU[un];return u?u.name:(un||'');}).filter(Boolean);
+  const allPeople=[w.person||'',...coNames].filter(Boolean);
   const allFirstNames=allPeople.map(fn);
   const peopleStr=allFirstNames.join(', ');
   const title=encodeURIComponent('Modlitebn\u00ed str\u00e1\u017e \u2013 '+peopleStr);
