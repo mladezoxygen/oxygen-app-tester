@@ -1667,8 +1667,9 @@ function renderStats(){
     const wC=watch.filter(w=>w.createdBy===u.username&&w.endDate&&(()=>{const ed=new Date(w.endDate);ed.setHours(23,59,59,999);return ed<_tod;})()).length;
     const dC=diary.filter(d=>d.createdBy===u.username).length;
     const userStreak=calcStreakFor(u.username);
+    const streakBadge=userStreak>0?`<span style="font-size:.72rem;color:var(--gold);margin-left:4px">🔥${userStreak}</span>`:`<span style="font-size:.72rem;color:var(--muted);margin-left:4px">🔥0</span>`;
     const avEl=u.emoji?`<div class="usc-av ea">${u.emoji}</div>`:`<div class="usc-av">${ini(u.name)}</div>`;
-    return`<div class="usc">${avEl}<div class="usc-info"><div class="usc-name">${esc(u.name)} <span class="tag ${u.role==='admin'?'t-rodina':u.role==='modlitebnik'?'t-duchovní':'t-jiné'}">${u.role}</span>${userStreak>0?`<span style="font-size:.72rem;color:var(--gold);margin-left:4px">🔥${userStreak}</span>`:''}</div><div class="usc-stats"><div><div class="usc-sn">${pC}</div><div class="usc-sl">Modliteb</div></div><div><div class="usc-sn">${rC}</div><div class="usc-sl">Žádostí</div></div><div><div class="usc-sn">${wC}</div><div class="usc-sl">Stráží</div></div><div><div class="usc-sn">${dC}</div><div class="usc-sl">Zápisů</div></div></div></div></div>`;
+    return`<div class="usc">${avEl}<div class="usc-info"><div class="usc-name">${esc(u.name)} <span class="tag ${u.role==='admin'?'t-rodina':u.role==='modlitebnik'?'t-duchovní':'t-jiné'}">${u.role}</span>${streakBadge}</div><div class="usc-stats"><div><div class="usc-sn">${pC}</div><div class="usc-sl">Modliteb</div></div><div><div class="usc-sn">${rC}</div><div class="usc-sl">Žádostí</div></div><div><div class="usc-sn">${wC}</div><div class="usc-sl">Stráží</div></div><div><div class="usc-sn">${dC}</div><div class="usc-sl">Zápisů</div></div></div></div></div>`;
   }).join('');
 }
 function mkC(id,labels,data,bc,bgc,cfg,type){
@@ -1833,7 +1834,7 @@ function startOnline(){
         +'<div style="min-width:0"><div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap">'
         +'<span style="font-size:.78rem">'+esc(u.name)+(isMe?' <span style="color:var(--muted);font-size:.68rem">(ty)</span>':'')+'</span>'
         +(roleLabel?'<span class="urole '+roleCls+'" style="font-size:.62rem;padding:1px 5px">'+roleLabel+'</span>':'')
-        +(calcStreakFor(u.username)>0?'<span style="font-size:.68rem;color:var(--gold)">🔥'+calcStreakFor(u.username)+'</span>':'')
+        +(()=>{const s=calcStreakFor(u.username);return s>0?'<span style="font-size:.68rem;color:var(--gold)">🔥'+s+'</span>':'<span style="font-size:.68rem;color:var(--muted)">🔥0</span>';})()
         +'</div></div></div>';
     }).join('');
   });
