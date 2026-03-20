@@ -93,7 +93,7 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 .uinfo{flex:1;min-width:0}
 .uname-t{font-size:.84rem;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .urole{font-size:.68rem;font-weight:700;padding:1px 7px;border-radius:20px;display:inline-block;margin-top:2px}
-.ra{background:rgba(255,209,102,.2);color:var(--gold)}.rm{background:rgba(123,47,190,.3);color:var(--purple-xl)}.rml{background:rgba(255,255,255,.08);color:var(--muted)}
+.ra{background:rgba(255,209,102,.2);color:var(--gold)}.rm{background:rgba(6,214,160,.15);color:#06D6A0}.rml{background:rgba(255,255,255,.08);color:var(--muted)}
 .snav{flex:1;padding:8px;overflow-y:auto;scroll-behavior:smooth}
 .ni{display:flex;align-items:center;gap:8px;padding:9px 11px;border-radius:10px;cursor:pointer;transition:all .2s;color:var(--muted);font-size:.84rem;font-weight:600;margin-bottom:1px;user-select:none}
 .ni:hover{background:rgba(123,47,222,.15);color:var(--text)}.ni.on{background:rgba(123,47,190,.25);color:var(--purple-xl)}
@@ -1288,7 +1288,7 @@ function renderReqs(){
     const pHTML=pNames.length?`<div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:3px;align-items:center"><span style="font-size:.7rem;color:var(--muted)">Modlil/a se: </span>${pNames.map(n=>`<span style="font-size:.71rem;background:rgba(123,47,190,.15);border:1px solid var(--border);border-radius:20px;padding:1px 7px;color:var(--purple-xl)">${esc(n)}</span>`).join('')}</div>`:'';
     const publicBadge=isPublic?`<span class="tag" style="background:rgba(255,209,102,.15);color:var(--gold);border:1px solid rgba(255,209,102,.3)">🌐 Veřejná</span>`:'';
     return`<div class="pc ${r.answered?'answered':''}">
-      <div class="rh"><div class="rm2">${u?.emoji?`<span style="font-size:.95rem">${u.emoji}</span>`:''}<span class="rn" style="cursor:pointer" onclick="showUserProfile('${r.createdBy}')">${esc(r.name)}</span>${publicBadge}<span class="tag t-${r.cat}">${r.cat}</span><span class="tag" style="background:rgba(255,255,255,.07);color:var(--muted);font-size:.65rem">${(r.reqType||"jednorázová")==="opakovaná"?"🔄 Opakovaná":(r.reqType||"jednorázová")==="dlouhodobá"?"📅 Dlouhodobá":"🕯 Jednorázová"}</span></div><div class="rd">${fmtTs(r.ts)}</div></div>
+      <div class="rh"><div class="rm2">${u?.emoji?`<span style="font-size:.95rem;cursor:pointer" onclick="showUserProfile('${r.createdBy}')">${u.emoji}</span>`:''}<span class="rn" style="cursor:pointer" onclick="showUserProfile('${r.createdBy}')">${esc(r.name)}</span>${publicBadge}<span class="tag t-${r.cat}">${r.cat}</span><span class="tag" style="background:rgba(255,255,255,.07);color:var(--muted);font-size:.65rem">${(r.reqType||"jednorázová")==="opakovaná"?"🔄 Opakovaná":(r.reqType||"jednorázová")==="dlouhodobá"?"📅 Dlouhodobá":"🕯 Jednorázová"}</span></div><div class="rd">${fmtTs(r.ts)}</div></div>
       <p class="rt">${esc(r.text)}</p>
       ${pHTML}
       <div class="rf">
@@ -1589,7 +1589,7 @@ function renderChat(){
   const atBottom=el.scrollHeight-el.clientHeight-el.scrollTop<100;
   el.innerHTML=msgs.map(m=>{
     const mine=m.author===CU.username;
-    const avEl=m.authorEmoji?`<div class="chat-av ea">${m.authorEmoji}</div>`:`<div class="chat-av">${ini(m.authorName||'?')}</div>`;
+    const avEl=m.authorEmoji?`<div class="chat-av ea" style="cursor:pointer" onclick="showUserProfile('${m.author}')">${m.authorEmoji}</div>`:`<div class="chat-av" style="cursor:pointer" onclick="showUserProfile('${m.author}')">${ini(m.authorName||'?')}</div>`;
     const reacts=m.reactions||{};
     const reactHTML=Object.entries(reacts).filter(([,v])=>v.length>0).map(([emoji,users])=>`<span class="reaction ${users.includes(CU.username)?'mine':''}" onclick="toggleReact('${m._id}','${emoji}')">${emoji} <span class="reaction-count">${users.length}</span></span>`).join('');
     const canDel=isAdmin()||m.author===CU.username;
@@ -1718,8 +1718,10 @@ function renderStats(){
     const dC=diary.filter(d=>d.createdBy===u.username).length;
     const userStreak=calcStreakFor(u.username);
     const streakBadge=userStreak>0?`<span style="font-size:.72rem;color:var(--gold);margin-left:4px">🔥${userStreak}</span>`:`<span style="font-size:.72rem;color:var(--muted);margin-left:4px">🔥0</span>`;
-    const avEl=u.emoji?`<div class="usc-av ea">${u.emoji}</div>`:`<div class="usc-av">${ini(u.name)}</div>`;
-    return`<div class="usc">${avEl}<div class="usc-info"><div class="usc-name" style="cursor:pointer" onclick="showUserProfile('${u.username}')">${esc(u.name)} <span class="tag ${u.role==='admin'?'t-rodina':u.role==='modlitebnik'?'t-duchovní':'t-jiné'}">${u.role}</span>${streakBadge}</div><div class="usc-stats"><div><div class="usc-sn">${pC}</div><div class="usc-sl">Modliteb</div></div><div><div class="usc-sn">${rC}</div><div class="usc-sl">Žádostí</div></div><div><div class="usc-sn">${wC}</div><div class="usc-sl">Stráží</div></div><div><div class="usc-sn">${dC}</div><div class="usc-sl">Zápisů</div></div></div></div></div>`;
+    const avEl=u.emoji?`<div class="usc-av ea" style="cursor:pointer" onclick="showUserProfile('${u.username}')">${u.emoji}</div>`:`<div class="usc-av" style="cursor:pointer" onclick="showUserProfile('${u.username}')">${ini(u.name)}</div>`;
+    const rm2={admin:'Admin',modlitebnik:'Modlitebník',mladeznik:'Mládežník'};
+    const rc2={admin:'ra',modlitebnik:'rm',mladeznik:'rml'};
+    return`<div class="usc">${avEl}<div class="usc-info"><div class="usc-name" style="cursor:pointer" onclick="showUserProfile('${u.username}')">${esc(u.name)} <span class="urole ${rc2[u.role]||'rml'}">${rm2[u.role]||u.role}</span>${streakBadge}</div><div class="usc-stats"><div><div class="usc-sn">${pC}</div><div class="usc-sl">Modliteb</div></div><div><div class="usc-sn">${rC}</div><div class="usc-sl">Žádostí</div></div><div><div class="usc-sn">${wC}</div><div class="usc-sl">Stráží</div></div><div><div class="usc-sn">${dC}</div><div class="usc-sl">Zápisů</div></div></div></div></div>`;
   }).join('');
 }
 function mkC(id,labels,data,bc,bgc,cfg,type){
@@ -1756,11 +1758,14 @@ window.showProfile=()=>{
       <div class="ns-row"><label>⏰ Připomínka stráže (24h předem)</label><label class="toggle"><input type="checkbox" id="ns4" ${notifSettings.watchReminder?'checked':''}><span class="slider"></span></label></div>
     </div>
     <button class="bp" onclick="saveNS()" style="margin-bottom:16px">Uložit nastavení oznámení</button>
-    <div class="g2" style="margin-bottom:16px">
+    ${(()=>{const {streak,best}=calcStreak();return streak>0?`<div style="background:linear-gradient(135deg,rgba(255,209,102,.1),rgba(255,209,102,.04));border:1px solid rgba(255,209,102,.25);border-radius:12px;padding:12px 16px;margin-bottom:14px;display:flex;align-items:center;gap:10px"><span style="font-size:1.6rem">🔥</span><div><span style="font-family:'Cinzel',serif;font-size:1.4rem;color:var(--gold)">${streak}</span> <span style="font-size:.75rem;color:var(--gold);opacity:.8">${streak===1?'den':'dnů'} streak</span><div style="font-size:.7rem;color:var(--muted);margin-top:2px">Nejlepší: ${best} ${best===1?'den':'dnů'}</div></div></div>`:'';})()}
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px">
       <div class="scard"><div class="snum">${pC}</div><div class="slbl">Modliteb</div></div>
       <div class="scard"><div class="snum">${reqs.filter(r=>r.createdBy===CU.username).length}</div><div class="slbl">Žádostí</div></div>
+      <div class="scard"><div class="snum">${reqs.filter(r=>r.createdBy===CU.username&&r.answered).length}</div><div class="slbl">Vyslyšených</div></div>
       <div class="scard"><div class="snum">${watch.filter(w=>w.createdBy===CU.username).length}</div><div class="slbl">Stráží</div></div>
       <div class="scard"><div class="snum">${diary.filter(d=>d.createdBy===CU.username).length}</div><div class="slbl">Zápisů</div></div>
+      <div class="scard"><div class="snum">${(()=>{const {streak}=calcStreak();return streak;})()}</div><div class="slbl">Streak 🔥</div></div>
     </div>
     <div class="lbl" style="margin-bottom:8px">📥 Export dat</div>
     <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px">
@@ -1878,22 +1883,51 @@ function startOnline(){
     });
 
     const allU=window._users||{};
-    list.innerHTML=online.map(u=>{
+    // Track which users are currently rendered
+    const prevNames=new Set([...list.querySelectorAll('[data-uname]')].map(el=>el.getAttribute('data-uname')));
+    const newNames=new Set(online.map(u=>u.username));
+    // Users who just joined (not in prev)
+    const joining=online.filter(u=>!prevNames.has(u.username));
+    // Users who left (in prev but not in new) - already handled above with .leaving class
+    online.forEach(u=>{
       const isMe=u.username===CU.username;
       const userDoc=allU[u.username]||{};
       const role=userDoc.role||'';
       const roleLabel=role==='admin'?'Admin':role==='modlitebnik'?'Modlitebník':role==='mladeznik'?'Mládežník':'';
       const roleCls=role==='admin'?'ra':role==='modlitebnik'?'rm':'rml';
+      const isJoining=!prevNames.has(u.username);
+      // Check if element already exists
+      const existing=list.querySelector('[data-uname="'+u.username+'"]');
+      if(existing){
+        // Already rendered, just update streak (no animation)
+        const streakEl=existing.querySelector('.online-streak');
+        if(streakEl){const s=calcStreakFor(u.username);streakEl.textContent='🔥'+(s>0?s:0);}
+        return;
+      }
       const av=u.emoji
         ?'<div class="online-av-sm ea">'+u.emoji+'</div>'
         :'<div class="online-av-sm">'+ini(u.name)+'</div>';
-      return'<div class="online-person joining" data-uname="'+u.username+'" onclick="showUserProfile(&quot;'+u.username+'&quot;)" title="Zobrazit profil">'+av
+      const el=document.createElement('div');
+      el.className='online-person'+(isJoining?' joining':'');
+      el.setAttribute('data-uname',u.username);
+      el.setAttribute('onclick','showUserProfile("'+u.username+'")');
+      el.setAttribute('title','Zobrazit profil');
+      const s=calcStreakFor(u.username);
+      el.innerHTML=av
         +'<div style="min-width:0"><div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap">'
         +'<span style="font-size:.78rem">'+esc(u.name)+(isMe?' <span style="color:var(--muted);font-size:.68rem">(ty)</span>':'')+'</span>'
         +(roleLabel?'<span class="urole '+roleCls+'" style="font-size:.62rem;padding:1px 5px">'+roleLabel+'</span>':'')
-        +(()=>{const s=calcStreakFor(u.username);return s>0?'<span style="font-size:.68rem;color:var(--gold)">🔥'+s+'</span>':'<span style="font-size:.68rem;color:var(--muted)">🔥0</span>';})()
-        +'</div></div></div>';
-    }).join('');
+        +'<span class="online-streak" style="font-size:.68rem;color:'+(s>0?'var(--gold)':'var(--muted)')+'">🔥'+(s>0?s:0)+'</span>'
+        +'</div></div>';
+      list.appendChild(el);
+    });
+    // Remove elements for users who left (after animation)
+    [...list.querySelectorAll('[data-uname]')].forEach(el=>{
+      if(!newNames.has(el.getAttribute('data-uname'))&&!el.classList.contains('leaving')){
+        el.classList.add('leaving');
+        setTimeout(()=>el.remove(),300);
+      }
+    });
   });
 }
 
@@ -2209,7 +2243,7 @@ window.showUserProfile=(username)=>{
   m.innerHTML=`<div class="modal" onclick="event.stopPropagation()" style="max-width:400px">
     <button class="modal-close" onclick="document.getElementById('userProfileModal').remove()">✕</button>
     <div style="text-align:center;margin-bottom:22px">
-      <div style="width:68px;height:68px;border-radius:50%;background:${u.emoji?'var(--surface)':'linear-gradient(135deg,var(--purple),var(--purple-d))'};display:flex;align-items:center;justify-content:center;font-size:${u.emoji?'2rem':'1.1rem'};font-weight:800;color:#fff;margin:0 auto 10px;box-shadow:0 6px 24px rgba(0,0,0,.3)">${u.emoji||ini(u.name)}</div>
+      <div style="width:68px;height:68px;border-radius:50%;background:${u.emoji?'var(--surface)':'linear-gradient(135deg,var(--purple),var(--purple-d))'};display:flex;align-items:center;justify-content:center;font-size:${u.emoji?'2rem':'1.1rem'};font-weight:800;color:#fff;margin:0 auto 10px;box-shadow:0 6px 24px rgba(0,0,0,.3);flex-shrink:0;line-height:1;text-align:center">${u.emoji||ini(u.name)}</div>
       <div style="font-family:'Cinzel',serif;font-size:1.2rem;color:var(--white)">${esc(u.name)}</div>
       <div style="color:var(--muted);font-size:.8rem;margin-top:2px">@${esc(username)}</div>
       <span class="urole ${rc[u.role]||'rml'}" style="margin-top:6px;display:inline-block">${rm[u.role]||u.role}</span>
