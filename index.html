@@ -16,6 +16,7 @@
 :root{
   --purple:#7B2FBE;--purple-l:#9B4FDE;--purple-xl:#C080FF;--purple-d:#4A1882;
   --bg:#1A0833;--bg2:#220D42;--surface:#2A1050;--card:#311260;
+  --card-bg:rgba(49,18,96,.72);--bg-dark:rgba(26,8,51,.97);--bg-dark2:rgba(26,8,51,.98);--orb2:#3D0D8C;--orb3:#5A1BA0;
   --border:rgba(155,79,222,0.2);--border-l:rgba(155,79,222,0.4);
   --text:#F0E8FF;--muted:#9B8FBB;--gold:#FFD166;--green:#06D6A0;--red:#EF476F;--white:#fff;
 }
@@ -27,12 +28,12 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 .orbs{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
 .orb{position:absolute;border-radius:50%;filter:blur(80px);opacity:0.2}
 .o1{width:600px;height:600px;background:var(--purple-d);top:-180px;left:-100px}
-.o2{width:500px;height:500px;background:#3D0D8C;bottom:-140px;right:-100px}
-.o3{width:280px;height:280px;background:#5A1BA0;top:42%;left:50%;transform:translate(-50%,-50%)}
+.o2{width:500px;height:500px;background:var(--orb2);bottom:-140px;right:-100px}
+.o3{width:280px;height:280px;background:var(--orb3);top:42%;left:50%;transform:translate(-50%,-50%)}
 #app{position:relative;z-index:1}
 /* AUTH */
 #authWrap{display:flex;align-items:flex-start;justify-content:center;min-height:100vh;padding:20px;padding-top:max(20px,env(safe-area-inset-top))}
-.abox{background:rgba(49,18,96,0.92);border:1px solid var(--border-l);border-radius:24px;padding:36px 28px;width:100%;max-width:410px;backdrop-filter:blur(20px);box-shadow:0 32px 80px rgba(0,0,0,0.5);animation:abox-in .6s cubic-bezier(.22,.68,0,1.2) both;margin:auto 0;transition:box-shadow .3s ease}
+.abox{background:var(--card-alpha-hi,rgba(49,18,96,0.92));border:1px solid var(--border-l);border-radius:24px;padding:36px 28px;width:100%;max-width:410px;backdrop-filter:blur(20px);box-shadow:0 32px 80px rgba(0,0,0,0.5);animation:abox-in .6s cubic-bezier(.22,.68,0,1.2) both;margin:auto 0;transition:box-shadow .3s ease}
 .abox:has(#registerForm:not([style*="display:none"])){box-shadow:0 40px 90px rgba(0,0,0,.55)}
 @keyframes overlay-bg-in{from{background:rgba(0,0,0,0);backdrop-filter:blur(0px)}to{background:rgba(0,0,0,.75);backdrop-filter:blur(6px)}}
 @keyframes overlay-bg-out{from{background:rgba(0,0,0,.75);backdrop-filter:blur(6px)}to{background:rgba(0,0,0,0);backdrop-filter:blur(0px)}}
@@ -81,7 +82,7 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 .pendbox p{color:var(--muted);font-size:.87rem;line-height:1.65}
 /* SIDEBAR */
 #mainApp{display:none}
-.sidebar{position:fixed;top:0;left:0;bottom:0;width:238px;background:rgba(26,8,51,.97);border-right:1px solid var(--border);display:flex;flex-direction:column;z-index:100;backdrop-filter:blur(20px);transition:transform .3s ease}
+.sidebar{position:fixed;top:0;left:0;bottom:0;width:238px;background:var(--bg-dark);border-right:1px solid var(--border);display:flex;flex-direction:column;z-index:100;backdrop-filter:blur(20px);transition:transform .3s ease}
 .slogo{padding:20px 18px 15px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
 .slogo-icon{width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,var(--purple),var(--purple-d));display:flex;align-items:center;justify-content:center;font-size:.95rem;flex-shrink:0}
 .slogo-name{font-family:'Cinzel',serif;font-size:1.1rem;color:var(--white);letter-spacing:.05em;line-height:1}
@@ -136,11 +137,11 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 .ph h1{font-family:'Cinzel',serif;font-size:1.55rem;color:var(--white);letter-spacing:.04em;margin-bottom:3px}
 .ph p{color:var(--muted);font-size:.84rem}
 .sec{display:none}.sec.on{display:block;animation:fu .3s ease;padding-bottom:24px}
-.card{background:rgba(49,18,96,.72);border:1px solid var(--border);border-radius:14px;padding:19px;margin-bottom:13px}
+.card{background:var(--card-bg);border:1px solid var(--border);border-radius:14px;padding:19px;margin-bottom:13px}
 .card-top::before{content:'';display:block;height:2px;background:linear-gradient(90deg,transparent,var(--purple-l),transparent);margin:-19px -19px 15px;border-radius:14px 14px 0 0}
 .g3{display:grid;grid-template-columns:repeat(3,1fr);gap:11px;margin-bottom:16px}
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
-.scard{background:rgba(49,18,96,.72);border:1px solid var(--border);border-radius:12px;padding:15px;text-align:center}
+.scard{background:var(--card-bg);border:1px solid var(--border);border-radius:12px;padding:15px;text-align:center}
 .snum{font-family:'Cinzel',serif;font-size:1.8rem;color:var(--purple-xl);margin-bottom:2px}
 .slbl{color:var(--muted);font-size:.73rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase}
 /* BUTTONS */
@@ -163,7 +164,7 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 .t-práce{background:rgba(80,180,255,.2);color:#80D0FF}.t-duchovní{background:rgba(6,214,160,.2);color:var(--green)}
 .t-jiné{background:rgba(255,255,255,.08);color:var(--muted)}.t-anon{background:rgba(255,255,255,.08);color:var(--muted)}
 /* PRAYER CARD */
-.pc{background:rgba(49,18,96,.72);border:1px solid var(--border);border-radius:12px;padding:15px;margin-bottom:10px;transition:border-color .2s;animation:fu .3s ease}
+.pc{background:var(--card-bg);border:1px solid var(--border);border-radius:12px;padding:15px;margin-bottom:10px;transition:border-color .2s;animation:fu .3s ease}
 .pc:hover{border-color:var(--border-l)}
 .pc.answered{border-color:rgba(6,214,160,.3)}
 .pc.answered::before{content:'';display:block;height:2px;background:linear-gradient(90deg,transparent,var(--green),transparent);margin:-15px -15px 11px;border-radius:12px 12px 0 0}
@@ -200,13 +201,13 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 .c-send{padding:7px 12px;background:var(--purple);border:none;border-radius:8px;color:var(--white);font-family:'Nunito',sans-serif;font-size:.76rem;font-weight:700;cursor:pointer;transition:opacity .2s}
 .c-send:hover{opacity:.85}
 /* CHECKLIST */
-.ci{display:flex;align-items:flex-start;gap:11px;background:rgba(49,18,96,.72);border:1px solid var(--border);border-radius:11px;padding:13px 15px;margin-bottom:8px;animation:fu .3s ease}
+.ci{display:flex;align-items:flex-start;gap:11px;background:var(--card-bg);border:1px solid var(--border);border-radius:11px;padding:13px 15px;margin-bottom:8px;animation:fu .3s ease}
 .ci.done{opacity:.48;border-color:rgba(6,214,160,.18)}.ci.done .it{text-decoration:line-through;color:var(--muted)}
 .cb{width:19px;height:19px;border-radius:5px;border:2px solid var(--border-l);background:transparent;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .2s;margin-top:1px}
 .cb.on{background:var(--green);border-color:var(--green)}.cb.on::after{content:'✓';color:#fff;font-size:11px;font-weight:900}
 .it{flex:1;font-size:.88rem;line-height:1.48}.im{font-size:.71rem;color:var(--muted);margin-top:2px}
 /* WATCH CALENDAR */
-.cal-wrap{background:rgba(49,18,96,.72);border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:14px}
+.cal-wrap{background:var(--card-bg);border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:14px}
 .cal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
 .cal-title{font-family:'Cinzel',serif;font-size:.95rem;color:var(--white)}
 .cal-nav{background:rgba(123,47,190,.15);border:1px solid var(--border);border-radius:7px;color:var(--purple-xl);padding:4px 11px;cursor:pointer;font-family:'Nunito',sans-serif;font-size:.8rem;font-weight:700;transition:background .2s}
@@ -224,12 +225,12 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 .cal-popup h3{font-family:'Cinzel',serif;font-size:.9rem;color:var(--white);margin-bottom:12px}
 .cal-popup-close{float:right;background:none;border:none;color:var(--muted);cursor:pointer;font-size:1.1rem;line-height:1}
 /* WATCH */
-.wc{background:rgba(49,18,96,.72);border:1px solid var(--border);border-radius:12px;padding:15px;margin-bottom:9px;animation:fu .3s ease}
+.wc{background:var(--card-bg);border:1px solid var(--border);border-radius:12px;padding:15px;margin-bottom:9px;animation:fu .3s ease}
 .wc.curr{border-color:rgba(255,209,102,.3)}.wc.future{border-color:rgba(155,79,222,.3)}
 .wt{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
 .wtag{background:rgba(123,47,190,.2);border:1px solid var(--border);border-radius:6px;padding:2px 8px;font-size:.74rem;color:var(--muted)}
 /* DIARY */
-.de{background:rgba(49,18,96,.72);border:1px solid var(--border);border-radius:12px;padding:17px;margin-bottom:10px;animation:fu .3s ease}
+.de{background:var(--card-bg);border:1px solid var(--border);border-radius:12px;padding:17px;margin-bottom:10px;animation:fu .3s ease}
 .da{font-weight:800;color:var(--purple-xl);font-size:.85rem}.dd{color:var(--muted);font-size:.7rem}
 .dt{color:var(--text);line-height:1.68;font-size:.88rem;margin-top:8px}
 .ds{margin-top:9px;padding:8px 12px;background:rgba(255,209,102,.07);border-left:3px solid var(--gold);border-radius:0 6px 6px 0;color:var(--gold);font-style:italic;font-size:.83rem}
@@ -245,7 +246,7 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 .chat-bubble-wrap{max-width:70%}
 .chat-name{font-size:.72rem;font-weight:800;color:var(--purple-xl);margin-bottom:3px}
 .chat-msg.mine .chat-name{text-align:right}
-.chat-bubble{background:rgba(49,18,96,.8);border:1px solid var(--border);border-radius:12px;padding:9px 13px;position:relative}
+.chat-bubble{background:var(--card-bg);border:1px solid var(--border);border-radius:12px;padding:9px 13px;position:relative}
 .chat-msg.mine .chat-bubble{background:rgba(123,47,190,.3);border-color:var(--border-l)}
 .chat-text{font-size:.88rem;color:var(--text);line-height:1.5;word-break:break-word}
 .chat-footer{display:flex;justify-content:space-between;align-items:center;margin-top:4px;gap:8px}
@@ -278,13 +279,13 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 .react-emoji{font-size:1.3rem;cursor:pointer;padding:4px;border-radius:7px;transition:background .15s}
 .react-emoji:hover{background:rgba(123,47,190,.2)}
 /* STATS */
-.chart-wrap{background:rgba(49,18,96,.72);border:1px solid var(--border);border-radius:14px;padding:19px;margin-bottom:14px}
+.chart-wrap{background:var(--card-bg);border:1px solid var(--border);border-radius:14px;padding:19px;margin-bottom:14px}
 .chart-title{font-family:'Cinzel',serif;font-size:.88rem;color:var(--purple-xl);margin-bottom:13px}
 .month-nav{display:flex;align-items:center;gap:10px;margin-bottom:18px}
 .month-nav button{background:rgba(123,47,190,.15);border:1px solid var(--border);border-radius:8px;color:var(--purple-xl);padding:5px 12px;cursor:pointer;font-family:'Nunito',sans-serif;font-size:.82rem;font-weight:700;transition:background .2s}
 .month-nav button:hover{background:rgba(123,47,190,.3)}
 .month-label{font-family:'Cinzel',serif;font-size:.97rem;color:var(--white);flex:1;text-align:center}
-.usc{background:rgba(49,18,96,.72);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:8px;display:flex;align-items:center;gap:12px}
+.usc{background:var(--card-bg);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:8px;display:flex;align-items:center;gap:12px}
 .usc-av{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,var(--purple),var(--purple-d));display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.85rem;color:var(--white);flex-shrink:0}
 .usc-av.ea{background:var(--surface);font-size:1.3rem}
 .usc-info{flex:1}.usc-name{font-weight:700;font-size:.87rem;margin-bottom:4px}
@@ -292,7 +293,7 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 .usc-sn{font-family:'Cinzel',serif;font-size:1.1rem;color:var(--purple-xl);font-weight:700}
 .usc-sl{font-size:.63rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
 /* ADMIN */
-.ur{display:flex;align-items:center;gap:9px;background:rgba(49,18,96,.72);border:1px solid var(--border);border-radius:11px;padding:11px 14px;margin-bottom:7px}
+.ur{display:flex;align-items:center;gap:9px;background:var(--card-bg);border:1px solid var(--border);border-radius:11px;padding:11px 14px;margin-bottom:7px}
 .ui{flex:1;min-width:0}.un2{font-weight:700;font-size:.87rem}.us{font-size:.72rem;color:var(--muted);margin-top:1px}
 .ua{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
 .bs-placeholder{display:inline-flex;padding:5px 11px;border-radius:7px;font-size:.75rem;visibility:hidden;pointer-events:none;border:1px solid transparent;white-space:nowrap}
@@ -334,7 +335,7 @@ input:checked+.slider::before{transform:translateX(18px)}
 .stat-row-label{color:var(--muted)}
 .stat-row-val{font-weight:800;color:var(--purple-xl)}
 .week-stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:10px}
-.week-scard{background:rgba(49,18,96,.5);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center}
+.week-scard{background:var(--card-bg-lo,rgba(49,18,96,.5));border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center}
 .week-snum{font-family:'Cinzel',serif;font-size:1.4rem;color:var(--purple-xl)}
 .week-slbl{color:var(--muted);font-size:.67rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;margin-top:2px}
 .streak-badge{display:inline-flex;align-items:center;gap:5px;background:rgba(255,209,102,.12);border:1px solid rgba(255,209,102,.3);border-radius:20px;padding:4px 12px;font-size:.82rem;color:var(--gold);font-weight:800}
@@ -402,7 +403,7 @@ input:checked+.slider::before{transform:translateX(18px)}
   .week-stat-grid{grid-template-columns:1fr 1fr!important}
   .b-gcal{font-size:.68rem;padding:4px 8px}
 }
-.mob-topbar{display:none;align-items:center;justify-content:space-between;padding:10px 14px;background:rgba(26,8,51,.98);border-bottom:1px solid var(--border);backdrop-filter:blur(12px);position:fixed;top:0;left:0;right:0;z-index:90;height:52px}
+.mob-topbar{display:none;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--bg-dark2);border-bottom:1px solid var(--border);backdrop-filter:blur(12px);position:fixed;top:0;left:0;right:0;z-index:90;height:52px}
 .mob-topbar-title{font-family:'Cinzel',serif;font-size:1rem;color:var(--white);letter-spacing:.05em}
 .mob-topbar-btn{background:rgba(123,47,190,.15);border:1px solid var(--border);border-radius:8px;color:var(--purple-xl);padding:6px 10px;cursor:pointer;font-size:.9rem;line-height:1;-webkit-tap-highlight-color:transparent}
 @media(max-width:700px){.mob-topbar{display:flex}.hbg{display:none!important}}
@@ -446,7 +447,7 @@ input:checked+.slider::before{transform:translateX(18px)}
 
 /* PERSONAL STATS section */
 .pstat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
-.pstat-card{background:rgba(49,18,96,.72);border:1px solid var(--border);border-radius:12px;padding:14px;text-align:center}
+.pstat-card{background:var(--card-bg);border:1px solid var(--border);border-radius:12px;padding:14px;text-align:center}
 .pstat-num{font-family:'Cinzel',serif;font-size:1.6rem;color:var(--purple-xl);margin-bottom:2px}
 .pstat-lbl{color:var(--muted);font-size:.67rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase}
 .cat-bar-row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
@@ -492,7 +493,7 @@ input:checked+.slider::before{transform:translateX(18px)}
 
 <!-- PUBLIC PRAYER OVERLAY -->
 <div id="publicPrayerOverlay" style="display:none;position:fixed;inset:0;z-index:800;align-items:center;justify-content:center;padding:20px">
-  <div id="pubCard" style="background:rgba(42,16,80,.97);border:1px solid var(--border-l);border-radius:22px;padding:36px 30px;width:100%;max-width:420px;box-shadow:0 32px 80px rgba(0,0,0,.6);position:relative">
+  <div id="pubCard" style="background:var(--surface);border:1px solid var(--border-l);border-radius:22px;padding:36px 30px;width:100%;max-width:420px;box-shadow:0 32px 80px rgba(0,0,0,.6);position:relative">
     <button onclick="closePublicPrayer()" style="position:absolute;top:14px;right:16px;background:none;border:none;color:var(--muted);font-size:1.4rem;cursor:pointer;line-height:1">✕</button>
     <div style="text-align:center;margin-bottom:22px">
       <div style="width:56px;height:56px;border-radius:15px;background:linear-gradient(135deg,var(--purple),var(--purple-d));display:flex;align-items:center;justify-content:center;font-size:1.6rem;margin:0 auto 12px;box-shadow:0 6px 24px rgba(123,47,190,.4)">🙏</div>
@@ -1069,7 +1070,7 @@ function enterApp(){
   if(CU.role==='pending'){document.getElementById('pendScreen').style.display='flex';return;}
   document.getElementById('mainApp').style.display='block';
   document.getElementById('notifBtn').style.display='flex';
-  initUI();startListeners();initEmojiBar();startOnline();
+  initUI();startListeners();initEmojiBar();startOnline();loadPrayerLog().then(()=>{renderStreakDash();});
   setTimeout(requestPush,2000);
 }
 
@@ -1272,7 +1273,7 @@ function renderReqs(){
     </div>`;
   }).join('');
 }
-window.togglePray=async id=>{const r=(window._req||[]).find(x=>x._id===id);if(!r)return;const p=(r.prayedBy||[]).includes(CU.username);try{await updateDoc(doc(db,'requests',id),{prayedBy:p?arrayRemove(CU.username):arrayUnion(CU.username)});toast(p?'Modlitba odebrána':'✝ Modlíš se spolu s týmem!');}catch(e){toast('Chyba: '+e.message);}};
+window.togglePray=async id=>{const r=(window._req||[]).find(x=>x._id===id);if(!r)return;const p=(r.prayedBy||[]).includes(CU.username);try{await updateDoc(doc(db,'requests',id),{prayedBy:p?arrayRemove(CU.username):arrayUnion(CU.username)});if(!p)logPrayerDay();toast(p?'Modlitba odebrána':'✝ Modlíš se spolu s týmem!');}catch(e){toast('Chyba: '+e.message);}};
 window.toggleAns=async id=>{const r=(window._req||[]).find(x=>x._id===id);if(!r)return;if(r.createdBy!==CU.username&&!isAdmin()){toast('Jen autor může měnit stav.');return;}try{await updateDoc(doc(db,'requests',id),{answered:!r.answered});toast(r.answered?'Vráceno jako aktivní':'✓ Sláva Bohu!');}catch(e){toast('Chyba: '+e.message);}};
 window.delReq=async id=>{const r=(window._req||[]).find(x=>x._id===id);if(!r)return;if(!isAdmin()&&r.createdBy!==CU.username){toast('Nemáš oprávnění.');return;}if(!confirm('Opravdu smazat?'))return;try{await deleteDoc(doc(db,'requests',id));toast('Smazáno');}catch(e){toast('Chyba: '+e.message);}};
 
@@ -1302,7 +1303,7 @@ function renderChk(){
   }).join('');
 }
 window.toggleChk=async id=>{const item=(window._chk||[]).find(x=>x._id===id);if(!item)return;try{await updateDoc(doc(db,'checklist',id),{done:!item.done});if(!item.done)toast('✓ Splněno!');}catch(e){toast('Chyba: '+e.message);}};
-window.toggleChkPray=async id=>{const item=(window._chk||[]).find(x=>x._id===id);if(!item)return;const prayed=(item.prayedBy||[]).includes(CU.username);try{await updateDoc(doc(db,'checklist',id),{prayedBy:prayed?arrayRemove(CU.username):arrayUnion(CU.username)});toast(prayed?'Modlitba odebrána':'🙏 Modlíš se!');}catch(e){toast('Chyba: '+e.message);}};
+window.toggleChkPray=async id=>{const item=(window._chk||[]).find(x=>x._id===id);if(!item)return;const prayed=(item.prayedBy||[]).includes(CU.username);try{await updateDoc(doc(db,'checklist',id),{prayedBy:prayed?arrayRemove(CU.username):arrayUnion(CU.username)});if(!prayed)logPrayerDay();toast(prayed?'Modlitba odebrána':'🙏 Modlíš se!');}catch(e){toast('Chyba: '+e.message);}};
 window.delChk=async id=>{const item=(window._chk||[]).find(x=>x._id===id);if(!item)return;if(!isAdmin()&&item.createdBy!==CU.username){toast('Nemáš oprávnění.');return;}if(!confirm('Smazat?'))return;try{await deleteDoc(doc(db,'checklist',id));toast('Smazáno');}catch(e){toast('Chyba: '+e.message);}};
 
 // ── WATCH CALENDAR ─────────────────────────────────────────────────────────
@@ -1436,7 +1437,7 @@ function renderAnon(){
 }
 window.archiveAnon=async id=>{try{await updateDoc(doc(db,'anon',id),{archived:true});toast('📦 Žádost uzavřena');}catch(e){toast('Chyba: '+e.message);}};
 window.unarchiveAnon=async id=>{try{await updateDoc(doc(db,'anon',id),{archived:false});toast('↩ Žádost obnovena');}catch(e){toast('Chyba: '+e.message);}};
-window.tgPrayAnon=async id=>{const r=(window._anon||[]).find(x=>x._id===id);if(!r)return;const p=(r.prayedBy||[]).includes(CU.username);try{await updateDoc(doc(db,'anon',id),{prayedBy:p?arrayRemove(CU.username):arrayUnion(CU.username)});toast(p?'Modlitba odebrána':'🙏 Modlíš se!');}catch(e){toast('Chyba: '+e.message);}};
+window.tgPrayAnon=async id=>{const r=(window._anon||[]).find(x=>x._id===id);if(!r)return;const p=(r.prayedBy||[]).includes(CU.username);try{await updateDoc(doc(db,'anon',id),{prayedBy:p?arrayRemove(CU.username):arrayUnion(CU.username)});if(!p)logPrayerDay();toast(p?'Modlitba odebrána':'🙏 Modlíš se!');}catch(e){toast('Chyba: '+e.message);}};
 window.delAnon=async id=>{if(!isAdmin()){toast('Jen admin může mazat.');return;}if(!confirm('Smazat?'))return;try{await deleteDoc(doc(db,'anon',id));toast('Smazáno');}catch(e){toast('Chyba: '+e.message);}};
 
 // ── DIARY ──────────────────────────────────────────────────────────────────
@@ -1839,6 +1840,15 @@ function applyTheme(idx){
   r.setProperty('--card',`hsl(${h},48%,17%)`);
   r.setProperty('--border',`hsla(${h},${s},60%,0.2)`);
   r.setProperty('--border-l',`hsla(${h},${s},60%,0.4)`);
+  // Card backgrounds derived from hue
+  r.setProperty('--card-bg',`hsla(${h},55%,22%,.72)`);
+  r.setProperty('--card-bg-lo',`hsla(${h},55%,22%,.5)`);
+  r.setProperty('--card-alpha-hi',`hsla(${h},55%,22%,.92)`);
+  r.setProperty('--bg-dark',`hsla(${h},58%,7%,.97)`);
+  r.setProperty('--bg-dark2',`hsla(${h},58%,7%,.98)`);
+  r.setProperty('--orb2',`hsl(${h},65%,28%)`);
+  r.setProperty('--orb3',`hsl(${h},55%,36%)`);
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content',`hsl(${h},55%,8%)`);
   localStorage.setItem('oxygen_theme',idx);
 }
 function loadTheme(){const s=localStorage.getItem('oxygen_theme');if(s!==null)applyTheme(parseInt(s));}
@@ -1846,38 +1856,56 @@ loadTheme();
 window.pickTheme=idx=>{applyTheme(idx);document.querySelectorAll('.theme-swatch').forEach((el,i)=>el.classList.toggle('active',i===idx));toast('🎨 Téma změněno');};
 
 // ── STREAK ────────────────────────────────────────────────────────────────
+// logPrayerDay – called when user clicks "Modlím se" – saves today's date to prayerLog
+async function logPrayerDay(){
+  if(!CU)return;
+  const today=new Date();
+  const dateStr=today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0')+'-'+String(today.getDate()).padStart(2,'0');
+  const logId=CU.username+'_'+dateStr;
+  try{await setDoc(doc(db,'prayerLog',logId),{username:CU.username,date:dateStr,ts:serverTimestamp()});}catch(_){}
+  // Refresh streak display
+  await loadPrayerLog();
+  renderStreakDash();
+  if(document.getElementById('sec-my-stats').classList.contains('on'))renderMyStats();
+}
+
+let _prayerDays=new Set(); // dates "YYYY-MM-DD" for current user
+async function loadPrayerLog(){
+  if(!CU)return;
+  try{
+    const snap=await getDocs(query(collection(db,'prayerLog'),orderBy('date','asc')));
+    _prayerDays=new Set(snap.docs.filter(d=>d.data().username===CU.username).map(d=>d.data().date));
+  }catch(_){}
+}
+
 function calcStreak(){
-  const reqs=window._req||[],chk=window._chk||[];
-  // Collect all days the user prayed (prayedBy)
-  const prayedDays=new Set();
-  [...reqs,...chk].forEach(item=>{
-    if(!(item.prayedBy||[]).includes(CU?.username))return;
-    const ts=item.ts;if(!ts)return;
-    const d=ts.toDate?ts.toDate():new Date(ts);
-    if(!isNaN(d.getTime()))prayedDays.add(d.toDateString());
-  });
-  // Count current streak (consecutive days ending today or yesterday)
-  let streak=0,best=0,cur=0;
-  const today=new Date();today.setHours(0,0,0,0);
-  // Build sorted day list
-  const days=[...prayedDays].map(s=>new Date(s)).sort((a,b)=>b-a);
+  const days=[..._prayerDays].sort();
   if(!days.length)return{streak:0,best:0};
-  // Check if today or yesterday is in set
-  const todayStr=today.toDateString();
+  const today=new Date();
+  const todayStr=today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0')+'-'+String(today.getDate()).padStart(2,'0');
   const yest=new Date(today);yest.setDate(yest.getDate()-1);
-  const yestStr=yest.toDateString();
-  let ref=prayedDays.has(todayStr)?new Date(today):prayedDays.has(yestStr)?new Date(yest):null;
+  const yestStr=yest.getFullYear()+'-'+String(yest.getMonth()+1).padStart(2,'0')+'-'+String(yest.getDate()).padStart(2,'0');
+  // Current streak
+  let streak=0;
+  let ref=_prayerDays.has(todayStr)?todayStr:_prayerDays.has(yestStr)?yestStr:null;
   if(ref){
     streak=1;
-    let check=new Date(ref);
-    while(true){check.setDate(check.getDate()-1);if(prayedDays.has(check.toDateString())){streak++;}else break;}
+    let d=new Date(ref);
+    while(true){
+      d.setDate(d.getDate()-1);
+      const s=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+      if(_prayerDays.has(s))streak++;else break;
+    }
   }
   // Best streak
-  let sorted=[...prayedDays].map(s=>new Date(s)).sort((a,b)=>a-b);
-  cur=sorted.length>0?1:0;best=cur;
-  for(let i=1;i<sorted.length;i++){
-    const diff=(sorted[i]-sorted[i-1])/(1000*60*60*24);
-    if(Math.round(diff)===1){cur++;best=Math.max(best,cur);}else{cur=1;}
+  let best=0,cur=0;
+  for(let i=0;i<days.length;i++){
+    if(i===0){cur=1;}else{
+      const prev=new Date(days[i-1]);const curr=new Date(days[i]);
+      const diff=Math.round((curr-prev)/(1000*60*60*24));
+      cur=diff===1?cur+1:1;
+    }
+    best=Math.max(best,cur);
   }
   return{streak,best};
 }
