@@ -1503,22 +1503,20 @@ window.calClick=(y,mo,d,e)=>{
   }else{
     // Sestavit seznam uživatelů – strážce (radio) + další (checkboxy)
     const users=Object.values(window._users||{}).filter(u=>u.role!=='pending').sort((a,b)=>a.name.localeCompare(b.name));
-    // Seznam uživatelů — kliknutím přidáš/odebereš, první vybraný = strážce
-    const userChips=users.map(u=>{
-      const isMe=u.username===CU.username;
-      const av=u.emoji?'<div class="cp-user-av ea">'+u.emoji+'</div>':'<div class="cp-user-av">'+ini(u.name)+'</div>';
-      return '<div class="cp-chip'+(isMe?' cp-chip-guardian':'')+'" id="cpChip_'+u.username+'" onclick="cpChipClick(\''+u.username+'\')">'
-        +av+'<span>'+esc(u.name.split(' ')[0])+'</span>'
-        +'<span class="cp-chip-role" id="cpChipRole_'+u.username+'">'+(isMe?'⭐':'')+'</span>'
-        +'</div>';
-    }).join('');
+    // Jednoduchý výběr strážce — dropdown + checkboxy pro další
+    const guardianOpts=users.map(u=>'<option value="'+u.username+'"'+(u.username===CU.username?' selected':'')+'>'+esc(u.name)+'</option>').join('');
+    const memberChecks=users.map(u=>'<label style="display:flex;align-items:center;gap:8px;padding:4px 0;cursor:pointer;font-size:.84rem;color:var(--text)">'
+      +'<input type="checkbox" id="cpMember_'+u.username+'" value="'+u.username+'" style="accent-color:var(--purple-l);width:15px;height:15px;cursor:pointer">'
+      +(u.emoji?'<span>'+u.emoji+'</span>':'')
+      +esc(u.name)
+      +'</label>').join('');
     popup.innerHTML=
       '<button class="cal-popup-close" onclick="document.querySelector(\'.cal-popup\').remove();calPopup=null">✕</button>'
       +'<h3>Přidat stráž</h3>'
       +'<div style="color:var(--muted);font-size:.79rem;margin-bottom:10px">'+label+'</div>'
-      +'<div class="cp-section-lbl">Kdo se účastní</div>'
-      +'<div class="cp-chips" id="cpChips">'+userChips+'</div>'
-      +'<div class="fg" style="margin-top:12px;margin-bottom:8px"><label>Do data</label><input type="date" id="cpE" value="'+iso+'"></div>'
+      +'<div class="fg" style="margin-bottom:10px"><label>Strážce</label><select id="cpGuardianSelect" style="width:100%">'+guardianOpts+'</select></div>'
+      +'<div class="fg" style="margin-bottom:10px"><label>Další účastníci</label><div style="background:rgba(0,0,0,.15);border:1px solid var(--border);border-radius:10px;padding:8px 12px;max-height:150px;overflow-y:auto">'+memberChecks+'</div></div>'
+      +'<div class="fg" style="margin-bottom:8px"><label>Do data</label><input type="date" id="cpE" value="'+iso+'"></div>'
       +'<div class="fg" style="margin-bottom:10px"><label>Témata (čárkou)</label><input type="text" id="cpT" placeholder="Mládež, vedení, …"></div>'
       +'<button class="bp" style="padding:9px" onclick="saveCalWatch(\''+iso+'\')">Uložit</button>';
     window._cpGuardian=CU.username;
@@ -2399,3 +2397,34 @@ restoreSession();
 </script>
 </body>
 </html>
+window.saveCalWatch=async iso=>{
+  const guardianUsername=document.getElementById('cpGuardianSelect')?.value||CU.username;
+  const coPersons=[...document.querySelectorAll('[id^="cpMember_"]:checked')].map(el=>el.value).filter(v=>v!==guardianUsername);
+  const guardianUser=window._users?.[guardianUsername];
+  const person=guardianUser?.name||CU.name;
+  const endVal=document.getElementById('cpE')?.value||iso;
+  // Blokuj překryv
+  const sd0=new Date(iso);sd0.setHours(0,0,0,0);
+  const ed0=new Date(endVal);ed0.setHours(23,59,59,999);
+  const overlap=(window._watch||[]).find(w=>{
+    if(!w.startDate)return false;
+    const wsd=new Date(w.startDate);wsd.setHours(0,0,0,0);
+    const wed=w.endDate?new Date(w.endDate):new Date(w.startDate);wed.setHours(23,59,59,999);
+    return sd0<=wed&&ed0>=wsd;
+  });
+  if(overlap){toast('⚠️ Toto období je již obsazeno – '+overlap.person);return;}
+  const topStr=document.getElementById('cpT')?.value.trim()||'';
+  const topics=topStr.split(',').map(s=>s.trim()).filter(Boolean);
+  const sd=new Date(iso);const ed=new Date(endVal);
+  const dateLabel=(()=>{const day=sd.getDate();const mon=sd.getMonth()+1;const dayE=ed.getDate();const monE=ed.getMonth()+1;return endVal!==iso?`${day}. ${mon}. – ${dayE}. ${monE}. ${ed.getFullYear()}`:`${day}. ${mon}. ${sd.getFullYear()}`;})();
+  try{
+    await addDoc(collection(db,'watch'),{
+      person,guardianUsername,coPersons,addedBy:CU.username,
+      date:dateLabel,startDate:iso,endDate:endVal,
+      topics,createdBy:guardianUsername,ts:serverTimestamp()
+    });
+    document.querySelector('.cal-popup')?.remove();calPopup=null;
+    toast('⌚ Stráž přidána');
+  }catch(e){toast('Chyba: '+e.message);}
+};
+
