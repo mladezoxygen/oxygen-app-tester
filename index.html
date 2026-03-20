@@ -1297,7 +1297,7 @@ function renderReqs(){
     const pHTML=pNames.length?`<div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:3px;align-items:center"><span style="font-size:.7rem;color:var(--muted)">Modlil/a se: </span>${pNames.map(n=>`<span style="font-size:.71rem;background:rgba(123,47,190,.15);border:1px solid var(--border);border-radius:20px;padding:1px 7px;color:var(--purple-xl)">${esc(n)}</span>`).join('')}</div>`:'';
     const publicBadge=isPublic?`<span class="tag" style="background:rgba(255,209,102,.15);color:var(--gold);border:1px solid rgba(255,209,102,.3)">🌐 Veřejná</span>`:'';
     return`<div class="pc ${r.answered?'answered':''}">
-      <div class="rh"><div class="rm2">${u?.emoji?`<span style="font-size:.95rem;cursor:pointer" onclick="showUserProfile('${r.createdBy}')">${u.emoji}</span>`:''}<span class="rn" style="cursor:pointer" onclick="showUserProfile('${r.createdBy}')">${esc(r.name)}</span>${publicBadge}<span class="tag t-${r.cat}">${r.cat}</span><span class="tag" style="background:rgba(255,255,255,.07);color:var(--muted);font-size:.65rem">${(r.reqType||"jednorázová")==="opakovaná"?"🔄 Opakovaná":(r.reqType||"jednorázová")==="dlouhodobá"?"📅 Dlouhodobá":"🕯 Jednorázová"}</span></div><div class="rd">${fmtTs(r.ts)}</div></div>
+      <div class="rh"><div class="rm2">${u?.emoji?`<span class="profile-clickable" style="font-size:.95rem" onclick="showUserProfile('${r.createdBy}')">${u.emoji}</span>`:''}<span class="rn profile-clickable" onclick="showUserProfile('${r.createdBy}')">${esc(r.name)}</span>${publicBadge}<span class="tag t-${r.cat}">${r.cat}</span><span class="tag" style="background:rgba(255,255,255,.07);color:var(--muted);font-size:.65rem">${(r.reqType||"jednorázová")==="opakovaná"?"🔄 Opakovaná":(r.reqType||"jednorázová")==="dlouhodobá"?"📅 Dlouhodobá":"🕯 Jednorázová"}</span></div><div class="rd">${fmtTs(r.ts)}</div></div>
       <p class="rt">${esc(r.text)}</p>
       ${pHTML}
       <div class="rf">
@@ -1550,7 +1550,7 @@ function renderDiary(){
     const readHTML=readers.length?`<div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:3px;align-items:center"><span style="font-size:.68rem;color:var(--muted)">👁 Četl/a: </span>${readerNames.map(n=>`<span style="font-size:.7rem;background:rgba(255,255,255,.06);border:1px solid var(--border);border-radius:20px;padding:1px 7px;color:var(--muted)">${esc(n)}</span>`).join('')}</div>`:'';
     return`<div class="de" id="de-${e._id}">
       <div style="display:flex;justify-content:space-between;align-items:flex-start">
-        <div><div class="da" style="cursor:pointer" onclick="showUserProfile('${e.createdBy}')">${u?.emoji?`<span style="font-size:1rem;margin-right:3px">${u.emoji}</span>`:''} ✦ ${esc(e.author)}</div><div class="dd">${fmtTs(e.ts)}</div></div>
+        <div><div class="da profile-clickable" onclick="showUserProfile('${e.createdBy}')">${u?.emoji?`<span style="font-size:1rem;margin-right:3px">${u.emoji}</span>`:''} ✦ ${esc(e.author)}</div><div class="dd">${fmtTs(e.ts)}</div></div>
         ${canDel?`<button class="bs b-del" onclick="delDiary('${e._id}')">🗑</button>`:''}
       </div>
       <div class="dt">${esc(e.text)}</div>
@@ -1598,14 +1598,14 @@ function renderChat(){
   const atBottom=el.scrollHeight-el.clientHeight-el.scrollTop<100;
   el.innerHTML=msgs.map(m=>{
     const mine=m.author===CU.username;
-    const avEl=m.authorEmoji?`<div class="chat-av ea" style="cursor:pointer" onclick="showUserProfile('${m.author}')">${m.authorEmoji}</div>`:`<div class="chat-av" style="cursor:pointer" onclick="showUserProfile('${m.author}')">${ini(m.authorName||'?')}</div>`;
+    const avEl=m.authorEmoji?`<div class="chat-av ea profile-clickable" onclick="showUserProfile('${m.author}')">${m.authorEmoji}</div>`:`<div class="chat-av profile-clickable" onclick="showUserProfile('${m.author}')">${ini(m.authorName||'?')}</div>`;
     const reacts=m.reactions||{};
     const reactHTML=Object.entries(reacts).filter(([,v])=>v.length>0).map(([emoji,users])=>`<span class="reaction ${users.includes(CU.username)?'mine':''}" onclick="toggleReact('${m._id}','${emoji}')">${emoji} <span class="reaction-count">${users.length}</span></span>`).join('');
     const canDel=isAdmin()||m.author===CU.username;
     return`<div class="chat-msg ${mine?'mine':''}" id="cm-${m._id}">
       ${avEl}
       <div class="chat-bubble-wrap">
-        <div class="chat-name" style="cursor:pointer" onclick="showUserProfile('${m.author}')">${esc(m.authorName||m.author)}</div>
+        <div class="chat-name profile-clickable" onclick="showUserProfile('${m.author}')">${esc(m.authorName||m.author)}</div>
         <div class="chat-bubble">
           ${m.replyTo?`<div style="background:rgba(123,47,190,.15);border-left:3px solid var(--purple-l);border-radius:0 7px 7px 0;padding:5px 9px;margin-bottom:6px;font-size:.77rem;color:var(--muted)"><strong style="color:var(--purple-xl)">${esc(m.replyTo.author)}</strong><br>${esc(m.replyTo.text)}</div>`:''}
           <div class="chat-text">${esc(m.text)}</div>
@@ -1727,10 +1727,10 @@ function renderStats(){
     const dC=diary.filter(d=>d.createdBy===u.username).length;
     const userStreak=calcStreakFor(u.username);
     const streakBadge=userStreak>0?`<span style="font-size:.72rem;color:var(--gold);margin-left:4px">🔥${userStreak}</span>`:`<span style="font-size:.72rem;color:var(--muted);margin-left:4px">🔥0</span>`;
-    const avEl=u.emoji?`<div class="usc-av ea" style="cursor:pointer" onclick="showUserProfile('${u.username}')">${u.emoji}</div>`:`<div class="usc-av" style="cursor:pointer" onclick="showUserProfile('${u.username}')">${ini(u.name)}</div>`;
+    const avEl=u.emoji?`<div class="usc-av ea profile-clickable" onclick="showUserProfile('${u.username}')">${u.emoji}</div>`:`<div class="usc-av profile-clickable" onclick="showUserProfile('${u.username}')">${ini(u.name)}</div>`;
     const rm2={admin:'Admin',modlitebnik:'Modlitebník',mladeznik:'Mládežník'};
     const rc2={admin:'ra',modlitebnik:'rm',mladeznik:'rml'};
-    return`<div class="usc">${avEl}<div class="usc-info"><div class="usc-name" style="cursor:pointer" onclick="showUserProfile('${u.username}')">${esc(u.name)} <span class="urole ${rc2[u.role]||'rml'}">${rm2[u.role]||u.role}</span>${streakBadge}</div><div class="usc-stats"><div><div class="usc-sn">${pC}</div><div class="usc-sl">Modliteb</div></div><div><div class="usc-sn">${rC}</div><div class="usc-sl">Žádostí</div></div><div><div class="usc-sn">${wC}</div><div class="usc-sl">Stráží</div></div><div><div class="usc-sn">${dC}</div><div class="usc-sl">Zápisů</div></div></div></div></div>`;
+    return`<div class="usc">${avEl}<div class="usc-info"><div class="usc-name profile-clickable" onclick="showUserProfile('${u.username}')">${esc(u.name)} <span class="urole ${rc2[u.role]||'rml'}">${rm2[u.role]||u.role}</span>${streakBadge}</div><div class="usc-stats"><div><div class="usc-sn">${pC}</div><div class="usc-sl">Modliteb</div></div><div><div class="usc-sn">${rC}</div><div class="usc-sl">Žádostí</div></div><div><div class="usc-sn">${wC}</div><div class="usc-sl">Stráží</div></div><div><div class="usc-sn">${dC}</div><div class="usc-sl">Zápisů</div></div></div></div></div>`;
   }).join('');
 }
 function mkC(id,labels,data,bc,bgc,cfg,type){
@@ -2249,22 +2249,30 @@ window.showUserProfile=(username)=>{
   const rc={admin:'ra',modlitebnik:'rm',mladeznik:'rml'};
   document.getElementById('userProfileModal')?.remove();
   const m=document.createElement('div');m.className='modal-bg';m.id='userProfileModal';
-  m.innerHTML=`<div class="modal" onclick="event.stopPropagation()" style="max-width:400px">
-    <button class="modal-close" onclick="closeModal('userProfileModal')">✕</button>
-    <div style="text-align:center;margin-bottom:22px">
-      <div style="width:68px;height:68px;border-radius:50%;background:${u.emoji?'var(--surface)':'linear-gradient(135deg,var(--purple),var(--purple-d))'};display:flex;align-items:center;justify-content:center;font-size:${u.emoji?'2rem':'1.1rem'};font-weight:800;color:#fff;margin:0 auto 10px;box-shadow:0 6px 24px rgba(0,0,0,.3);flex-shrink:0;line-height:1;overflow:hidden">${u.emoji||ini(u.name)}</div>
+  m.innerHTML=`<div class="modal" onclick="event.stopPropagation()" style="max-width:400px;padding:0;overflow:hidden">
+    <div style="display:flex;justify-content:flex-end;padding:14px 14px 0">
+      <button class="modal-close" onclick="closeModal('userProfileModal')" style="float:none;margin:0">✕</button>
+    </div>
+    <div style="text-align:center;padding:0 26px 20px">
+      <div style="width:68px;height:68px;border-radius:50%;background:${u.emoji?'var(--surface)':'linear-gradient(135deg,var(--purple),var(--purple-d))'};display:flex;align-items:center;justify-content:center;font-size:${u.emoji?'2rem':'1.1rem'};font-weight:800;color:#fff;margin:0 auto 10px;box-shadow:0 6px 24px rgba(0,0,0,.3);line-height:1;overflow:hidden">${u.emoji||ini(u.name)}</div>
       <div style="font-family:'Cinzel',serif;font-size:1.2rem;color:var(--white)">${esc(u.name)}</div>
       <div style="color:var(--muted);font-size:.8rem;margin-top:2px">@${esc(username)}</div>
       <span class="urole ${rc[u.role]||'rml'}" style="margin-top:6px;display:inline-block">${rm[u.role]||u.role}</span>
     </div>
-    ${streak>0?`<div style="background:linear-gradient(135deg,rgba(255,209,102,.1),rgba(255,209,102,.04));border:1px solid rgba(255,209,102,.25);border-radius:12px;padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;gap:10px"><span style="font-size:1.6rem">🔥</span><div><span style="font-family:'Cinzel',serif;font-size:1.4rem;color:var(--gold)">${streak}</span> <span style="font-size:.75rem;color:var(--gold);opacity:.8">${streak===1?'den':'dnů'} streak</span><div style="font-size:.7rem;color:var(--muted);margin-top:2px">Nejlepší: ${bestFor} ${bestFor===1?'den':'dnů'}</div></div></div>`:''}
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:6px">
-      <div class="scard"><div class="snum" style="font-size:1.3rem">${pC+pChk}</div><div class="slbl">Modliteb</div></div>
-      <div class="scard"><div class="snum" style="font-size:1.3rem">${rC}</div><div class="slbl">Žádostí</div></div>
-      <div class="scard"><div class="snum" style="font-size:1.3rem">${ansC}</div><div class="slbl">Vyslyšených</div></div>
-      <div class="scard"><div class="snum" style="font-size:1.3rem">${wC}</div><div class="slbl">Stráží</div></div>
-      <div class="scard"><div class="snum" style="font-size:1.3rem">${dC}</div><div class="slbl">Zápisů</div></div>
-      <div class="scard"><div class="snum" style="font-size:1.3rem">${streak}</div><div class="slbl">Streak 🔥</div></div>
+    <div style="padding:0 26px 26px">
+      ${streak>0?`<div class="streak-card" style="margin-bottom:14px">
+        <div class="streak-fire">🔥</div>
+        <div><div style="display:flex;align-items:baseline;gap:6px"><div class="streak-num">${streak}</div><div class="streak-lbl">${streak===1?'den':'dnů'} streak</div></div>
+        <div class="streak-best">Nejlepší: ${bestFor} ${bestFor===1?'den':'dnů'}</div></div>
+      </div>`:''}
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+        <div class="scard"><div class="snum" style="font-size:1.3rem">${pC+pChk}</div><div class="slbl">Modliteb</div></div>
+        <div class="scard"><div class="snum" style="font-size:1.3rem">${rC}</div><div class="slbl">Žádostí</div></div>
+        <div class="scard"><div class="snum" style="font-size:1.3rem">${ansC}</div><div class="slbl">Vyslyšených</div></div>
+        <div class="scard"><div class="snum" style="font-size:1.3rem">${wC}</div><div class="slbl">Stráží</div></div>
+        <div class="scard"><div class="snum" style="font-size:1.3rem">${dC}</div><div class="slbl">Zápisů</div></div>
+        <div class="scard"><div class="snum" style="font-size:1.3rem">${streak}</div><div class="slbl">Streak 🔥</div></div>
+      </div>
     </div>
   </div>`;
   m.addEventListener('click',e=>{if(e.target===m)closeModal('userProfileModal');});
