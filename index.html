@@ -1509,12 +1509,10 @@ function makeGCalUrl(w){
   const edExcl=new Date(ed);edExcl.setDate(edExcl.getDate()+1);
   const allPeople=[w.person||'',...(w.coPersons||[])].filter(Boolean);
   const peopleStr=allPeople.join(', ');
-  const title=encodeURIComponent('Modlitební stráž – '+peopleStr);
-  const topicsLine=(w.topics||[]).length?'Témata: '+(w.topics||[]).join(', ')+'
-':'';
-  const peopleLine=allPeople.length>1?'Stráž: '+peopleStr+'
-':'';
-  const details=encodeURIComponent(peopleLine+topicsLine||'Modlitební stráž Oxygen');
+  const title=encodeURIComponent('Modlitebn\u00ed str\u00e1\u017e \u2013 '+peopleStr);
+  const peoplePart=allPeople.length>1?'Str\u00e1\u017e: '+peopleStr+'\n':'';
+  const topicsPart=(w.topics||[]).length?'T\u00e9mata: '+(w.topics||[]).join(', '):'';
+  const details=encodeURIComponent((peoplePart+topicsPart)||'Modlitebn\u00ed str\u00e1\u017e Oxygen');
   return`https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${fmt(sd)}/${fmt(edExcl)}&details=${details}`;
 }
 let _watchFilter='active';
