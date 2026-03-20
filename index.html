@@ -1070,7 +1070,7 @@ function enterApp(){
   if(CU.role==='pending'){document.getElementById('pendScreen').style.display='flex';return;}
   document.getElementById('mainApp').style.display='block';
   document.getElementById('notifBtn').style.display='flex';
-  initUI();startListeners();initEmojiBar();startOnline();loadPrayerLog().then(()=>{renderStreakDash();});
+  initUI();startListeners();initEmojiBar();startOnline();loadPrayerLog().then(()=>{renderStreakDash();renderCountdownDash();});
   setTimeout(requestPush,2000);
 }
 
@@ -1131,6 +1131,12 @@ function startListeners(){
     const chatOn=document.getElementById('sec-chat').classList.contains('on');
     if(!_fl.chat){const nn=window._chat.filter(m=>!prev.find(p=>p._id===m._id)&&m.author!==CU.username);if(nn.length){if(!chatOn){document.getElementById('bChat').style.display='inline';}if(notifSettings.newChat)addNotif('💬 Nová zpráva',nn[nn.length-1].authorName+': '+nn[nn.length-1].text.slice(0,50),'chat');}}
     _fl.chat=false;renderChat();if(chatOn)scrollChatBottom();
+  }));
+  // prayerLog – real-time streak (načte data okamžitě při startu)
+  unsubs.push(onSnapshot(query(collection(db,'prayerLog')),snap=>{
+    _prayerDays=new Set(snap.docs.filter(d=>d.data().username===CU.username).map(d=>d.data().date));
+    renderStreakDash();renderCountdownDash();
+    if(document.getElementById('sec-my-stats')?.classList.contains('on'))renderMyStats();
   }));
 }
 
