@@ -1418,7 +1418,7 @@ function renderCalendar(){
     if(isCurrentDay){borderColor='var(--purple-l)';}
     html+=`<div class="cal-day ${isCurrentDay?'cal-today':''} ${w?'cal-has':''}" style="background:${bgColor};border-color:${borderColor}" onclick="calClick(${m.getFullYear()},${m.getMonth()},${d},event)">
       <div class="cal-day-num">${d}</div>
-      ${w?`<div class="cal-day-person">${esc(w.person.split(' ')[0])}</div>`:''}
+      ${w?`<div class="cal-day-person">${esc(w.person.split(' ')[0])}${(w.coPersons||[]).length?` <span style="opacity:.7;font-size:.62rem">+${(w.coPersons||[]).length}</span>`:''}</div>`:''}
     </div>`;
   }
   document.getElementById('calGrid').innerHTML=html;
@@ -1470,9 +1470,11 @@ function makeGCalUrl(w){
 function renderWatch(){
   const list=[...(window._watch||[])].reverse();const el=document.getElementById('watchList');
   if(!list.length){el.innerHTML=`<div class="empty"><div class="ei">⌚</div><p>Klikni na den v kalendáři pro přidání stráže</p></div>`;return;}
-  const today=new Date();
+  const today=new Date();today.setHours(0,0,0,0);
   el.innerHTML=list.map(w=>{
-    const isFuture=w.startDate&&new Date(w.startDate)>today;const isPast=w.endDate&&new Date(w.endDate)<today;const isCurr=!isFuture&&!isPast;
+    const sd=w.startDate?new Date(w.startDate):null;if(sd)sd.setHours(0,0,0,0);
+    const ed=w.endDate?new Date(w.endDate):sd?new Date(sd):null;if(ed)ed.setHours(23,59,59,999);
+    const isFuture=sd&&sd>today;const isPast=ed&&ed<today;const isCurr=!isFuture&&!isPast;
     const canDel=isAdmin()||w.createdBy===CU.username;
     const gcalUrl=makeGCalUrl(w);
     return`<div class="wc ${isCurr?'curr':isFuture?'future':''}">
