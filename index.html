@@ -450,11 +450,16 @@ input:checked+.slider::before{transform:translateX(18px)}
 @keyframes streak-in{from{opacity:0;transform:translateY(14px) scale(.96)}to{opacity:1;transform:translateY(0) scale(1)}}
 @keyframes streak-bounce{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-3px) scale(1.06)}}
 @keyframes streak-glow{0%,100%{box-shadow:0 2px 12px rgba(255,209,102,.08)}50%{box-shadow:0 4px 20px rgba(255,209,102,.18)}}
+@keyframes scard-streak-glow{0%,100%{box-shadow:0 0 0 rgba(255,209,102,0);border-color:rgba(255,209,102,.25)}50%{box-shadow:0 2px 14px rgba(255,209,102,.2);border-color:rgba(255,209,102,.5)}}
 .streak-card{background:linear-gradient(135deg,rgba(255,209,102,.1),rgba(255,209,102,.04));border:1px solid rgba(255,209,102,.25);border-radius:16px;padding:18px 22px;margin-bottom:14px;display:flex;align-items:center;gap:16px;animation:streak-in .45s cubic-bezier(.22,.68,0,1.2) both,streak-glow 4s ease 1.5s infinite}
 .streak-fire{font-size:2.2rem;line-height:1;animation:streak-bounce 2.5s ease infinite}
 .streak-num{font-family:'Cinzel',serif;font-size:2.4rem;color:var(--gold);font-weight:700;line-height:1}
 .streak-lbl{font-size:.76rem;color:var(--gold);opacity:.75;text-transform:uppercase;letter-spacing:.07em;margin-top:3px}
 .streak-best{font-size:.72rem;color:var(--muted);margin-top:5px}
+.scard-streak{background:linear-gradient(135deg,rgba(255,209,102,.12),rgba(255,209,102,.04));border:1px solid rgba(255,209,102,.25);border-radius:12px;padding:15px;text-align:center;animation:streak-in .45s cubic-bezier(.22,.68,0,1.2) both,scard-streak-glow 3s ease 1s infinite}
+.scard-streak .snum{color:var(--gold)}
+.scard-streak .slbl{color:rgba(255,209,102,.7)}
+.scard-streak-fire{display:inline-block;animation:streak-bounce 2.5s ease infinite;line-height:1}
 
 /* COUNTDOWN */
 .countdown-card{background:linear-gradient(135deg,rgba(155,79,222,.15),rgba(155,79,222,.07));border:1px solid rgba(155,79,222,.3);border-radius:14px;padding:14px 18px;margin-bottom:14px;display:flex;align-items:center;gap:12px;animation:fu .4s ease both}
@@ -573,7 +578,7 @@ input:checked+.slider::before{transform:translateX(18px)}
   <div class="sidebar" id="sb">
     <div class="slogo"><div class="slogo-icon">✝</div><div><div class="slogo-name">Oxygen</div><div class="slogo-sub">Modlitební tým</div></div></div>
     <div class="suser">
-      <div class="uav" id="uavEl" onclick="showProfile()" title="Profil a nastavení">?</div>
+      <div class="uav profile-clickable" id="uavEl" onclick="showProfile()" title="Profil a nastavení">?</div>
       <div class="uinfo"><div class="uname-t" id="unameEl">—</div><span class="urole" id="uroleEl">—</span></div>
     </div>
     <nav class="snav">
@@ -1767,14 +1772,13 @@ window.showProfile=()=>{
       <div class="ns-row"><label>⏰ Připomínka stráže (24h předem)</label><label class="toggle"><input type="checkbox" id="ns4" ${notifSettings.watchReminder?'checked':''}><span class="slider"></span></label></div>
     </div>
     <button class="bp" onclick="saveNS()" style="margin-bottom:16px">Uložit nastavení oznámení</button>
-    ${(()=>{const {streak,best}=calcStreak();return streak>0?`<div style="background:linear-gradient(135deg,rgba(255,209,102,.1),rgba(255,209,102,.04));border:1px solid rgba(255,209,102,.25);border-radius:12px;padding:12px 16px;margin-bottom:14px;display:flex;align-items:center;gap:10px"><span style="font-size:1.6rem">🔥</span><div><span style="font-family:'Cinzel',serif;font-size:1.4rem;color:var(--gold)">${streak}</span> <span style="font-size:.75rem;color:var(--gold);opacity:.8">${streak===1?'den':'dnů'} streak</span><div style="font-size:.7rem;color:var(--muted);margin-top:2px">Nejlepší: ${best} ${best===1?'den':'dnů'}</div></div></div>`:'';})()}
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px">
       <div class="scard"><div class="snum">${pC}</div><div class="slbl">Modliteb</div></div>
       <div class="scard"><div class="snum">${reqs.filter(r=>r.createdBy===CU.username).length}</div><div class="slbl">Žádostí</div></div>
       <div class="scard"><div class="snum">${reqs.filter(r=>r.createdBy===CU.username&&r.answered).length}</div><div class="slbl">Vyslyšených</div></div>
       <div class="scard"><div class="snum">${watch.filter(w=>w.createdBy===CU.username).length}</div><div class="slbl">Stráží</div></div>
       <div class="scard"><div class="snum">${diary.filter(d=>d.createdBy===CU.username).length}</div><div class="slbl">Zápisů</div></div>
-      <div class="scard"><div class="snum">${(()=>{const {streak}=calcStreak();return streak;})()}</div><div class="slbl">Streak 🔥</div></div>
+      ${(()=>{const {streak}=calcStreak();return`<div class="scard-streak"><div class="snum"><span class="scard-streak-fire">🔥</span> ${streak}</div><div class="slbl">Streak</div></div>`;})()}
     </div>
     <div class="lbl" style="margin-bottom:8px">📥 Export dat</div>
     <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px">
@@ -1802,8 +1806,8 @@ window.saveNS=async()=>{notifSettings={newRequest:document.getElementById('ns1')
 // ── ADMIN ──────────────────────────────────────────────────────────────────
 window.aTab=(tab,btn)=>{document.querySelectorAll('#sec-admin .tab').forEach(b=>b.classList.remove('on'));btn.classList.add('on');['aUsers','aPending','aAnon'].forEach(id=>document.getElementById(id).style.display='none');if(tab==='users'){document.getElementById('aUsers').style.display='block';renderAdminUsers();}if(tab==='pending'){document.getElementById('aPending').style.display='block';renderAdminPending();}if(tab==='anon'){document.getElementById('aAnon').style.display='block';renderAdminAnon();}};
 function renderAdminSec(){document.getElementById('aUsers').style.display='block';document.getElementById('aPending').style.display='none';document.getElementById('aAnon').style.display='none';renderAdminUsers();}
-function renderAdminUsers(){const el=document.getElementById('aUsers');const users=Object.values(window._users||{}).filter(u=>u.role!=='pending').sort((a,b)=>a.name.localeCompare(b.name));if(!users.length){el.innerHTML=`<div class="empty"><p>Žádní uživatelé</p></div>`;return;}el.innerHTML=users.map(u=>`<div class="ur"><div class="uav ${u.emoji?'ea':''} profile-clickable" style="flex-shrink:0" onclick="showUserProfile('${u.username}')" title="Zobrazit profil">${u.emoji||ini(u.name)}</div><div class="ui" style="cursor:pointer" onclick="showUserProfile('${u.username}')"><div class="un2">${esc(u.name)}</div><div class="us">@${esc(u.username)}</div></div><div class="ua"><select class="rs" onchange="chRole('${u.username}',this.value)"><option value="admin" ${u.role==='admin'?'selected':''}>Admin</option><option value="modlitebnik" ${u.role==='modlitebnik'?'selected':''}>Modlitebník</option><option value="mladeznik" ${u.role==='mladeznik'?'selected':''}>Mládežník</option></select>${u.username!==CU.username?`<button class="bs b-del" onclick="delUser('${u.username}')">🗑</button>`:`<span class="bs-placeholder"></span>`}</div></div>`).join('');}
-function renderAdminPending(){const el=document.getElementById('aPending');const pend=Object.values(window._users||{}).filter(u=>u.role==='pending');const pc=document.getElementById('pCnt');if(pc)pc.textContent=pend.length?` (${pend.length})`:'';if(!pend.length){el.innerHTML=`<div class="empty"><div class="ei">✓</div><p>Žádné čekající žádosti</p></div>`;return;}el.innerHTML=pend.map(u=>`<div class="ur"><div class="uav profile-clickable" style="flex-shrink:0" onclick="showUserProfile('${u.username}')" title="Zobrazit profil">${ini(u.name)}</div><div class="ui" style="cursor:pointer" onclick="showUserProfile('${u.username}')"><div class="un2">${esc(u.name)}</div><div class="us">@${esc(u.username)}</div></div><div class="ua"><button class="bs b-ok" onclick="approveUser('${u.username}','modlitebnik')">✓ Modlitebník</button><button class="bs b-ghost" onclick="approveUser('${u.username}','mladeznik')">✓ Mládežník</button><button class="bs b-del" onclick="rejectUser('${u.username}')">✗</button></div></div>`).join('');}
+function renderAdminUsers(){const el=document.getElementById('aUsers');const users=Object.values(window._users||{}).filter(u=>u.role!=='pending').sort((a,b)=>a.name.localeCompare(b.name));if(!users.length){el.innerHTML=`<div class="empty"><p>Žádní uživatelé</p></div>`;return;}el.innerHTML=users.map(u=>`<div class="ur"><div class="uav ${u.emoji?'ea':''} profile-clickable" style="flex-shrink:0" onclick="showUserProfile('${u.username}')" title="Zobrazit profil">${u.emoji||ini(u.name)}</div><div class="ui profile-clickable" onclick="showUserProfile('${u.username}')"><div class="un2">${esc(u.name)}</div><div class="us">@${esc(u.username)}</div></div><div class="ua"><select class="rs" onchange="chRole('${u.username}',this.value)"><option value="admin" ${u.role==='admin'?'selected':''}>Admin</option><option value="modlitebnik" ${u.role==='modlitebnik'?'selected':''}>Modlitebník</option><option value="mladeznik" ${u.role==='mladeznik'?'selected':''}>Mládežník</option></select>${u.username!==CU.username?`<button class="bs b-del" onclick="delUser('${u.username}')">🗑</button>`:`<span class="bs-placeholder"></span>`}</div></div>`).join('');}
+function renderAdminPending(){const el=document.getElementById('aPending');const pend=Object.values(window._users||{}).filter(u=>u.role==='pending');const pc=document.getElementById('pCnt');if(pc)pc.textContent=pend.length?` (${pend.length})`:'';if(!pend.length){el.innerHTML=`<div class="empty"><div class="ei">✓</div><p>Žádné čekající žádosti</p></div>`;return;}el.innerHTML=pend.map(u=>`<div class="ur"><div class="uav profile-clickable" style="flex-shrink:0" onclick="showUserProfile('${u.username}')" title="Zobrazit profil">${ini(u.name)}</div><div class="ui profile-clickable" onclick="showUserProfile('${u.username}')"><div class="un2">${esc(u.name)}</div><div class="us">@${esc(u.username)}</div></div><div class="ua"><button class="bs b-ok" onclick="approveUser('${u.username}','modlitebnik')">✓ Modlitebník</button><button class="bs b-ghost" onclick="approveUser('${u.username}','mladeznik')">✓ Mládežník</button><button class="bs b-del" onclick="rejectUser('${u.username}')">✗</button></div></div>`).join('');}
 function renderAdminAnon(){const el=document.getElementById('aAnon');const list=window._anon||[];if(!list.length){el.innerHTML=`<div class="empty"><div class="ei">📭</div><p>Žádné anonymní žádosti</p></div>`;return;}el.innerHTML=list.map(r=>`<div class="pc" style="margin-bottom:9px"><div class="rh"><div class="rm2"><span class="tag t-anon">Anonymní</span><span class="tag t-${r.cat}">${r.cat}</span><span class="tag" style="background:rgba(255,255,255,.07);color:var(--muted);font-size:.65rem">${(r.reqType||"jednorázová")==="opakovaná"?"🔄 Opakovaná":(r.reqType||"jednorázová")==="dlouhodobá"?"📅 Dlouhodobá":"🕯 Jednorázová"}</span></div><div class="rd">${fmtTs(r.ts)}</div></div><p class="rt">${esc(r.text)}</p><div class="rf"><span class="pc-cnt">${(r.prayedBy||[]).length}×</span><button class="bs b-del" style="margin-left:auto" onclick="delAnon('${r._id}')">🗑</button></div></div>`).join('');}
 window.approveUser=async(un,role)=>{try{await updateDoc(doc(db,'users',un),{role});toast(`✓ Schválen/a jako ${role}`);}catch(e){toast('Chyba: '+e.message);}};
 window.rejectUser=async un=>{confirmDialog('Odmítnout a smazat žádost?',async()=>{try{await deleteDoc(doc(db,'users',un));toast('Odmítnuto');}catch(e){toast('Chyba: '+e.message);}})};
@@ -2271,7 +2275,7 @@ window.showUserProfile=(username)=>{
         <div class="scard"><div class="snum" style="font-size:1.3rem">${ansC}</div><div class="slbl">Vyslyšených</div></div>
         <div class="scard"><div class="snum" style="font-size:1.3rem">${wC}</div><div class="slbl">Stráží</div></div>
         <div class="scard"><div class="snum" style="font-size:1.3rem">${dC}</div><div class="slbl">Zápisů</div></div>
-        <div class="scard"><div class="snum" style="font-size:1.3rem">${streak}</div><div class="slbl">Streak 🔥</div></div>
+        <div class="scard-streak"><div class="snum" style="font-size:1.3rem"><span class="scard-streak-fire">🔥</span> ${streak}</div><div class="slbl">Streak</div></div>
       </div>
     </div>
   </div>`;
