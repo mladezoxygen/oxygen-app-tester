@@ -941,7 +941,7 @@ function renderBanners(){
   const existing=b.querySelector('.watch-banner');if(existing)existing.remove();
   const watch=window._watch||[];
   const tomorrow=new Date();tomorrow.setDate(tomorrow.getDate()+1);
-  const myWatch=watch.find(w=>{if(!w.startDate)return false;const sd=new Date(w.startDate);return sd.toDateString()===tomorrow.toDateString()&&w.createdBy===CU?.username;});
+  const myWatch=watch.find(w=>{if(!w.startDate)return false;const sd=new Date(w.startDate);return sd.toDateString()===tomorrow.toDateString()&&(w.createdBy===CU?.username||w.addedBy===CU?.username);});
   if(myWatch&&notifSettings.watchReminder){
     const div=document.createElement('div');div.className='watch-banner';
     div.innerHTML=`<span style="font-size:1.2rem">⏰</span><div class="watch-banner-txt">Připomínka: Zítra máš modlitební stráž! (${esc(myWatch.date)})</div>`;
@@ -1458,7 +1458,7 @@ window.calClick=(y,mo,d,e)=>{
     const gcalBtn=gcalUrl
       ? '<a href="'+gcalUrl+'" target="_blank" rel="noopener" class="bs b-gcal" style="text-decoration:none">📅 Google Kalendář</a>'
       : '';
-    const delBtn=(existing.createdBy===CU.username||isAdmin())
+    const delBtn=(existing.createdBy===CU.username||existing.addedBy===CU.username||isAdmin())
       ? '<button class="bs b-del" onclick="delWatch(\''+existing._id+'\');document.querySelector(\'.cal-popup\').remove();calPopup=null">🗑 Smazat stráž</button>'
       : '';
     popup.innerHTML=
@@ -1539,7 +1539,7 @@ function renderWatch(){
   }
   el.innerHTML=list.map(w=>{
     const{isFuture,isCurr}=classify(w);
-    const canDel=isAdmin()||w.createdBy===CU.username;
+    const canDel=isAdmin()||w.createdBy===CU.username||w.addedBy===CU.username;
     const gcalUrl=makeGCalUrl(w);
     return`<div class="wc ${isCurr?'curr':isFuture?'future':''}">
       <div style="display:flex;justify-content:space-between;align-items:flex-start">
@@ -1559,7 +1559,7 @@ window.joinWatch=async id=>{
   const updated=[...(w.coPersons||[]),CU.name];
   try{await updateDoc(doc(db,'watch',id),{coPersons:updated});toast('✓ Přidán/a ke stráži!');}catch(e){toast('Chyba: '+e.message);}
 };
-window.delWatch=async id=>{const w=(window._watch||[]).find(x=>x._id===id);if(!w)return;if(!isAdmin()&&w.createdBy!==CU.username){toast('Nemáš oprávnění.');return;}confirmDialog('Smazat modlitební stráž?',async()=>{try{await deleteDoc(doc(db,'watch',id));toast('Smazáno');}catch(e){toast('Chyba: '+e.message);}})};
+window.delWatch=async id=>{const w=(window._watch||[]).find(x=>x._id===id);if(!w)return;if(!isAdmin()&&w.createdBy!==CU.username&&w.addedBy!==CU.username){toast('Nemáš oprávnění.');return;}confirmDialog('Smazat modlitební stráž?',async()=>{try{await deleteDoc(doc(db,'watch',id));toast('Smazáno');}catch(e){toast('Chyba: '+e.message);}})};
 
 // ── ANON ──────────────────────────────────────────────────────────────────
 let _anonFilter='active';
