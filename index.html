@@ -238,12 +238,12 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 .cp-user-av.ea{background:var(--surface);font-size:.85rem}
 .cp-user-name{font-size:.82rem;color:var(--text);font-weight:600}
 .cp-user-badge{font-size:.8rem;margin-left:auto;min-width:16px;text-align:center}
-.cp-role-btns{display:flex;gap:2px;flex-shrink:0}
-.cp-role-btn{width:24px;height:24px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:.75rem;cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;padding:0}
-.cp-role-btn:hover{background:rgba(123,47,190,.15);border-color:var(--border-l);color:var(--text)}
-.cp-role-btn.active-guardian{background:rgba(255,209,102,.15);border-color:rgba(255,209,102,.5);color:var(--gold)}
-.cp-role-btn.active-member{background:rgba(6,214,160,.12);border-color:rgba(6,214,160,.4);color:var(--green)}
-.cp-role-btn.active-none{background:transparent;border-color:var(--border);color:var(--muted)}
+.cp-chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:4px}
+.cp-chip{display:inline-flex;align-items:center;gap:5px;padding:5px 10px 5px 6px;border-radius:20px;border:1px solid var(--border);background:rgba(255,255,255,.04);cursor:pointer;transition:all .2s;user-select:none;font-size:.82rem;color:var(--muted)}
+.cp-chip:hover{border-color:var(--border-l);background:rgba(123,47,190,.12);color:var(--text)}
+.cp-chip-guardian{border-color:rgba(255,209,102,.5);background:rgba(255,209,102,.1);color:var(--gold)}
+.cp-chip-member{border-color:rgba(6,214,160,.4);background:rgba(6,214,160,.1);color:var(--green)}
+.cp-chip-role{font-size:.72rem;margin-left:2px}
 .cp-section-lbl{font-size:.68rem;font-weight:800;color:var(--purple-xl);letter-spacing:.06em;text-transform:uppercase;margin:8px 0 4px}
 .cal-popup h3{font-family:'Cinzel',serif;font-size:.9rem;color:var(--white);margin-bottom:12px}
 .cal-popup-close{float:right;background:none;border:none;color:var(--muted);cursor:pointer;font-size:1.1rem;line-height:1}
@@ -1503,32 +1503,22 @@ window.calClick=(y,mo,d,e)=>{
   }else{
     // Sestavit seznam uživatelů – strážce (radio) + další (checkboxy)
     const users=Object.values(window._users||{}).filter(u=>u.role!=='pending').sort((a,b)=>a.name.localeCompare(b.name));
-    // Jeden seznam — každý user má roli: "strážce" / "účastník" / ""
-    const userRows=users.map(u=>{
-      const av=u.emoji?'<div class="cp-user-av ea">'+u.emoji+'</div>':'<div class="cp-user-av">'+ini(u.name)+'</div>';
+    // Seznam uživatelů — kliknutím přidáš/odebereš, první vybraný = strážce
+    const userChips=users.map(u=>{
       const isMe=u.username===CU.username;
-      const initRole=isMe?'guardian':'';
-      return '<div class="cp-user-row" id="cpRow_'+u.username+'" data-role="'+initRole+'" style="justify-content:space-between">'
-        +'<div style="display:flex;align-items:center;gap:8px">'+av+'<span class="cp-user-name">'+esc(u.name)+'</span></div>'
-        +'<div class="cp-role-btns" id="cpRoleBtns_'+u.username+'">'
-          +'<button class="cp-role-btn'+(isMe?' active-guardian':'')+'" onclick="cpSetRole(\''+u.username+'\',\'guardian\')" title="Strážce">⭐</button>'
-          +'<button class="cp-role-btn" onclick="cpSetRole(\''+u.username+'\',\'member\')" title="Účastník">✓</button>'
-          +'<button class="cp-role-btn'+(isMe?'':' active-none')+'" onclick="cpSetRole(\''+u.username+'\',\'\')" title="Bez role">✕</button>'
-        +'</div>'
+      const av=u.emoji?'<div class="cp-user-av ea">'+u.emoji+'</div>':'<div class="cp-user-av">'+ini(u.name)+'</div>';
+      return '<div class="cp-chip'+(isMe?' cp-chip-guardian':'')+'" id="cpChip_'+u.username+'" onclick="cpChipClick(\''+u.username+'\')">'
+        +av+'<span>'+esc(u.name.split(' ')[0])+'</span>'
+        +'<span class="cp-chip-role" id="cpChipRole_'+u.username+'">'+(isMe?'⭐':'')+'</span>'
         +'</div>';
     }).join('');
     popup.innerHTML=
       '<button class="cal-popup-close" onclick="document.querySelector(\'.cal-popup\').remove();calPopup=null">✕</button>'
       +'<h3>Přidat stráž</h3>'
-      +'<div style="color:var(--muted);font-size:.79rem;margin-bottom:8px">'+label+'</div>'
-      +'<div style="display:flex;gap:10px;margin-bottom:5px;padding:0 2px">'
-        +'<span style="flex:1"></span>'
-        +'<span style="font-size:.63rem;color:var(--muted);width:22px;text-align:center" title="Strážce">⭐</span>'
-        +'<span style="font-size:.63rem;color:var(--muted);width:22px;text-align:center" title="Účastník">✓</span>'
-        +'<span style="font-size:.63rem;color:var(--muted);width:22px;text-align:center" title="Bez role">✕</span>'
-      +'</div>'
-      +'<div class="cp-user-list" style="max-height:170px">'+userRows+'</div>'
-      +'<div class="fg" style="margin-top:10px;margin-bottom:8px"><label>Do data</label><input type="date" id="cpE" value="'+iso+'"></div>'
+      +'<div style="color:var(--muted);font-size:.79rem;margin-bottom:10px">'+label+'</div>'
+      +'<div class="cp-section-lbl">Kdo se účastní</div>'
+      +'<div class="cp-chips" id="cpChips">'+userChips+'</div>'
+      +'<div class="fg" style="margin-top:12px;margin-bottom:8px"><label>Do data</label><input type="date" id="cpE" value="'+iso+'"></div>'
       +'<div class="fg" style="margin-bottom:10px"><label>Témata (čárkou)</label><input type="text" id="cpT" placeholder="Mládež, vedení, …"></div>'
       +'<button class="bp" style="padding:9px" onclick="saveCalWatch(\''+iso+'\')">Uložit</button>';
     window._cpGuardian=CU.username;
@@ -1542,137 +1532,38 @@ window.calClick=(y,mo,d,e)=>{
   setTimeout(()=>document.addEventListener('click',close),100);
 };
 
-// Nastavení role uživatele ve stráži
-window.cpSetRole=(un,role)=>{
+// Chip klik — první vybraný = strážce, ostatní = účastníci
+window.cpChipClick=un=>{
   if(!window._cpCo)window._cpCo=[];
-  // Pokud chceme nastavit strážce, odeber ho z co-persons a nastav guardian
-  if(role==='guardian'){
-    // Předchozí strážce → přehoď na member nebo odeber
-    if(window._cpGuardian&&window._cpGuardian!==un){
-      const prev=window._cpGuardian;
-      // Přidej předchozího strážce jako member
-      if(!window._cpCo.includes(prev))window._cpCo.push(prev);
-      cpUpdateRowUI(prev,'member');
-    }
-    window._cpGuardian=un;
+  const isGuardian=window._cpGuardian===un;
+  const isCo=window._cpCo.includes(un);
+  if(isGuardian){
+    // Strážce nelze odebrat pokud není nikdo jiný
+    if(window._cpCo.length===0){toast('Musí být aspoň jeden strážce');return;}
+    // Předej strážce prvnímu co-person
+    window._cpGuardian=window._cpCo[0];
+    window._cpCo=window._cpCo.slice(1);
+    // Původní strážce zmizí ze seznamu
+  }else if(isCo){
     window._cpCo=window._cpCo.filter(x=>x!==un);
-  }else if(role==='member'){
-    if(window._cpGuardian===un){
-      toast('Strážce nelze jen tak odebrat – přiřaď nejprve jiného');return;
-    }
-    if(!window._cpCo.includes(un))window._cpCo.push(un);
   }else{
-    // role === '' → odebrat
-    if(window._cpGuardian===un){
-      toast('Strážce nelze odebrat – přiřaď nejpriv jiného');return;
-    }
-    window._cpCo=window._cpCo.filter(x=>x!==un);
+    // Přidat — pokud ještě není strážce, stane se jím
+    if(!window._cpGuardian){window._cpGuardian=un;}
+    else{window._cpCo.push(un);}
   }
-  cpUpdateRowUI(un,role);
+  cpRefreshChips();
 };
-function cpUpdateRowUI(un,role){
-  const row=document.getElementById('cpRow_'+un);
-  if(!row)return;
-  row.dataset.role=role;
-  const btns=document.querySelectorAll('#cpRoleBtns_'+un+' .cp-role-btn');
-  btns.forEach((b,i)=>{
-    b.classList.remove('active-guardian','active-member','active-none');
-    if(i===0&&role==='guardian')b.classList.add('active-guardian');
-    if(i===1&&role==='member')b.classList.add('active-member');
-    if(i===2&&role==='')b.classList.add('active-none');
+function cpRefreshChips(){
+  document.querySelectorAll('[id^="cpChip_"]').forEach(chip=>{
+    const un=chip.id.replace('cpChip_','');
+    const isG=window._cpGuardian===un;
+    const isCo=(window._cpCo||[]).includes(un);
+    chip.className='cp-chip'+(isG?' cp-chip-guardian':isCo?' cp-chip-member':'');
+    const role=document.getElementById('cpChipRole_'+un);
+    if(role)role.textContent=isG?'⭐':isCo?'✓':'';
   });
-  row.classList.toggle('selected',role!=='');
 }
 
-
-window.saveCalWatch=async iso=>{
-  const guardianUsername=window._cpGuardian||CU.username;
-  const coPersons=window._cpCo||[];
-  const guardianUser=window._users?.[guardianUsername];
-  const person=guardianUser?.name||CU.name;
-  const endVal=document.getElementById('cpE')?.value||iso;
-  // Blokuj překryv
-  const sd0=new Date(iso);sd0.setHours(0,0,0,0);
-  const ed0=new Date(endVal);ed0.setHours(23,59,59,999);
-  const overlap=(window._watch||[]).find(w=>{
-    if(!w.startDate)return false;
-    const wsd=new Date(w.startDate);wsd.setHours(0,0,0,0);
-    const wed=w.endDate?new Date(w.endDate):new Date(w.startDate);wed.setHours(23,59,59,999);
-    return sd0<=wed&&ed0>=wsd;
-  });
-  if(overlap){toast('⚠️ Toto období je již obsazeno – '+overlap.person);return;}
-  const topStr=document.getElementById('cpT')?.value.trim()||'';
-  const topics=topStr.split(',').map(s=>s.trim()).filter(Boolean);
-  const sd=new Date(iso);const ed=new Date(endVal);
-  const dateLabel=(()=>{const day=sd.getDate();const mon=sd.getMonth()+1;const dayE=ed.getDate();const monE=ed.getMonth()+1;return endVal!==iso?`${day}. ${mon}. – ${dayE}. ${monE}. ${ed.getFullYear()}`:`${day}. ${mon}. ${sd.getFullYear()}`;})();
-  try{
-    await addDoc(collection(db,'watch'),{
-      person,guardianUsername,coPersons,addedBy:CU.username,
-      date:dateLabel,startDate:iso,endDate:endVal,
-      topics,createdBy:guardianUsername,ts:serverTimestamp()
-    });
-    document.querySelector('.cal-popup')?.remove();calPopup=null;
-    window._cpGuardian=null;window._cpCo=null;
-    toast('⌚ Stráž přidána');
-  }catch(e){toast('Chyba: '+e.message);}
-};
-
-function makeGCalUrl(w){
-  if(!w.startDate)return null;
-  const sd=new Date(w.startDate);
-  const ed=w.endDate?new Date(w.endDate):sd;
-  const fmt=d=>{const y=d.getFullYear();const m=String(d.getMonth()+1).padStart(2,'0');const day=String(d.getDate()).padStart(2,'0');return y+m+day;};
-  const edExcl=new Date(ed);edExcl.setDate(edExcl.getDate()+1);
-  const fn=n=>n?n.split(' ')[0]:n;
-  // coPersons jsou nyní usernames – přelož na jména
-  const allU=window._users||{};
-  const coNames=(w.coPersons||[]).map(un=>{const u=allU[un];return u?u.name:(un||'');}).filter(Boolean);
-  const allPeople=[w.person||'',...coNames].filter(Boolean);
-  const allFirstNames=allPeople.map(fn);
-  const peopleStr=allFirstNames.join(', ');
-  const title=encodeURIComponent('Modlitebn\u00ed str\u00e1\u017e \u2013 '+peopleStr);
-  const peoplePart=allFirstNames.length>1?'Str\u00e1\u017e: '+peopleStr+'\n':'';
-  const topicsPart=(w.topics||[]).length?'T\u00e9mata: '+(w.topics||[]).join(', '):'';
-  const details=encodeURIComponent((peoplePart+topicsPart)||'Modlitebn\u00ed str\u00e1\u017e Oxygen');
-  return`https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${fmt(sd)}/${fmt(edExcl)}&details=${details}`;
-}
-let _watchFilter='active';
-window.setWF=(f,btn)=>{_watchFilter=f;document.querySelectorAll('#watchTabs .tab').forEach(b=>b.classList.remove('on'));btn.classList.add('on');renderWatch();};
-function renderWatch(){
-  const all=window._watch||[];const el=document.getElementById('watchList');
-  if(!all.length){el.innerHTML=`<div class="empty"><div class="ei">⌚</div><p>Klikni na den v kalendáři pro přidání stráže</p></div>`;return;}
-  const today=new Date();today.setHours(0,0,0,0);
-  const classify=w=>{
-    const sd=w.startDate?new Date(w.startDate):null;if(sd)sd.setHours(0,0,0,0);
-    const ed=w.endDate?new Date(w.endDate):sd?new Date(sd):null;if(ed)ed.setHours(23,59,59,999);
-    const isFuture=sd&&sd>today;const isPast=ed&&ed<today;const isCurr=!isFuture&&!isPast;
-    return{isFuture,isPast,isCurr,sd,ed};
-  };
-  // Split and sort
-  const active=[...all].filter(w=>{const{isFuture,isCurr}=classify(w);return isCurr||isFuture;})
-    .sort((a,b)=>{const sa=a.startDate?new Date(a.startDate):new Date(0);const sb=b.startDate?new Date(b.startDate):new Date(0);return sa-sb;});
-  const past=[...all].filter(w=>classify(w).isPast)
-    .sort((a,b)=>{const sa=a.startDate?new Date(a.startDate):new Date(0);const sb=b.startDate?new Date(b.startDate):new Date(0);return sb-sa;});
-  const list=_watchFilter==='past'?past:active;
-  if(!list.length){
-    el.innerHTML=`<div class="empty"><div class="ei">${_watchFilter==='past'?'📦':'⌚'}</div><p>${_watchFilter==='past'?'Žádné minulé stráže':'Žádné nadcházející stráže'}</p></div>`;
-    return;
-  }
-  el.innerHTML=list.map(w=>{
-    const{isFuture,isCurr}=classify(w);
-    const canDel=isAdmin()||(w.guardianUsername||w.createdBy)===CU.username||w.addedBy===CU.username;
-    const gcalUrl=makeGCalUrl(w);
-    return`<div class="wc ${isCurr?'curr':isFuture?'future':''}">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start">
-        <div><div style="font-family:'Cinzel',serif;font-size:.77rem;color:${isCurr?'var(--gold)':isFuture?'var(--purple-xl)':'var(--muted)'}">✦ ${isCurr?'Aktuální stráž':isFuture?'Plánovaná stráž':'Minulá stráž'}</div><div style="font-weight:800;font-size:.92rem;color:var(--white);margin-top:2px">${esc(w.person)}</div>${(w.coPersons||[]).length?`<div style="font-size:.77rem;color:var(--muted);margin-top:1px">+ ${(w.coPersons||[]).map(un=>{const u2=window._users?.[un];return esc(u2?.name||un);}).join(', ')}</div>`:''}<div style="color:var(--muted);font-size:.76rem;margin-top:1px">${esc(w.date)}</div></div>
-        <div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap">
-          ${gcalUrl?`<a href="${gcalUrl}" target="_blank" rel="noopener" class="bs b-gcal" style="text-decoration:none">📅 Google Kalendář</a>`:''}
-          ${canDel?`<button class="bs b-del" onclick="delWatch('${w._id}')">🗑</button>`:''}
-        </div>
-      </div><div class="wt">${(w.topics||[]).map(t=>`<span class="wtag">${esc(t)}</span>`).join('')}</div>
-    </div>`;
-  }).join('');
-}
 window.joinWatch=async id=>{
   const w=(window._watch||[]).find(x=>x._id===id);if(!w)return;
   if(w.endDate){const ed=new Date(w.endDate);ed.setHours(23,59,59,999);if(ed<new Date()){toast('Tato stráž již proběhla.');return;}}
