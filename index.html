@@ -314,10 +314,10 @@ select.rs{padding:5px 8px;font-size:.77rem;background:var(--surface);border:1px 
 .irow-btn{flex-shrink:0;width:auto}
 .lbl{font-size:.72rem;font-weight:700;color:var(--purple-xl);letter-spacing:.06em;text-transform:uppercase;margin-bottom:5px;display:block}
 /* MODAL */
-@keyframes modal-pop-in{from{opacity:0;transform:scale(.88) translateY(18px)}60%{transform:scale(1.02) translateY(-3px)}to{opacity:1;transform:scale(1) translateY(0)}}
-@keyframes modal-pop-out{from{opacity:1;transform:scale(1) translateY(0)}to{opacity:0;transform:scale(.92) translateY(14px)}}
-@keyframes modal-bg-in{from{background:rgba(0,0,0,0);backdrop-filter:blur(0px)}to{background:rgba(0,0,0,.65);backdrop-filter:blur(6px)}}
-@keyframes modal-bg-out{from{background:rgba(0,0,0,.65);backdrop-filter:blur(6px)}to{background:rgba(0,0,0,0);backdrop-filter:blur(0px)}}
+@keyframes modal-pop-in{from{opacity:0}to{opacity:1}}
+@keyframes modal-pop-out{from{opacity:1}to{opacity:0}}
+@keyframes modal-bg-in{from{background:rgba(0,0,0,0)}to{background:rgba(0,0,0,.65)}}
+@keyframes modal-bg-out{from{background:rgba(0,0,0,.65)}to{background:rgba(0,0,0,0)}}
 .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:500;display:flex;align-items:center;justify-content:center;padding:20px;animation:modal-bg-in .22s ease forwards}
 .modal-bg.closing{animation:modal-bg-out .2s ease forwards;pointer-events:none}
 .modal{background:var(--surface);border:1px solid var(--border-l);border-radius:18px;padding:26px;max-width:460px;width:100%;max-height:85vh;overflow-y:auto;animation:modal-pop-in .3s cubic-bezier(.22,.68,0,1.2) forwards}
@@ -326,8 +326,8 @@ select.rs{padding:5px 8px;font-size:.77rem;background:var(--surface);border:1px 
 .modal-close{float:right;background:none;border:none;color:var(--muted);font-size:1.3rem;cursor:pointer;line-height:1;margin-left:8px}
 .modal-close:hover{color:var(--red)}
 /* Clickable profile targets */
-.profile-clickable{cursor:pointer;transition:opacity .15s,transform .15s}
-.profile-clickable:hover{opacity:.82;transform:scale(1.07)}
+.profile-clickable{cursor:pointer;transition:opacity .15s;will-change:opacity}
+.profile-clickable:hover{opacity:.7}
 .ep{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 16px}
 .ep-e{font-size:1.5rem;padding:6px;border-radius:8px;cursor:pointer;transition:background .15s;border:2px solid transparent}
 .ep-e:hover{background:rgba(123,47,190,.2)}.ep-e.sel{border-color:var(--purple-l);background:rgba(123,47,190,.2)}
@@ -2273,11 +2273,11 @@ window.showUserProfile=(username)=>{
 
 
 // ── MODAL CLOSE WITH ANIMATION ────────────────────────────────────────────
-function closeModal(id){
+window.closeModal=function(id){
   const m=document.getElementById(id);if(!m)return;
   m.classList.add('closing');
   setTimeout(()=>m.remove(),200);
-}
+};
 
 // ── IN-APP CONFIRM DIALOG ──────────────────────────────────────────────────
 function confirmDialog(msg, onYes, onNo){
