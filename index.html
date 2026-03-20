@@ -700,6 +700,7 @@ input:checked+.slider::before{transform:translateX(18px)}
           <div style="display:flex;align-items:center;gap:5px;font-size:.72rem;color:var(--muted)"><div style="width:10px;height:10px;border-radius:50%;background:rgba(255,209,102,.4)"></div>Budoucí</div>
         </div>
       </div>
+      <div class="tabs" id="watchTabs" style="margin:16px 0 12px"><button class="tab on" onclick="setWF('active',this)">⌚ Aktuální &amp; nadcházející</button><button class="tab" onclick="setWF('past',this)">📦 Minulé</button></div>
       <div id="watchList"><div class="loading"><div class="spin"></div>Načítám…</div></div>
     </div>
 
@@ -1467,14 +1468,30 @@ function makeGCalUrl(w){
   const details=encodeURIComponent((w.topics||[]).length?'Témata: '+(w.topics||[]).join(', '):'Modlitební stráž Oxygen');
   return`https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${fmt(sd)}/${fmt(edExcl)}&details=${details}`;
 }
+let _watchFilter='active';
+window.setWF=(f,btn)=>{_watchFilter=f;document.querySelectorAll('#watchTabs .tab').forEach(b=>b.classList.remove('on'));btn.classList.add('on');renderWatch();};
 function renderWatch(){
-  const list=[...(window._watch||[])].reverse();const el=document.getElementById('watchList');
-  if(!list.length){el.innerHTML=`<div class="empty"><div class="ei">⌚</div><p>Klikni na den v kalendáři pro přidání stráže</p></div>`;return;}
+  const all=window._watch||[];const el=document.getElementById('watchList');
+  if(!all.length){el.innerHTML=`<div class="empty"><div class="ei">⌚</div><p>Klikni na den v kalendáři pro přidání stráže</p></div>`;return;}
   const today=new Date();today.setHours(0,0,0,0);
-  el.innerHTML=list.map(w=>{
+  const classify=w=>{
     const sd=w.startDate?new Date(w.startDate):null;if(sd)sd.setHours(0,0,0,0);
     const ed=w.endDate?new Date(w.endDate):sd?new Date(sd):null;if(ed)ed.setHours(23,59,59,999);
     const isFuture=sd&&sd>today;const isPast=ed&&ed<today;const isCurr=!isFuture&&!isPast;
+    return{isFuture,isPast,isCurr,sd,ed};
+  };
+  // Split and sort
+  const active=[...all].filter(w=>{const{isFuture,isCurr}=classify(w);return isCurr||isFuture;})
+    .sort((a,b)=>{const sa=a.startDate?new Date(a.startDate):new Date(0);const sb=b.startDate?new Date(b.startDate):new Date(0);return sa-sb;});
+  const past=[...all].filter(w=>classify(w).isPast)
+    .sort((a,b)=>{const sa=a.startDate?new Date(a.startDate):new Date(0);const sb=b.startDate?new Date(b.startDate):new Date(0);return sb-sa;});
+  const list=_watchFilter==='past'?past:active;
+  if(!list.length){
+    el.innerHTML=`<div class="empty"><div class="ei">${_watchFilter==='past'?'📦':'⌚'}</div><p>${_watchFilter==='past'?'Žádné minulé stráže':'Žádné nadcházející stráže'}</p></div>`;
+    return;
+  }
+  el.innerHTML=list.map(w=>{
+    const{isFuture,isCurr}=classify(w);
     const canDel=isAdmin()||w.createdBy===CU.username;
     const gcalUrl=makeGCalUrl(w);
     return`<div class="wc ${isCurr?'curr':isFuture?'future':''}">
