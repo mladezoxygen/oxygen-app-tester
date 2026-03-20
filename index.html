@@ -139,7 +139,7 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 .t-práce{background:rgba(80,180,255,.2);color:#80D0FF}.t-duchovní{background:rgba(6,214,160,.2);color:var(--green)}
 .t-jiné{background:rgba(255,255,255,.08);color:var(--muted)}.t-anon{background:rgba(255,255,255,.08);color:var(--muted)}
 /* PRAYER CARD */
-.pc{background:rgba(49,18,96,.72);border:1px solid var(--border);border-radius:12px;padding:15px;margin-bottom:10px;transition:border-color .2s;animation:fu .3s ease}
+.pc{background:rgba(49,18,96,.72);border:1px solid var(--border);border-radius:12px;padding:15px;margin-bottom:10px;transition:border-color .2s}
 .pc:hover{border-color:var(--border-l)}
 .pc.answered{border-color:rgba(6,214,160,.3)}
 .pc.answered::before{content:'';display:block;height:2px;background:linear-gradient(90deg,transparent,var(--green),transparent);margin:-15px -15px 11px;border-radius:12px 12px 0 0}
@@ -176,7 +176,7 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 .c-send{padding:7px 12px;background:var(--purple);border:none;border-radius:8px;color:var(--white);font-family:'Nunito',sans-serif;font-size:.76rem;font-weight:700;cursor:pointer;transition:opacity .2s}
 .c-send:hover{opacity:.85}
 /* CHECKLIST */
-.ci{display:flex;align-items:flex-start;gap:11px;background:rgba(49,18,96,.72);border:1px solid var(--border);border-radius:11px;padding:13px 15px;margin-bottom:8px;animation:fu .3s ease}
+.ci{display:flex;align-items:flex-start;gap:11px;background:rgba(49,18,96,.72);border:1px solid var(--border);border-radius:11px;padding:13px 15px;margin-bottom:8px}
 .ci.done{opacity:.48;border-color:rgba(6,214,160,.18)}.ci.done .it{text-decoration:line-through;color:var(--muted)}
 .cb{width:19px;height:19px;border-radius:5px;border:2px solid var(--border-l);background:transparent;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .2s;margin-top:1px}
 .cb.on{background:var(--green);border-color:var(--green)}.cb.on::after{content:'✓';color:#fff;font-size:11px;font-weight:900}
@@ -200,12 +200,13 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 .cal-popup h3{font-family:'Cinzel',serif;font-size:.9rem;color:var(--white);margin-bottom:12px}
 .cal-popup-close{float:right;background:none;border:none;color:var(--muted);cursor:pointer;font-size:1.1rem;line-height:1}
 /* WATCH */
-.wc{background:rgba(49,18,96,.72);border:1px solid var(--border);border-radius:12px;padding:15px;margin-bottom:9px;animation:fu .3s ease}
+.wc{background:rgba(49,18,96,.72);border:1px solid var(--border);border-radius:12px;padding:15px;margin-bottom:9px}
 .wc.curr{border-color:rgba(255,209,102,.3)}.wc.future{border-color:rgba(155,79,222,.3)}
 .wt{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
 .wtag{background:rgba(123,47,190,.2);border:1px solid var(--border);border-radius:6px;padding:2px 8px;font-size:.74rem;color:var(--muted)}
 /* DIARY */
-.de{background:rgba(49,18,96,.72);border:1px solid var(--border);border-radius:12px;padding:17px;margin-bottom:10px;animation:fu .3s ease}
+.de{background:rgba(49,18,96,.72);border:1px solid var(--border);border-radius:12px;padding:17px;margin-bottom:10px}
+.is-new{animation:fu .35s ease}
 .da{font-weight:800;color:var(--purple-xl);font-size:.85rem}.dd{color:var(--muted);font-size:.7rem}
 .dt{color:var(--text);line-height:1.68;font-size:.88rem;margin-top:8px}
 .ds{margin-top:9px;padding:8px 12px;background:rgba(255,209,102,.07);border-left:3px solid var(--gold);border-radius:0 6px 6px 0;color:var(--gold);font-style:italic;font-size:.83rem}
@@ -987,16 +988,44 @@ function navigate(id){
 
 // ── LISTENERS ─────────────────────────────────────────────────────────────
 let _fl={req:true,chat:true};
+// Track already-rendered IDs to avoid re-animating on Firestore pending→confirmed double-fire
+const _rendered={req:new Set(),chk:new Set(),watch:new Set(),anon:new Set(),diary:new Set()};
 function startListeners(){
   unsubs.push(onSnapshot(query(collection(db,'requests'),orderBy('ts','desc')),snap=>{
     const prev=window._req||[];window._req=snap.docs.map(d=>({...d.data(),_id:d.id}));
-    if(!_fl.req){const nn=window._req.filter(r=>!prev.find(p=>p._id===r._id));nn.forEach(r=>{if(notifSettings.newRequest)addNotif('🙏 Nová žádost o modlitbu',r.name+': '+r.text.slice(0,55),'requests');});}
-    _fl.req=false;renderReqs();updateBadges();
+    const newIds=new Set(window._req.filter(r=>!_rendered.req.has(r._id)).map(r=>r._id));
+    window._req.forEach(r=>_rendered.req.add(r._id));
+    if(!_fl.req){const nn=window._req.filter(r=>newIds.has(r._id)&&!prev.find(p=>p._id===r._id));nn.forEach(r=>{if(notifSettings.newRequest)addNotif('🙏 Nová žádost o modlitbu',r.name+': '+r.text.slice(0,55),'requests');});}
+    _fl.req=false;renderReqs(newIds);updateBadges();
   }));
-  unsubs.push(onSnapshot(query(collection(db,'checklist'),orderBy('ts','desc')),snap=>{window._chk=snap.docs.map(d=>({...d.data(),_id:d.id}));renderChk();}));
-  unsubs.push(onSnapshot(query(collection(db,'watch'),orderBy('ts','asc')),snap=>{window._watch=snap.docs.map(d=>({...d.data(),_id:d.id}));renderWatch();renderCalendar();renderDash();renderBanners();}));
-  unsubs.push(onSnapshot(query(collection(db,'anon'),orderBy('ts','desc')),snap=>{window._anon=snap.docs.map(d=>({...d.data(),_id:d.id}));renderAnon();updateBadges();const el=document.getElementById('aAnon');if(el&&el.style.display!=='none')renderAdminAnon();}));
-  unsubs.push(onSnapshot(query(collection(db,'diary'),orderBy('ts','desc')),snap=>{window._diary=snap.docs.map(d=>({...d.data(),_id:d.id}));renderDiary();updateBadges();}));
+  unsubs.push(onSnapshot(query(collection(db,'checklist'),orderBy('ts','desc')),snap=>{
+    const prevIds=new Set((window._chk||[]).map(x=>x._id));
+    window._chk=snap.docs.map(d=>({...d.data(),_id:d.id}));
+    const newIds=new Set(window._chk.filter(x=>!prevIds.has(x._id)).map(x=>x._id));
+    window._chk.forEach(x=>_rendered.chk.add(x._id));
+    renderChk(newIds);
+  }));
+  unsubs.push(onSnapshot(query(collection(db,'watch'),orderBy('ts','asc')),snap=>{
+    const prevIds=new Set((window._watch||[]).map(x=>x._id));
+    window._watch=snap.docs.map(d=>({...d.data(),_id:d.id}));
+    const newIds=new Set(window._watch.filter(x=>!prevIds.has(x._id)).map(x=>x._id));
+    window._watch.forEach(x=>_rendered.watch.add(x._id));
+    renderWatch(newIds);renderCalendar();renderDash();renderBanners();
+  }));
+  unsubs.push(onSnapshot(query(collection(db,'anon'),orderBy('ts','desc')),snap=>{
+    const prevIds=new Set((window._anon||[]).map(x=>x._id));
+    window._anon=snap.docs.map(d=>({...d.data(),_id:d.id}));
+    const newIds=new Set(window._anon.filter(x=>!prevIds.has(x._id)).map(x=>x._id));
+    window._anon.forEach(x=>_rendered.anon.add(x._id));
+    renderAnon(newIds);updateBadges();const el=document.getElementById('aAnon');if(el&&el.style.display!=='none')renderAdminAnon();
+  }));
+  unsubs.push(onSnapshot(query(collection(db,'diary'),orderBy('ts','desc')),snap=>{
+    const prevIds=new Set((window._diary||[]).map(x=>x._id));
+    window._diary=snap.docs.map(d=>({...d.data(),_id:d.id}));
+    const newIds=new Set(window._diary.filter(x=>!prevIds.has(x._id)).map(x=>x._id));
+    window._diary.forEach(x=>_rendered.diary.add(x._id));
+    renderDiary(newIds);updateBadges();
+  }));
   unsubs.push(onSnapshot(collection(db,'users'),snap=>{window._users={};snap.docs.forEach(d=>{window._users[d.id]=d.data();});updateBadges();}));
   unsubs.push(onSnapshot(query(collection(db,'chat'),orderBy('ts','asc'),limit(300)),snap=>{
     const prev=window._chat||[];window._chat=snap.docs.map(d=>({...d.data(),_id:d.id}));
@@ -1108,7 +1137,7 @@ window.addRequest=async()=>{
 };
 window.setRF=(f,btn)=>{RF=f;btn.closest('div.tabs').querySelectorAll('.tab').forEach(b=>b.classList.remove('on'));btn.classList.add('on');renderReqs();};
 window.setRT=(t,btn)=>{RT=t;btn.closest('div.tabs').querySelectorAll('.tab').forEach(b=>b.classList.remove('on'));btn.classList.add('on');renderReqs();};
-function renderReqs(){
+function renderReqs(newIds=new Set()){
   let list=window._req||[];
   // Stav filtr
   if(RF==='aktivní')list=list.filter(r=>!r.answered);
@@ -1127,7 +1156,7 @@ function renderReqs(){
     const pNames=(r.prayedBy||[]).map(un=>{const u2=allU[un];return(u2&&u2.emoji?u2.emoji+' ':'')+((u2&&u2.name?u2.name:un).split(' ')[0]);});
     const pHTML=pNames.length?`<div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:3px;align-items:center"><span style="font-size:.7rem;color:var(--muted)">Modlil/a se: </span>${pNames.map(n=>`<span style="font-size:.71rem;background:rgba(123,47,190,.15);border:1px solid var(--border);border-radius:20px;padding:1px 7px;color:var(--purple-xl)">${esc(n)}</span>`).join('')}</div>`:'';
     const publicBadge=isPublic?`<span class="tag" style="background:rgba(255,209,102,.15);color:var(--gold);border:1px solid rgba(255,209,102,.3)">🌐 Veřejná</span>`:'';
-    return`<div class="pc ${r.answered?'answered':''}">
+    return`<div class="pc ${r.answered?'answered':''} ${newIds.has(r._id)?'is-new':''}" data-rid="${r._id}">
       <div class="rh"><div class="rm2">${u?.emoji?`<span style="font-size:.95rem">${u.emoji}</span>`:''}<span class="rn">${esc(r.name)}</span>${publicBadge}<span class="tag t-${r.cat}">${r.cat}</span><span class="tag" style="background:rgba(255,255,255,.07);color:var(--muted);font-size:.65rem">${(r.reqType||"jednorázová")==="opakovaná"?"🔄 Opakovaná":(r.reqType||"jednorázová")==="dlouhodobá"?"📅 Dlouhodobá":"🕯 Jednorázová"}</span></div><div class="rd">${fmtTs(r.ts)}</div></div>
       <p class="rt">${esc(r.text)}</p>
       ${pHTML}
@@ -1149,7 +1178,7 @@ window.delReq=async id=>{const r=(window._req||[]).find(x=>x._id===id);if(!r)ret
 // ── CHECKLIST ─────────────────────────────────────────────────────────────
 window.addChkItem=async()=>{const text=document.getElementById('chkText').value.trim();if(!text){toast('✏️ Napiš téma');return;}try{await addDoc(collection(db,'checklist'),{text,author:CU.name,done:false,prayedBy:[],createdBy:CU.username,ts:serverTimestamp()});document.getElementById('chkText').value='';toast('✅ Přidáno');}catch(e){toast('Chyba: '+e.message);}};
 window.setCF=(f,btn)=>{CF=f;document.querySelectorAll('#sec-checklist .tab').forEach(b=>b.classList.remove('on'));btn.classList.add('on');renderChk();};
-function renderChk(){
+function renderChk(newIds=new Set()){
   let list=window._chk||[];if(CF==='active')list=list.filter(x=>!x.done);if(CF==='done')list=list.filter(x=>x.done);
   const el=document.getElementById('chkList');
   if(!list.length){el.innerHTML=`<div class="empty"><div class="ei">📋</div><p>Prázdný seznam</p></div>`;return;}
@@ -1159,7 +1188,7 @@ function renderChk(){
     const prayed=(item.prayedBy||[]).includes(CU.username);
     const pNames=(item.prayedBy||[]).map(un=>{const u=allU[un];return(u&&u.emoji?u.emoji+' ':'')+((u&&u.name?u.name:un).split(' ')[0]);});
     const pHTML=pNames.length?`<div style="margin-top:5px;display:flex;flex-wrap:wrap;gap:3px;align-items:center"><span style="font-size:.7rem;color:var(--muted)">Modlil/a se: </span>${pNames.map(n=>`<span style="font-size:.71rem;background:rgba(123,47,190,.15);border:1px solid var(--border);border-radius:20px;padding:1px 7px;color:var(--purple-xl)">${esc(n)}</span>`).join('')}</div>`:'';
-    return`<div class="ci ${item.done?'done':''}">
+    return`<div class="ci ${item.done?'done':''} ${newIds.has(item._id)?'is-new':''}" data-cid="${item._id}">
       <div class="cb ${item.done?'on':''}" onclick="toggleChk('${item._id}')"></div>
       <div style="flex:1;min-width:0">
         <div class="it">${esc(item.text)}</div>
@@ -1230,7 +1259,8 @@ window.saveCalWatch=async iso=>{
   const topStr=document.getElementById('cpT')?.value.trim()||'';
   const topics=topStr.split(',').map(s=>s.trim()).filter(Boolean);
   const sd=new Date(iso);const ed=endVal?new Date(endVal):sd;
-  const dateLabel=sd.toLocaleDateString('cs-CZ',{day:'numeric',month:'numeric'})+(endVal&&endVal!==iso?' – '+ed.toLocaleDateString('cs-CZ',{day:'numeric',month:'numeric',year:'numeric'}):'. '+sd.getFullYear());
+  const fmtD=(date,opts)=>date.toLocaleDateString('cs-CZ',opts).replace(/\.$/,'');
+  const dateLabel=fmtD(sd,{day:'numeric',month:'numeric'})+(endVal&&endVal!==iso?' – '+fmtD(ed,{day:'numeric',month:'numeric',year:'numeric'}):'. '+sd.getFullYear());
   try{await addDoc(collection(db,'watch'),{person,date:dateLabel,startDate:iso,endDate:endVal||iso,topics,createdBy:CU.username,ts:serverTimestamp()});document.querySelector('.cal-popup')?.remove();calPopup=null;toast('⌚ Stráž přidána');}catch(e){toast('Chyba: '+e.message);}
 };
 function makeGCalUrl(w){
@@ -1244,7 +1274,7 @@ function makeGCalUrl(w){
   const details=encodeURIComponent((w.topics||[]).length?'Témata: '+(w.topics||[]).join(', '):'Modlitební stráž Oxygen');
   return`https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${fmt(sd)}/${fmt(edExcl)}&details=${details}`;
 }
-function renderWatch(){
+function renderWatch(newIds=new Set()){
   const list=[...(window._watch||[])].reverse();const el=document.getElementById('watchList');
   if(!list.length){el.innerHTML=`<div class="empty"><div class="ei">⌚</div><p>Klikni na den v kalendáři pro přidání stráže</p></div>`;return;}
   const today=new Date();
@@ -1252,7 +1282,7 @@ function renderWatch(){
     const isFuture=w.startDate&&new Date(w.startDate)>today;const isPast=w.endDate&&new Date(w.endDate)<today;const isCurr=!isFuture&&!isPast;
     const canDel=isAdmin()||w.createdBy===CU.username;
     const gcalUrl=makeGCalUrl(w);
-    return`<div class="wc ${isCurr?'curr':isFuture?'future':''}">
+    return`<div class="wc ${newIds.has(w._id)?"is-new":""} ${isCurr?'curr':isFuture?'future':''}">
       <div style="display:flex;justify-content:space-between;align-items:flex-start">
         <div><div style="font-family:'Cinzel',serif;font-size:.77rem;color:${isCurr?'var(--gold)':isFuture?'var(--purple-xl)':'var(--muted)'}">✦ ${isCurr?'Aktuální stráž':isFuture?'Plánovaná stráž':'Minulá stráž'}</div><div style="font-weight:800;font-size:.92rem;color:var(--white);margin-top:2px">${esc(w.person)}</div><div style="color:var(--muted);font-size:.76rem;margin-top:1px">${esc(w.date)}</div></div>
         <div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap">
@@ -1269,7 +1299,7 @@ window.delWatch=async id=>{const w=(window._watch||[]).find(x=>x._id===id);if(!w
 let _anonFilter='active';
 window.setAnonF=(f,btn)=>{_anonFilter=f;document.querySelectorAll('#anonTabs .tab').forEach(b=>b.classList.remove('on'));btn.classList.add('on');renderAnon();};
 window.submitAnon=async()=>{const text=document.getElementById('anonText').value.trim();const cat=document.getElementById('anonCat').value;if(!text){toast('✏️ Napiš žádost');return;}try{await addDoc(collection(db,'anon'),{text,cat,prayedBy:[],archived:false,createdBy:CU.username,ts:serverTimestamp()});document.getElementById('anonText').value='';toast('📩 Odesláno anonymně.');}catch(e){toast('Chyba: '+e.message);}};
-function renderAnon(){
+function renderAnon(newIds=new Set()){
   const inbox=document.getElementById('anonInbox');
   const tabs=document.getElementById('anonTabs');
   if(tabs)tabs.style.display='flex';
@@ -1316,7 +1346,7 @@ window.addDiary=async()=>{
   try{await addDoc(collection(db,'diary'),{author:CU.name,text,scripture,createdBy:CU.username,ts:serverTimestamp()});['diaryText','diaryScripture'].forEach(id=>document.getElementById(id).value='');toast('📖 Zápis přidán!');}catch(e){toast('Chyba: '+e.message);}
 };
 const DIARY_REACTS=['🙏','❤️','🔥','✨','💜','🕊️'];
-function renderDiary(){
+function renderDiary(newIds=new Set()){
   const el=document.getElementById('diaryList');const list=window._diary||[];
   if(!list.length){el.innerHTML=`<div class="empty"><div class="ei">📖</div><p>Deník je prázdný. Buď první!</p></div>`;return;}
   const allU=window._users||{};
@@ -1334,7 +1364,7 @@ function renderDiary(){
     const readers=e.readBy||[];
     const readerNames=readers.map(un=>{const u2=allU[un];return u2?.emoji?u2.emoji+' '+(u2.name.split(' ')[0]):u2?.name?.split(' ')[0]||un;});
     const readHTML=readers.length?`<div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:3px;align-items:center"><span style="font-size:.68rem;color:var(--muted)">👁 Četl/a: </span>${readerNames.map(n=>`<span style="font-size:.7rem;background:rgba(255,255,255,.06);border:1px solid var(--border);border-radius:20px;padding:1px 7px;color:var(--muted)">${esc(n)}</span>`).join('')}</div>`:'';
-    return`<div class="de" id="de-${e._id}">
+    return`<div class="de ${newIds.has(e._id)?'is-new':''}" id="de-${e._id}">
       <div style="display:flex;justify-content:space-between;align-items:flex-start">
         <div><div class="da">${u?.emoji?`<span style="font-size:1rem;margin-right:3px">${u.emoji}</span>`:''} ✦ ${esc(e.author)}</div><div class="dd">${fmtTs(e.ts)}</div></div>
         ${canDel?`<button class="bs b-del" onclick="delDiary('${e._id}')">🗑</button>`:''}
