@@ -595,7 +595,6 @@ input:checked+.slider::before{transform:translateX(18px)}
     <!-- DASHBOARD -->
     <div class="sec on" id="sec-dashboard">
       <div class="ph"><h1>Přehled</h1><p>Vítej v modlitebním týmu Oxygen</p></div>
-      <div id="dashStreakRow"></div>
       <div id="dashCountdown"></div>
       <div class="g3">
         <div class="scard"><div class="snum" id="s1">–</div><div class="slbl">Žádostí</div></div>
@@ -1147,10 +1146,12 @@ function startListeners(){
   }));
   // prayerLog – real-time streak (načte data okamžitě při startu)
   unsubs.push(onSnapshot(query(collection(db,'prayerLog')),snap=>{
+    window._allPrayerLog=snap.docs.map(d=>d.data()); // store all for userStats
     _prayerDays=new Set(snap.docs.filter(d=>d.data().username===CU.username).map(d=>d.data().date));
     _prayerLoaded=true;
     renderStreakDash();renderCountdownDash();
     if(document.getElementById('sec-my-stats')?.classList.contains('on'))renderMyStats();
+    if(document.getElementById('sec-stats')?.classList.contains('on'))renderStats();
   }));
 }
 
@@ -1662,8 +1663,9 @@ function renderStats(){
     const _tod=new Date();_tod.setHours(0,0,0,0);
     const wC=watch.filter(w=>w.createdBy===u.username&&w.endDate&&(()=>{const ed=new Date(w.endDate);ed.setHours(23,59,59,999);return ed<_tod;})()).length;
     const dC=diary.filter(d=>d.createdBy===u.username).length;
+    const userStreak=calcStreakFor(u.username);
     const avEl=u.emoji?`<div class="usc-av ea">${u.emoji}</div>`:`<div class="usc-av">${ini(u.name)}</div>`;
-    return`<div class="usc">${avEl}<div class="usc-info"><div class="usc-name">${esc(u.name)} <span class="tag ${u.role==='admin'?'t-rodina':u.role==='modlitebnik'?'t-duchovní':'t-jiné'}">${u.role}</span></div><div class="usc-stats"><div><div class="usc-sn">${pC}</div><div class="usc-sl">Modliteb</div></div><div><div class="usc-sn">${rC}</div><div class="usc-sl">Žádostí</div></div><div><div class="usc-sn">${wC}</div><div class="usc-sl">Stráží</div></div><div><div class="usc-sn">${dC}</div><div class="usc-sl">Zápisů</div></div></div></div></div>`;
+    return`<div class="usc">${avEl}<div class="usc-info"><div class="usc-name">${esc(u.name)} <span class="tag ${u.role==='admin'?'t-rodina':u.role==='modlitebnik'?'t-duchovní':'t-jiné'}">${u.role}</span>${userStreak>0?`<span style="font-size:.72rem;color:var(--gold);margin-left:4px">🔥${userStreak}</span>`:''}</div><div class="usc-stats"><div><div class="usc-sn">${pC}</div><div class="usc-sl">Modliteb</div></div><div><div class="usc-sn">${rC}</div><div class="usc-sl">Žádostí</div></div><div><div class="usc-sn">${wC}</div><div class="usc-sl">Stráží</div></div><div><div class="usc-sn">${dC}</div><div class="usc-sl">Zápisů</div></div></div></div></div>`;
   }).join('');
 }
 function mkC(id,labels,data,bc,bgc,cfg,type){
@@ -1828,6 +1830,7 @@ function startOnline(){
         +'<div style="min-width:0"><div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap">'
         +'<span style="font-size:.78rem">'+esc(u.name)+(isMe?' <span style="color:var(--muted);font-size:.68rem">(ty)</span>':'')+'</span>'
         +(roleLabel?'<span class="urole '+roleCls+'" style="font-size:.62rem;padding:1px 5px">'+roleLabel+'</span>':'')
+        +(calcStreakFor(u.username)>0?'<span style="font-size:.68rem;color:var(--gold)">🔥'+calcStreakFor(u.username)+'</span>':'')
         +'</div></div></div>';
     }).join('');
   });
@@ -1931,7 +1934,22 @@ function calcStreak(){
   return{streak,best};
 }
 
-function renderStreakDash(){
+function calcStreakFor(username){
+  const logs=window._allPrayerLog||[];
+  const days=new Set(logs.filter(d=>d.username===username).map(d=>d.date));
+  if(!days.size)return 0;
+  const today=new Date();
+  const fmt=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  const todayStr=fmt(today);
+  const yest=new Date(today);yest.setDate(yest.getDate()-1);
+  const yestStr=fmt(yest);
+  let ref=days.has(todayStr)?todayStr:days.has(yestStr)?yestStr:null;
+  if(!ref)return 0;
+  let streak=1;
+  const d=new Date(ref);
+  while(true){d.setDate(d.getDate()-1);if(days.has(fmt(d)))streak++;else break;}
+  return streak;
+}
   if(!_prayerLoaded)return; // wait for data before showing anything
   const {streak,best}=calcStreak();
   const el=document.getElementById('dashStreakRow');
