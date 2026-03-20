@@ -1152,6 +1152,9 @@ function startListeners(){
     renderStreakDash();renderCountdownDash();
     if(document.getElementById('sec-my-stats')?.classList.contains('on'))renderMyStats();
     if(document.getElementById('sec-stats')?.classList.contains('on'))renderStats();
+    // Refresh online list to show updated streaks
+    const onlineList=document.getElementById('onlineList');
+    if(onlineList&&onlineList.children.length)startOnline();
   }));
 }
 
@@ -1950,6 +1953,8 @@ function calcStreakFor(username){
   while(true){d.setDate(d.getDate()-1);if(days.has(fmt(d)))streak++;else break;}
   return streak;
 }
+
+function renderStreakDash(){
   if(!_prayerLoaded)return; // wait for data before showing anything
   const {streak,best}=calcStreak();
   const el=document.getElementById('dashStreakRow');
