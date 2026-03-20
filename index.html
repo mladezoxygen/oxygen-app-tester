@@ -1499,20 +1499,20 @@ window.calClick=(y,mo,d,e)=>{
     const users=Object.values(window._users||{}).filter(u=>u.role!=='pending').sort((a,b)=>a.name.localeCompare(b.name));
     const guardianRows=users.map(u=>{
       const av=u.emoji?'<div class="cp-user-av ea">'+u.emoji+'</div>':'<div class="cp-user-av">'+ini(u.name)+'</div>';
-      const checked=u.username===CU.username?'checked':'';
-      return'<label class="cp-user-row'+(u.username===CU.username?' selected':'')+'" id="cpGRow_'+u.username+'" onclick="cpSelectGuardian(''+u.username+'')">'
+      const isMeSel=u.username===CU.username;
+      return '<label class="cp-user-row'+(isMeSel?' selected':'')+'" id="cpGRow_'+u.username+'" onclick="cpSelectGuardian(this,\''+u.username+'\')">'
         +av+'<span class="cp-user-name">'+esc(u.name)+'</span>'
         +'</label>';
     }).join('');
     const coRows=users.map(u=>{
-      return'<label class="cp-user-row" id="cpCRow_'+u.username+'" onclick="cpToggleCo(''+u.username+'')">'
+      return '<label class="cp-user-row" id="cpCRow_'+u.username+'" onclick="cpToggleCo(this,\''+u.username+'\')">'
         +(u.emoji?'<div class="cp-user-av ea">'+u.emoji+'</div>':'<div class="cp-user-av">'+ini(u.name)+'</div>')
         +'<span class="cp-user-name">'+esc(u.name)+'</span>'
         +'<span class="cp-user-badge" id="cpCBadge_'+u.username+'"></span>'
         +'</label>';
     }).join('');
     popup.innerHTML=
-      '<button class="cal-popup-close" onclick="document.querySelector('.cal-popup').remove();calPopup=null">✕</button>'
+      '<button class="cal-popup-close" onclick="document.querySelector(\'.cal-popup\').remove();calPopup=null">✕</button>'
       +'<h3>Přidat stráž</h3>'
       +'<div style="color:var(--muted);font-size:.79rem;margin-bottom:8px">'+label+'</div>'
       +'<div class="cp-section-lbl">Strážce</div>'
@@ -1521,7 +1521,7 @@ window.calClick=(y,mo,d,e)=>{
       +'<div class="cp-user-list" id="cpCoList" style="max-height:120px">'+coRows+'</div>'
       +'<div class="fg" style="margin-top:10px;margin-bottom:8px"><label>Do data</label><input type="date" id="cpE" value="'+iso+'"></div>'
       +'<div class="fg" style="margin-bottom:10px"><label>Témata (čárkou)</label><input type="text" id="cpT" placeholder="Mládež, vedení, …"></div>'
-      +'<button class="bp" style="padding:9px" onclick="saveCalWatch(''+iso+'')">Uložit</button>';
+      +'<button class="bp" style="padding:9px" onclick="saveCalWatch(\''+iso+'\')">Uložit</button>';
     window._cpGuardian=CU.username;
     window._cpCo=[];
   }
@@ -1534,21 +1534,20 @@ window.calClick=(y,mo,d,e)=>{
 };
 
 // Výběr strážce (radio)
-window.cpSelectGuardian=un=>{
+window.cpSelectGuardian=(el,un)=>{
   window._cpGuardian=un;
-  document.querySelectorAll('[id^="cpGRow_"]').forEach(row=>{
-    row.classList.toggle('selected',row.id==='cpGRow_'+un);
-  });
+  document.querySelectorAll('[id^="cpGRow_"]').forEach(row=>row.classList.remove('selected'));
+  el.classList.add('selected');
 };
 // Toggle co-person (checkbox)
-window.cpToggleCo=un=>{
+window.cpToggleCo=(el,un)=>{
   if(!window._cpCo)window._cpCo=[];
   const idx=window._cpCo.indexOf(un);
   if(idx===-1){window._cpCo.push(un);}else{window._cpCo.splice(idx,1);}
-  const row=document.getElementById('cpCRow_'+un);
+  const inList=window._cpCo.includes(un);
+  el.classList.toggle('selected',inList);
   const badge=document.getElementById('cpCBadge_'+un);
-  if(row)row.classList.toggle('selected',window._cpCo.includes(un));
-  if(badge)badge.textContent=window._cpCo.includes(un)?'✓':'';
+  if(badge)badge.textContent=inList?'✓':'';
 };
 
 
