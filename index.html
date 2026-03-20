@@ -1448,7 +1448,8 @@ window.calClick=(y,mo,d,e)=>{
   if(existing){
     const gcalUrl=makeGCalUrl(existing);
     const allInWatch=[existing.person,...(existing.coPersons||[])];
-    const alreadyIn=allInWatch.some(n=>n===CU.name);
+    const cuFirst=CU.name.split(' ')[0];
+    const alreadyIn=allInWatch.some(n=>n===CU.name||n===cuFirst);
     const extraNames=(existing.coPersons||[]).length
       ? '<div style="font-size:.8rem;color:var(--muted);margin-top:2px">+ '+(existing.coPersons||[]).map(n=>esc(n)).join(', ')+'</div>'
       : '';
@@ -1572,10 +1573,9 @@ window.joinWatch=async id=>{
   const w=(window._watch||[]).find(x=>x._id===id);if(!w)return;
   // Block joining past watches
   if(w.endDate){const ed=new Date(w.endDate);ed.setHours(23,59,59,999);if(ed<new Date()){toast('Tato stráž již proběhla.');return;}}
-  const already=[w.person,...(w.coPersons||[])].some(n=>n===CU.name);
-  if(already){toast('Už jsi v této stráži');return;}
-  // Store only first name for auto-joined users
   const firstName=CU.name.split(' ')[0];
+  const already=[w.person,...(w.coPersons||[])].some(n=>n===CU.name||n===firstName);
+  if(already){toast('Už jsi v této stráži');return;}
   const updated=[...(w.coPersons||[]),firstName];
   try{await updateDoc(doc(db,'watch',id),{coPersons:updated});toast('✓ Přidán/a ke stráži!');}catch(e){toast('Chyba: '+e.message);}
 };
