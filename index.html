@@ -314,11 +314,20 @@ select.rs{padding:5px 8px;font-size:.77rem;background:var(--surface);border:1px 
 .irow-btn{flex-shrink:0;width:auto}
 .lbl{font-size:.72rem;font-weight:700;color:var(--purple-xl);letter-spacing:.06em;text-transform:uppercase;margin-bottom:5px;display:block}
 /* MODAL */
-.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:500;display:flex;align-items:center;justify-content:center;padding:20px;animation:fu .2s ease}
-.modal{background:var(--surface);border:1px solid var(--border-l);border-radius:18px;padding:26px;max-width:460px;width:100%;max-height:85vh;overflow-y:auto}
+@keyframes modal-pop-in{from{opacity:0;transform:scale(.88) translateY(18px)}60%{transform:scale(1.02) translateY(-3px)}to{opacity:1;transform:scale(1) translateY(0)}}
+@keyframes modal-pop-out{from{opacity:1;transform:scale(1) translateY(0)}to{opacity:0;transform:scale(.92) translateY(14px)}}
+@keyframes modal-bg-in{from{background:rgba(0,0,0,0);backdrop-filter:blur(0px)}to{background:rgba(0,0,0,.65);backdrop-filter:blur(6px)}}
+@keyframes modal-bg-out{from{background:rgba(0,0,0,.65);backdrop-filter:blur(6px)}to{background:rgba(0,0,0,0);backdrop-filter:blur(0px)}}
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:500;display:flex;align-items:center;justify-content:center;padding:20px;animation:modal-bg-in .22s ease forwards}
+.modal-bg.closing{animation:modal-bg-out .2s ease forwards;pointer-events:none}
+.modal{background:var(--surface);border:1px solid var(--border-l);border-radius:18px;padding:26px;max-width:460px;width:100%;max-height:85vh;overflow-y:auto;animation:modal-pop-in .3s cubic-bezier(.22,.68,0,1.2) forwards}
+.modal-bg.closing .modal{animation:modal-pop-out .2s ease forwards}
 .modal h2{font-family:'Cinzel',serif;font-size:1.15rem;color:var(--white);margin-bottom:16px}
 .modal-close{float:right;background:none;border:none;color:var(--muted);font-size:1.3rem;cursor:pointer;line-height:1;margin-left:8px}
 .modal-close:hover{color:var(--red)}
+/* Clickable profile targets */
+.profile-clickable{cursor:pointer;transition:opacity .15s,transform .15s}
+.profile-clickable:hover{opacity:.82;transform:scale(1.07)}
 .ep{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 16px}
 .ep-e{font-size:1.5rem;padding:6px;border-radius:8px;cursor:pointer;transition:background .15s;border:2px solid transparent}
 .ep-e:hover{background:rgba(123,47,190,.2)}.ep-e.sel{border-color:var(--purple-l);background:rgba(123,47,190,.2)}
@@ -1737,7 +1746,7 @@ window.showProfile=()=>{
   document.getElementById('profileModal')?.remove();
   const modal=document.createElement('div');modal.className='modal-bg';modal.id='profileModal';
   modal.innerHTML=`<div class="modal" onclick="event.stopPropagation()">
-    <button class="modal-close" onclick="document.getElementById('profileModal').remove()">✕</button>
+    <button class="modal-close" onclick="closeModal('profileModal')">✕</button>
     <h2>👤 Můj profil</h2>
     <div style="display:flex;align-items:center;gap:14px;margin-bottom:18px">
       <div id="profPrev" style="width:52px;height:52px;border-radius:50%;background:${_selEmoji?'var(--surface)':'linear-gradient(135deg,var(--purple),var(--purple-d))'};display:flex;align-items:center;justify-content:center;font-size:${_selEmoji?'1.8rem':'.95rem'};font-weight:800;color:#fff">${_selEmoji||ini(CU.name)}</div>
@@ -1783,7 +1792,7 @@ window.showProfile=()=>{
       <input type="file" accept=".json" style="display:none" onchange="importAll(this)">
     </label>
   </div>`;
-  modal.addEventListener('click',e=>{if(e.target===modal)modal.remove();});
+  modal.addEventListener('click',e=>{if(e.target===modal)closeModal('profileModal');});
   document.body.appendChild(modal);
 };
 window.selEm=(e,el)=>{_selEmoji=e;document.querySelectorAll('.ep-e').forEach(x=>x.classList.remove('sel'));el.classList.add('sel');const p=document.getElementById('profPrev');if(p){p.textContent=e||ini(CU.name);p.style.fontSize=e?'1.8rem':'.95rem';p.style.background=e?'var(--surface)':'linear-gradient(135deg,var(--purple),var(--purple-d))'; }};
@@ -1793,8 +1802,8 @@ window.saveNS=async()=>{notifSettings={newRequest:document.getElementById('ns1')
 // ── ADMIN ──────────────────────────────────────────────────────────────────
 window.aTab=(tab,btn)=>{document.querySelectorAll('#sec-admin .tab').forEach(b=>b.classList.remove('on'));btn.classList.add('on');['aUsers','aPending','aAnon'].forEach(id=>document.getElementById(id).style.display='none');if(tab==='users'){document.getElementById('aUsers').style.display='block';renderAdminUsers();}if(tab==='pending'){document.getElementById('aPending').style.display='block';renderAdminPending();}if(tab==='anon'){document.getElementById('aAnon').style.display='block';renderAdminAnon();}};
 function renderAdminSec(){document.getElementById('aUsers').style.display='block';document.getElementById('aPending').style.display='none';document.getElementById('aAnon').style.display='none';renderAdminUsers();}
-function renderAdminUsers(){const el=document.getElementById('aUsers');const users=Object.values(window._users||{}).filter(u=>u.role!=='pending').sort((a,b)=>a.name.localeCompare(b.name));if(!users.length){el.innerHTML=`<div class="empty"><p>Žádní uživatelé</p></div>`;return;}el.innerHTML=users.map(u=>`<div class="ur"><div class="uav ${u.emoji?'ea':''}" style="flex-shrink:0">${u.emoji||ini(u.name)}</div><div class="ui"><div class="un2">${esc(u.name)}</div><div class="us">@${esc(u.username)}</div></div><div class="ua"><select class="rs" onchange="chRole('${u.username}',this.value)"><option value="admin" ${u.role==='admin'?'selected':''}>Admin</option><option value="modlitebnik" ${u.role==='modlitebnik'?'selected':''}>Modlitebník</option><option value="mladeznik" ${u.role==='mladeznik'?'selected':''}>Mládežník</option></select>${u.username!==CU.username?`<button class="bs b-del" onclick="delUser('${u.username}')">🗑</button>`:`<span class="bs-placeholder"></span>`}</div></div>`).join('');}
-function renderAdminPending(){const el=document.getElementById('aPending');const pend=Object.values(window._users||{}).filter(u=>u.role==='pending');const pc=document.getElementById('pCnt');if(pc)pc.textContent=pend.length?` (${pend.length})`:'';if(!pend.length){el.innerHTML=`<div class="empty"><div class="ei">✓</div><p>Žádné čekající žádosti</p></div>`;return;}el.innerHTML=pend.map(u=>`<div class="ur"><div class="uav" style="flex-shrink:0">${ini(u.name)}</div><div class="ui"><div class="un2">${esc(u.name)}</div><div class="us">@${esc(u.username)}</div></div><div class="ua"><button class="bs b-ok" onclick="approveUser('${u.username}','modlitebnik')">✓ Modlitebník</button><button class="bs b-ghost" onclick="approveUser('${u.username}','mladeznik')">✓ Mládežník</button><button class="bs b-del" onclick="rejectUser('${u.username}')">✗</button></div></div>`).join('');}
+function renderAdminUsers(){const el=document.getElementById('aUsers');const users=Object.values(window._users||{}).filter(u=>u.role!=='pending').sort((a,b)=>a.name.localeCompare(b.name));if(!users.length){el.innerHTML=`<div class="empty"><p>Žádní uživatelé</p></div>`;return;}el.innerHTML=users.map(u=>`<div class="ur"><div class="uav ${u.emoji?'ea':''} profile-clickable" style="flex-shrink:0" onclick="showUserProfile('${u.username}')" title="Zobrazit profil">${u.emoji||ini(u.name)}</div><div class="ui" style="cursor:pointer" onclick="showUserProfile('${u.username}')"><div class="un2">${esc(u.name)}</div><div class="us">@${esc(u.username)}</div></div><div class="ua"><select class="rs" onchange="chRole('${u.username}',this.value)"><option value="admin" ${u.role==='admin'?'selected':''}>Admin</option><option value="modlitebnik" ${u.role==='modlitebnik'?'selected':''}>Modlitebník</option><option value="mladeznik" ${u.role==='mladeznik'?'selected':''}>Mládežník</option></select>${u.username!==CU.username?`<button class="bs b-del" onclick="delUser('${u.username}')">🗑</button>`:`<span class="bs-placeholder"></span>`}</div></div>`).join('');}
+function renderAdminPending(){const el=document.getElementById('aPending');const pend=Object.values(window._users||{}).filter(u=>u.role==='pending');const pc=document.getElementById('pCnt');if(pc)pc.textContent=pend.length?` (${pend.length})`:'';if(!pend.length){el.innerHTML=`<div class="empty"><div class="ei">✓</div><p>Žádné čekající žádosti</p></div>`;return;}el.innerHTML=pend.map(u=>`<div class="ur"><div class="uav profile-clickable" style="flex-shrink:0" onclick="showUserProfile('${u.username}')" title="Zobrazit profil">${ini(u.name)}</div><div class="ui" style="cursor:pointer" onclick="showUserProfile('${u.username}')"><div class="un2">${esc(u.name)}</div><div class="us">@${esc(u.username)}</div></div><div class="ua"><button class="bs b-ok" onclick="approveUser('${u.username}','modlitebnik')">✓ Modlitebník</button><button class="bs b-ghost" onclick="approveUser('${u.username}','mladeznik')">✓ Mládežník</button><button class="bs b-del" onclick="rejectUser('${u.username}')">✗</button></div></div>`).join('');}
 function renderAdminAnon(){const el=document.getElementById('aAnon');const list=window._anon||[];if(!list.length){el.innerHTML=`<div class="empty"><div class="ei">📭</div><p>Žádné anonymní žádosti</p></div>`;return;}el.innerHTML=list.map(r=>`<div class="pc" style="margin-bottom:9px"><div class="rh"><div class="rm2"><span class="tag t-anon">Anonymní</span><span class="tag t-${r.cat}">${r.cat}</span><span class="tag" style="background:rgba(255,255,255,.07);color:var(--muted);font-size:.65rem">${(r.reqType||"jednorázová")==="opakovaná"?"🔄 Opakovaná":(r.reqType||"jednorázová")==="dlouhodobá"?"📅 Dlouhodobá":"🕯 Jednorázová"}</span></div><div class="rd">${fmtTs(r.ts)}</div></div><p class="rt">${esc(r.text)}</p><div class="rf"><span class="pc-cnt">${(r.prayedBy||[]).length}×</span><button class="bs b-del" style="margin-left:auto" onclick="delAnon('${r._id}')">🗑</button></div></div>`).join('');}
 window.approveUser=async(un,role)=>{try{await updateDoc(doc(db,'users',un),{role});toast(`✓ Schválen/a jako ${role}`);}catch(e){toast('Chyba: '+e.message);}};
 window.rejectUser=async un=>{confirmDialog('Odmítnout a smazat žádost?',async()=>{try{await deleteDoc(doc(db,'users',un));toast('Odmítnuto');}catch(e){toast('Chyba: '+e.message);}})};
@@ -2241,9 +2250,9 @@ window.showUserProfile=(username)=>{
   document.getElementById('userProfileModal')?.remove();
   const m=document.createElement('div');m.className='modal-bg';m.id='userProfileModal';
   m.innerHTML=`<div class="modal" onclick="event.stopPropagation()" style="max-width:400px">
-    <button class="modal-close" onclick="document.getElementById('userProfileModal').remove()">✕</button>
+    <button class="modal-close" onclick="closeModal('userProfileModal')">✕</button>
     <div style="text-align:center;margin-bottom:22px">
-      <div style="width:68px;height:68px;border-radius:50%;background:${u.emoji?'var(--surface)':'linear-gradient(135deg,var(--purple),var(--purple-d))'};display:flex;align-items:center;justify-content:center;font-size:${u.emoji?'2rem':'1.1rem'};font-weight:800;color:#fff;margin:0 auto 10px;box-shadow:0 6px 24px rgba(0,0,0,.3);flex-shrink:0;line-height:1;text-align:center">${u.emoji||ini(u.name)}</div>
+      <div style="width:68px;height:68px;border-radius:50%;background:${u.emoji?'var(--surface)':'linear-gradient(135deg,var(--purple),var(--purple-d))'};display:flex;align-items:center;justify-content:center;font-size:${u.emoji?'2rem':'1.1rem'};font-weight:800;color:#fff;margin:0 auto 10px;box-shadow:0 6px 24px rgba(0,0,0,.3);flex-shrink:0;line-height:1;overflow:hidden">${u.emoji||ini(u.name)}</div>
       <div style="font-family:'Cinzel',serif;font-size:1.2rem;color:var(--white)">${esc(u.name)}</div>
       <div style="color:var(--muted);font-size:.8rem;margin-top:2px">@${esc(username)}</div>
       <span class="urole ${rc[u.role]||'rml'}" style="margin-top:6px;display:inline-block">${rm[u.role]||u.role}</span>
@@ -2258,10 +2267,17 @@ window.showUserProfile=(username)=>{
       <div class="scard"><div class="snum" style="font-size:1.3rem">${streak}</div><div class="slbl">Streak 🔥</div></div>
     </div>
   </div>`;
-  m.addEventListener('click',e=>{if(e.target===m)m.remove();});
+  m.addEventListener('click',e=>{if(e.target===m)closeModal('userProfileModal');});
   document.body.appendChild(m);
 };
 
+
+// ── MODAL CLOSE WITH ANIMATION ────────────────────────────────────────────
+function closeModal(id){
+  const m=document.getElementById(id);if(!m)return;
+  m.classList.add('closing');
+  setTimeout(()=>m.remove(),200);
+}
 
 // ── IN-APP CONFIRM DIALOG ──────────────────────────────────────────────────
 function confirmDialog(msg, onYes, onNo){
