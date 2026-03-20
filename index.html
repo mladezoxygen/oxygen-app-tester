@@ -1426,7 +1426,7 @@ function renderCalendar(){
 window.calPrev=()=>{calMonth.setMonth(calMonth.getMonth()-1);renderCalendar();};
 window.calNext=()=>{calMonth.setMonth(calMonth.getMonth()+1);renderCalendar();};
 window.calClick=(y,mo,d,e)=>{
-  if(calPopup)calPopup.remove();if(!canMgr())return;
+  if(calPopup)calPopup.remove();if(!CU)return;
   const iso=`${y}-${String(mo+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
   const label=new Date(y,mo,d).toLocaleDateString('cs-CZ',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
   const existing=window._watch?.find(w=>{if(!w.startDate)return false;const sd=new Date(w.startDate);const ed=w.endDate?new Date(w.endDate):sd;const dt=new Date(y,mo,d);return dt>=sd&&dt<=ed;});
