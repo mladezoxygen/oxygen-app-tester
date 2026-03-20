@@ -489,8 +489,8 @@ input:checked+.slider::before{transform:translateX(18px)}
       <div class="ni on" data-sec="dashboard"><span class="ni-ic">🏠</span>Přehled</div>
       <div class="ni" data-sec="requests"><span class="ni-ic">🙏</span>Žádosti<span class="nbadge" id="bReq" style="display:none">0</span></div>
       <div class="ni" data-sec="anon"><span class="ni-ic">📩</span>Anonymní formulář<span class="nbadge" id="bAnon" style="display:none">0</span></div>
+      <div class="ni" data-sec="checklist"><span class="ni-ic">✅</span>Modlitební seznam<span class="nbadge" id="bChk" style="display:none">0</span></div>
       <div class="ni" data-sec="watch"><span class="ni-ic">⌚</span>Modlitební stráž</div>
-      <div class="ni" data-sec="checklist"><span class="ni-ic">✅</span>Modlitební seznam</div>
       <div class="ni" data-sec="diary"><span class="ni-ic">📖</span>Boží hlas – Deník</div>
       <div class="ni" data-sec="chat"><span class="ni-ic">💬</span>Týmový chat<span class="nbadge" id="bChat" style="display:none">!</span></div>
       <div class="ni" data-sec="stats"><span class="ni-ic">📊</span>Statistiky</div>
@@ -994,7 +994,7 @@ function startListeners(){
     if(!_fl.req){const nn=window._req.filter(r=>!prev.find(p=>p._id===r._id));nn.forEach(r=>{if(notifSettings.newRequest)addNotif('🙏 Nová žádost o modlitbu',r.name+': '+r.text.slice(0,55),'requests');});}
     _fl.req=false;renderReqs();updateBadges();
   }));
-  unsubs.push(onSnapshot(query(collection(db,'checklist'),orderBy('ts','desc')),snap=>{window._chk=snap.docs.map(d=>({...d.data(),_id:d.id}));renderChk();}));
+  unsubs.push(onSnapshot(query(collection(db,'checklist'),orderBy('ts','desc')),snap=>{window._chk=snap.docs.map(d=>({...d.data(),_id:d.id}));renderChk();updateBadges();}));
   unsubs.push(onSnapshot(query(collection(db,'watch'),orderBy('ts','asc')),snap=>{window._watch=snap.docs.map(d=>({...d.data(),_id:d.id}));renderWatch();renderCalendar();renderDash();renderBanners();}));
   unsubs.push(onSnapshot(query(collection(db,'anon'),orderBy('ts','desc')),snap=>{window._anon=snap.docs.map(d=>({...d.data(),_id:d.id}));renderAnon();updateBadges();const el=document.getElementById('aAnon');if(el&&el.style.display!=='none')renderAdminAnon();}));
   unsubs.push(onSnapshot(query(collection(db,'diary'),orderBy('ts','desc')),snap=>{window._diary=snap.docs.map(d=>({...d.data(),_id:d.id}));renderDiary();updateBadges();}));
@@ -1014,6 +1014,9 @@ function updateBadges(){
   document.getElementById('s3').textContent=diary.length;
   const aq=reqs.filter(r=>!r.answered).length;
   const bq=document.getElementById('bReq');bq.textContent=aq;bq.style.display=aq?'inline':'none';
+  // Checklist badge – počet aktivních (nesplněných)
+  const chkCount=(window._chk||[]).filter(x=>!x.done).length;
+  const bc=document.getElementById('bChk');if(bc){bc.textContent=chkCount;bc.style.display=chkCount?'inline':'none';}
   // Anon badge – pro všechny přihlášené
   const anon=window._anon||[];
   const anonCount=anon.filter(r=>!r.archived).length;
@@ -1230,7 +1233,7 @@ window.saveCalWatch=async iso=>{
   const topStr=document.getElementById('cpT')?.value.trim()||'';
   const topics=topStr.split(',').map(s=>s.trim()).filter(Boolean);
   const sd=new Date(iso);const ed=endVal?new Date(endVal):sd;
-  const dateLabel=sd.toLocaleDateString('cs-CZ',{day:'numeric',month:'numeric'})+(endVal&&endVal!==iso?' – '+ed.toLocaleDateString('cs-CZ',{day:'numeric',month:'numeric',year:'numeric'}):'. '+sd.getFullYear());
+  const dateLabel=(()=>{const day=sd.getDate();const mon=sd.getMonth()+1;const dayE=ed.getDate();const monE=ed.getMonth()+1;return endVal&&endVal!==iso?`${day}. ${mon}. – ${dayE}. ${monE}. ${ed.getFullYear()}`:`${day}. ${mon}. ${sd.getFullYear()}`;})();
   try{await addDoc(collection(db,'watch'),{person,date:dateLabel,startDate:iso,endDate:endVal||iso,topics,createdBy:CU.username,ts:serverTimestamp()});document.querySelector('.cal-popup')?.remove();calPopup=null;toast('⌚ Stráž přidána');}catch(e){toast('Chyba: '+e.message);}
 };
 function makeGCalUrl(w){
