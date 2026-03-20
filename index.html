@@ -30,7 +30,8 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 #app{position:relative;z-index:1}
 /* AUTH */
 #authWrap{display:flex;align-items:flex-start;justify-content:center;min-height:100vh;padding:20px;padding-top:max(20px,env(safe-area-inset-top))}
-.abox{background:rgba(49,18,96,0.92);border:1px solid var(--border-l);border-radius:24px;padding:36px 28px;width:100%;max-width:410px;backdrop-filter:blur(20px);box-shadow:0 32px 80px rgba(0,0,0,0.5);animation:abox-in .6s cubic-bezier(.22,.68,0,1.2) both;margin:auto 0}
+.abox{background:rgba(49,18,96,0.92);border:1px solid var(--border-l);border-radius:24px;padding:36px 28px;width:100%;max-width:410px;backdrop-filter:blur(20px);box-shadow:0 32px 80px rgba(0,0,0,0.5);animation:abox-in .6s cubic-bezier(.22,.68,0,1.2) both;margin:auto 0;transition:box-shadow .3s ease}
+.abox:has(#registerForm:not([style*="display:none"])){box-shadow:0 40px 90px rgba(0,0,0,.55)}
 @keyframes abox-in{from{opacity:0;transform:translateY(32px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
 @keyframes fu{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:translateY(0)}}
 @keyframes logo-pop{0%{transform:scale(0) rotate(-15deg);opacity:0}60%{transform:scale(1.12) rotate(4deg)}80%{transform:scale(.96) rotate(-2deg)}100%{transform:scale(1) rotate(0);opacity:1}}
@@ -438,9 +439,9 @@ input:checked+.slider::before{transform:translateX(18px)}
       <button class="bp" id="rbtn" onclick="doRegister()">Odeslat žádost o přístup</button>
     </div>
     <div class="amsg" id="amsg"></div>
-    <div style="margin-top:18px;padding-top:16px;border-top:1px solid var(--border);text-align:center">
+    <div style="margin-top:18px;padding-top:16px;border-top:1px solid var(--border);text-align:center;animation:fg-in .4s ease .8s both">
       <div style="font-size:.75rem;color:var(--muted);margin-bottom:10px">Nechceš se registrovat?</div>
-      <button class="bp" style="background:rgba(255,209,102,.12);border:1px solid rgba(255,209,102,.3);color:var(--gold);box-shadow:none" onclick="openPublicPrayer()">🙏 Pošli žádost o modlitbu</button>
+      <button class="bp" style="background:rgba(255,209,102,.12);border:1px solid rgba(255,209,102,.3);color:var(--gold);box-shadow:none;transition:background .2s,transform .2s,box-shadow .2s" onmouseover="this.style.background='rgba(255,209,102,.22)';this.style.boxShadow='0 4px 18px rgba(255,209,102,.2)'" onmouseout="this.style.background='rgba(255,209,102,.12)';this.style.boxShadow='none'" onclick="openPublicPrayer()">🙏 Pošli žádost o modlitbu</button>
     </div>
   </div>
 </div>
@@ -476,7 +477,7 @@ input:checked+.slider::before{transform:translateX(18px)}
     </div>
     <button class="bp" id="pubBtn" onclick="submitPublicPrayer()">🙏 Odeslat žádost</button>
     <div id="pubMsg" class="amsg" style="margin-top:12px"></div>
-    <p style="text-align:center;font-size:.72rem;color:var(--muted);margin-top:14px">Žádosti vidí pouze členové modlitebního týmu</p>
+    <p style="text-align:center;font-size:.72rem;color:var(--muted);margin-top:14px">Bez jména půjde žádost anonymně, s jménem ji uvidí celý tým</p>
   </div>
 </div>
 
@@ -918,17 +919,37 @@ document.getElementById('publicPrayerOverlay').addEventListener('click',e=>{
 window.switchAuth=mode=>{
   const login=document.getElementById('loginForm');
   const reg=document.getElementById('registerForm');
+  const box=document.querySelector('.abox');
   const current=mode==='login'?reg:login;
   const next=mode==='login'?login:reg;
-  if(current.style.display==='none'){next.style.display='block';next.classList.add('auth-form-enter');setTimeout(()=>next.classList.remove('auth-form-enter'),350);showMsg('','');document.querySelectorAll('.atab').forEach((b,i)=>b.classList.toggle('on',(mode==='login'&&i===0)||(mode==='register'&&i===1)));return;}
+  document.querySelectorAll('.atab').forEach((b,i)=>b.classList.toggle('on',(mode==='login'&&i===0)||(mode==='register'&&i===1)));
+  showMsg('','');
+  if(current.style.display==='none'){
+    next.style.display='block';
+    next.classList.add('auth-form-enter');
+    setTimeout(()=>next.classList.remove('auth-form-enter'),350);
+    return;
+  }
+  // Animate height
+  const startH=box.offsetHeight;
   current.classList.add('auth-form-exit');
   setTimeout(()=>{
     current.style.display='none';current.classList.remove('auth-form-exit');
-    next.style.display='block';next.classList.add('auth-form-enter');
+    next.style.display='block';
+    // Measure target height
+    const endH=box.offsetHeight;
+    // Animate from startH to endH
+    box.style.transition='none';
+    box.style.height=startH+'px';
+    box.style.overflow='hidden';
+    requestAnimationFrame(()=>{
+      box.style.transition='height .35s cubic-bezier(.22,.68,0,1.2)';
+      box.style.height=endH+'px';
+    });
+    setTimeout(()=>{box.style.height='';box.style.overflow='';box.style.transition='';},380);
+    next.classList.add('auth-form-enter');
     setTimeout(()=>next.classList.remove('auth-form-enter'),350);
   },190);
-  document.querySelectorAll('.atab').forEach((b,i)=>b.classList.toggle('on',(mode==='login'&&i===0)||(mode==='register'&&i===1)));
-  showMsg('','');
 };
 window.doRegister=async()=>{
   const name=document.getElementById('rname').value.trim();
