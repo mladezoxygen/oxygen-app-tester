@@ -226,7 +226,7 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 .cal-day.cal-has:hover{background:rgba(123,47,190,.25)}
 .cal-day.cal-mine{background:rgba(6,214,160,.08)!important;border-color:rgba(6,214,160,.35)!important}
 .cal-day.cal-mine:hover{background:rgba(6,214,160,.16)!important}
-.cal-day-num{font-size:.75rem;font-weight:700;color:var(--muted);line-height:1}.cal-day.cal-today .cal-day-num{color:var(--purple-xl)}
+.cal-day-num{font-size:.75rem;font-weight:700;color:var(--muted);line-height:1;position:relative;z-index:1}.cal-day.cal-today .cal-day-num{color:var(--white);background:var(--purple-l);border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-size:.68rem}
 .cal-day-chips{display:flex;flex-direction:column;gap:2px;margin-top:2px;flex:1}
 .cal-chip{font-size:.58rem;font-weight:700;border-radius:3px;padding:1px 4px;line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 .cal-chip.past{background:rgba(123,47,190,.25);color:var(--purple-xl)}
@@ -1288,7 +1288,7 @@ function renderDash(){
             <strong style="color:var(--white)">${esc(cur.person)}</strong>
             <span style="color:var(--muted);font-size:.77rem;margin-left:6px">${esc(cur.date)}</span>
             <div class="wt" style="margin-top:6px">${(cur.topics||[]).map(t=>`<span class="wtag">${esc(t)}</span>`).join('')}</div>
-            ${(()=>{const pc=(cur.participants||[]).length;return pc?`<div style="margin-top:5px;font-size:.75rem;color:var(--muted)">👥 ${pc} účastník${pc===1?'':pc<5?'í':'ů'}</div>`:''})()}
+            ${(()=>{const pc=(cur.participants||[]).length;return`<div data-watch-parts="${cur._id}" class="watch-parts-row${pc?' visible':''}" style="font-size:.75rem;color:var(--muted)">${pc?`👥 ${csParticipantsShort(pc)}`:''}</div>`;})()}
           </div>
           <div style="display:flex;gap:4px;align-items:center;flex-shrink:0">
             ${makeGCalUrl(cur)?`<a href="${makeGCalUrl(cur)}" target="_blank" rel="noopener" class="bs b-gcal" style="text-decoration:none" title="Přidat do Google Kalendáře">📅</a>`:''}
@@ -1596,9 +1596,7 @@ window.calClick=(y,mo,d,e)=>{
     // Všichni přihlášení mohou přidat stráž; admin přiřazuje komukoliv, ostatní jen sobě
     const allUsers=Object.values(window._users||{}).filter(u=>u.role!=='pending').sort((a,b)=>a.name.localeCompare(b.name,'cs'));
     const userOptions=allUsers.map(u=>`<option value="${u.username}" ${u.username===CU.username?'selected':''}>${esc(u.name)}</option>`).join('');
-    const whoField=isAdmin()
-      ?`<div class="fg" style="margin-bottom:8px"><label>Vedoucí stráže</label><select id="cpU">${userOptions}</select></div>`
-      :`<div class="fg" style="margin-bottom:8px"><label>Vedoucí</label><input type="text" value="${esc(CU.name)}" readonly style="opacity:.7;cursor:default"></div>`;
+    const whoField=`<div class="fg" style="margin-bottom:8px"><label>Vedoucí stráže</label><select id="cpU">${userOptions}</select></div>`;
     inner+=`<div style="border-top:1px solid var(--border);margin-top:${watches.length?'10':'0'}px;padding-top:12px">
       <div style="font-size:.73rem;font-weight:800;color:var(--purple-xl);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px">+ Přidat novou stráž</div>
       ${whoField}
