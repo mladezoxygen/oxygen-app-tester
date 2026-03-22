@@ -253,10 +253,11 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 @keyframes past-reveal{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
 .wc-past-new{animation:past-reveal .35s ease both}
 @keyframes wc-curr-glow{0%,100%{box-shadow:0 0 0 1px rgba(255,209,102,.06),0 2px 16px rgba(255,209,102,.06)}50%{box-shadow:0 0 0 1px rgba(255,209,102,.15),0 4px 28px rgba(255,209,102,.18)}}
-@keyframes join-pop{0%{transform:scale(1)}50%{transform:scale(1.06)}100%{transform:scale(1)}}
-@keyframes part-count-in{0%{opacity:0;transform:translateY(8px) scale(.92)}60%{opacity:1;transform:translateY(-2px) scale(1.04)}100%{opacity:1;transform:translateY(0) scale(1)}}
-.join-popped{animation:join-pop .35s cubic-bezier(.22,.68,0,1.2)}
-.part-count-updated{animation:part-count-in .4s cubic-bezier(.22,.68,0,1.2)}
+@keyframes part-fade-in{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+.join-popped{transition:background .25s,border-color .25s,color .25s}
+.part-count-updated{animation:part-fade-in .3s ease}
+.watch-parts-row{max-height:0;overflow:hidden;opacity:0;margin-top:0;transition:max-height .35s ease,opacity .3s ease,margin-top .3s ease}
+.watch-parts-row.visible{max-height:40px;opacity:1;margin-top:5px}
 .wc.wc-future{border-color:rgba(155,79,222,.3)}
 .wc-header{padding:14px 16px 10px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
 .wc-header-left{flex:1;min-width:0}
@@ -1661,10 +1662,7 @@ window.toggleJoinWatch=async(id,btn)=>{
     if(btn){
       btn.textContent=iJoin?'+ Přidám se':'✓ Účastním se';
       btn.classList.toggle('on',!iJoin);
-      btn.classList.remove('join-popped');
-      void btn.offsetWidth; // reflow
-      btn.classList.add('join-popped');
-      setTimeout(()=>btn.classList.remove('join-popped'),400);
+      // transition handled by CSS
     }
     // Refresh participant label in popup
     const popupItem=btn?.closest('.watch-popup-item');
@@ -1693,7 +1691,8 @@ window.toggleJoinWatch=async(id,btn)=>{
       const partsNow=w.participants||[];
       const pc=partsNow.length;
       dashPc.textContent=pc?`👥 ${pc} účastník${pc===1?'':pc<5?'í':'ů'}`:'';
-      dashPc.classList.remove('part-count-updated');void dashPc.offsetWidth;dashPc.classList.add('part-count-updated');
+      if(pc){dashPc.classList.remove('part-count-updated');void dashPc.offsetWidth;dashPc.classList.add('part-count-updated','visible');}
+      else dashPc.classList.remove('visible');
     }
     // Also animate dashboard join button if it's for this watch
     const dashBtn=document.getElementById('dashJoinBtn');
@@ -1702,8 +1701,7 @@ window.toggleJoinWatch=async(id,btn)=>{
       const iNow=partsNow.includes(CU.username);
       dashBtn.textContent=iNow?'✓ Účastním se':'+ Přidám se';
       dashBtn.classList.toggle('on',iNow);
-      dashBtn.classList.remove('join-popped');void dashBtn.offsetWidth;dashBtn.classList.add('join-popped');
-      setTimeout(()=>dashBtn.classList.remove('join-popped'),400);
+      // transition handled by CSS
     }
   }catch(e){toast('Chyba: '+e.message);}
 };
