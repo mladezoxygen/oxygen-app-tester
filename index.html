@@ -2089,7 +2089,7 @@ function switchChannel(channelId){
   renderChannelList();
   // Reset pinned
   if(_pinnedUnsub){_pinnedUnsub();_pinnedUnsub=null;}
-  document.getElementById('chatPinned').innerHTML='';
+  const _pe=document.getElementById('chatPinned');if(_pe)_pe.innerHTML='';
   // Subscribe to pinned
   try{
     _pinnedUnsub=onSnapshot(doc(db,'channelPinned',channelId),snap=>{
@@ -2099,7 +2099,7 @@ function switchChannel(channelId){
   }catch(e){}
   // Subscribe to messages
   if(_chatUnsub){_chatUnsub();_chatUnsub=null;}
-  document.getElementById('chatMsgs').innerHTML='<div class="loading"><div class="spin"></div>Načítám…</div>';
+  const _me=document.getElementById('chatMsgs');if(_me)_me.innerHTML='<div class="loading"><div class="spin"></div>Načítám…</div>';
   _chatUnsub=onSnapshot(
     query(collection(db,'channels',channelId,'messages'),orderBy('ts','asc'),limit(200)),
     snap=>{
