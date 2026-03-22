@@ -311,7 +311,7 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 .dt{color:var(--text);line-height:1.68;font-size:.88rem;margin-top:8px}
 .ds{margin-top:9px;padding:8px 12px;background:rgba(255,209,102,.07);border-left:3px solid var(--gold);border-radius:0 6px 6px 0;color:var(--gold);font-style:italic;font-size:.83rem}
 /* CHAT — Discord-style */
-#sec-chat{padding:0!important;overflow:hidden}
+
 .chat-root{display:flex;height:calc(100vh - 56px);overflow:hidden;border-radius:14px;border:1px solid var(--border);background:var(--card-bg)}
 /* ── Channel sidebar ── */
 .ch-sidebar{width:240px;flex-shrink:0;display:flex;flex-direction:column;background:var(--bg-dark);border-right:1px solid var(--border);overflow:hidden}
@@ -442,6 +442,8 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 .chat-send{width:44px;height:44px;background:var(--purple);border:none;border-radius:12px;color:#fff;cursor:pointer;transition:opacity .15s,transform .12s;box-shadow:0 3px 14px rgba(123,47,190,.35);display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .chat-send:hover{opacity:.88;transform:scale(1.05)}
 .chat-send:active{transform:scale(.95)}
+.chat-emoji-btn{background:none;border:1px solid var(--border);border-radius:12px;cursor:pointer;font-size:1.15rem;padding:0 11px;height:44px;flex-shrink:0;transition:background .12s;color:var(--muted);line-height:1}
+.chat-emoji-btn:hover{background:rgba(123,47,190,.15);border-color:var(--border-l)}
 /* Reaction picker */
 .react-picker{position:fixed;background:var(--surface);border:1px solid var(--border-l);border-radius:14px;padding:8px 10px;display:flex;gap:4px;box-shadow:0 8px 32px rgba(0,0,0,.55);z-index:500;animation:fu .12s ease}
 .react-emoji{font-size:1.35rem;cursor:pointer;padding:5px;border-radius:9px;transition:background .1s,transform .1s;line-height:1}
@@ -451,7 +453,7 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 /* CHANNELS — Discord-style layout */
 /* Outer layout: chat area left, channel sidebar right */
 .chat-layout-outer{display:flex;height:calc(100vh - 170px);min-height:420px;border-radius:14px;overflow:hidden;background:var(--bg-dark)}
-#sec-chat{padding:0!important;overflow:hidden}
+
 #sec-chat .ph{display:none}
 /* Channel sidebar */
 .ch-sidebar{width:240px;flex-shrink:0;display:flex;flex-direction:column;border-left:1px solid var(--border);background:var(--bg-dark2);overflow:hidden}
@@ -631,8 +633,10 @@ input:checked+.slider::before{transform:translateX(18px)}
   /* Buttons */
   .bs{padding:5px 9px;font-size:.72rem}
   /* Chat */
-  .chat-wrap{height:calc(100dvh - 190px)}
-  #sec-chat .ph{margin-bottom:8px}
+  .chat-layout-outer{height:calc(100dvh - 80px)}
+  .channel-sidebar{width:44px}
+  .channel-item span:not(.channel-hash){display:none}
+  .channel-sidebar-title>span:first-child{display:none}
   .chat-bubble-wrap{max-width:85%}
   .chat-actions{opacity:1!important}
   .chat-act-btn{font-size:.85rem;padding:3px 6px}
@@ -969,19 +973,45 @@ input:checked+.slider::before{transform:translateX(18px)}
 
     <!-- CHAT -->
     <div class="sec" id="sec-chat">
-      <div class="ph"><h1>Týmový chat</h1><p>Hromadná komunikace celého týmu · najeď na zprávu pro akce</p></div>
-      <div class="card card-top chat-wrap">
-        <div class="chat-msgs" id="chatMsgs"><div class="loading"><div class="spin"></div>Načítám…</div></div>
-        <div class="chat-input-area">
-          <div id="replyBar" style="display:none"></div>
-          <div class="emoji-bar" id="emojiBar"></div>
-          <div class="chat-input-row">
-            <textarea class="chat-input" id="chatInput" placeholder="Napiš zprávu… (Enter = odeslat, Shift+Enter = nový řádek)" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChat()}"></textarea>
-            <button class="chat-send" onclick="sendChat()">→</button>
+      <div class="chat-layout-outer">
+        <!-- Channel sidebar -->
+        <div class="ch-sidebar" id="channelSidebar">
+          <div class="ch-sidebar-header">
+            <span class="ch-sidebar-title">💬 Kanály</span>
+          </div>
+          <div class="ch-sidebar-body" id="channelList"></div>
+          <div class="ch-sidebar-footer admin-only" id="addChannelFooter" style="display:none">
+            <button class="bp" style="padding:7px;font-size:.8rem;width:100%" onclick="showAddChannelModal()">+ Nový kanál</button>
+          </div>
+        </div>
+        <!-- Main chat area -->
+        <div class="ch-main">
+          <div class="ch-topbar">
+            <span class="ch-hash">#</span>
+            <span class="ch-topbar-name" id="channelHeaderName">obecný</span>
+            <span class="ch-topbar-desc" id="channelHeaderDesc"></span>
+            <div class="ch-topbar-right">
+              <span id="channelMemberCount" style="font-size:.74rem;color:var(--muted)"></span>
+            </div>
+          </div>
+          <div id="chatPinned"></div>
+          <div class="chat-msgs" id="chatMsgs"><div class="loading"><div class="spin"></div>Načítám…</div></div>
+          <div class="chat-typing" id="chatTyping"></div>
+          <div class="ch-input-area">
+            <div id="replyBar" style="display:none"></div>
+            <div class="ch-input-row">
+              <button class="ch-emoji-btn" onclick="toggleEmojiPicker(event)" title="Emoji">😊</button>
+              <textarea class="chat-input" id="chatInput" placeholder="Napiš zprávu…" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChat()}" oninput="onChatInput()" onblur="stopTyping()"></textarea>
+              <button class="chat-send" onclick="sendChat()">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+              </button>
+            </div>
           </div>
         </div>
       </div>
     </div>
+    <!-- Emoji picker overlay -->
+    <div id="emojiPickerOverlay" style="display:none;position:fixed;z-index:600;background:var(--surface);border:1px solid var(--border-l);border-radius:16px;padding:12px;box-shadow:0 16px 48px rgba(0,0,0,.65);width:288px;animation:fu .15s ease"><div style="display:flex;flex-wrap:wrap;gap:3px"></div></div>
 
 
     <!-- MY STATS -->
