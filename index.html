@@ -2556,12 +2556,16 @@ window.showEditChannelModal=()=>{
       <input type="text" id="editChDesc" value="${esc(ch.description||'')}" placeholder="Krátký popis kanálu" maxlength="100"></div>
     <div class="lbl" style="margin-bottom:6px">Členové <span style="font-weight:400;text-transform:none;color:var(--muted)">(prázdné = všichni)</span></div>
     <div style="max-height:200px;overflow-y:auto;border:1px solid var(--border);border-radius:10px;padding:6px;margin-bottom:16px;background:rgba(0,0,0,.1)">
-      ${allUsers.map(u=>`<label style="display:flex;align-items:center;gap:8px;padding:6px;cursor:pointer;border-radius:6px;transition:background .1s" onmouseover="this.style.background='rgba(123,47,190,.1)'" onmouseout="this.style.background=''">
-        <input type="checkbox" class="editChMember" value="${u.username}" ${(ch.members||[]).includes(u.username)?'checked':''} style="accent-color:var(--purple);width:14px;height:14px">
-        <div style="width:24px;height:24px;border-radius:50%;background:linear-gradient(135deg,var(--purple),var(--purple-d));display:flex;align-items:center;justify-content:center;font-size:.58rem;font-weight:800;color:#fff;flex-shrink:0">${u.emoji||ini(u.name)}</div>
-        <span style="font-size:.85rem;flex:1">${esc(u.name)}</span>
-        <span style="font-size:.7rem;color:var(--muted)">@${esc(u.username)}</span>
-      </label>`).join('')}
+      ${allUsers.map(u=>{
+        const roleLabel=u.role==='admin'?'Admin':u.role==='modlitebnik'?'Modlitebník':u.role==='mladeznik'?'Mládežník':'';
+        const roleCls=u.role==='admin'?'ra':u.role==='modlitebnik'?'rm':'rml';
+        return`<label style="display:flex;align-items:center;gap:8px;padding:6px;cursor:pointer;border-radius:6px;transition:background .1s" onmouseover="this.style.background='rgba(123,47,190,.1)'" onmouseout="this.style.background=''">
+        <input type="checkbox" class="editChMember" value="${u.username}" ${(ch.members||[]).includes(u.username)?'checked':''} style="accent-color:var(--purple);width:14px;height:14px;flex-shrink:0">
+        <div style="width:24px;height:24px;border-radius:50%;background:${u.emoji?'var(--surface)':'linear-gradient(135deg,var(--purple),var(--purple-d))'};display:flex;align-items:center;justify-content:center;font-size:${u.emoji?'.85rem':'.58rem'};font-weight:800;color:#fff;flex-shrink:0">${u.emoji||ini(u.name)}</div>
+        <span style="font-size:.85rem;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(u.name)}</span>
+        ${roleLabel?`<span class="urole ${roleCls}" style="font-size:.6rem;padding:1px 6px;flex-shrink:0">${roleLabel}</span>`:''}
+      </label>`;
+      }).join('')}
     </div>
     <div style="display:flex;gap:8px">
       <button class="bp" onclick="saveChannelEdit('${ch._id}')" style="flex:1">Uložit změny</button>
@@ -2639,12 +2643,16 @@ window.showAddChannelModal=(defaultCat)=>{
     <div style="margin-bottom:14px">
       <div class="lbl" style="margin-bottom:6px">Přístup <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted)">(prázdné = celý tým)</span></div>
       <div style="max-height:170px;overflow-y:auto;border:1px solid var(--border);border-radius:10px;padding:4px;background:rgba(0,0,0,.1)">
-        ${allUsers.map(u=>`<label style="display:flex;align-items:center;gap:8px;padding:6px 8px;cursor:pointer;border-radius:7px;transition:background .1s" onmouseover="this.style.background='rgba(123,47,190,.1)'" onmouseout="this.style.background=''">
+        ${allUsers.map(u=>{
+          const roleLabel=u.role==='admin'?'Admin':u.role==='modlitebnik'?'Modlitebník':u.role==='mladeznik'?'Mládežník':'';
+          const roleCls=u.role==='admin'?'ra':u.role==='modlitebnik'?'rm':'rml';
+          return`<label style="display:flex;align-items:center;gap:8px;padding:6px 8px;cursor:pointer;border-radius:7px;transition:background .1s" onmouseover="this.style.background='rgba(123,47,190,.1)'" onmouseout="this.style.background=''">
           <input type="checkbox" class="newChMember" value="${u.username}" style="accent-color:var(--purple);width:15px;height:15px;flex-shrink:0">
           <div style="width:26px;height:26px;border-radius:50%;background:${u.emoji?'var(--surface)':'linear-gradient(135deg,var(--purple),var(--purple-d))'};display:flex;align-items:center;justify-content:center;font-size:${u.emoji?'.9rem':'.6rem'};font-weight:800;color:#fff;flex-shrink:0">${u.emoji||ini(u.name)}</div>
-          <span style="font-size:.85rem;flex:1">${esc(u.name)}</span>
-          <span style="font-size:.7rem;color:var(--muted)">@${esc(u.username)}</span>
-        </label>`).join('')}
+          <span style="font-size:.85rem;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(u.name)}</span>
+          ${roleLabel?`<span class="urole ${roleCls}" style="font-size:.6rem;padding:1px 6px;flex-shrink:0">${roleLabel}</span>`:''}
+        </label>`;
+        }).join('')}
       </div>
     </div>
     <button class="bp" onclick="createChannel()">Vytvořit kanál</button>
