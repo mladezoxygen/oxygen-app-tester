@@ -683,18 +683,40 @@ input:checked+.slider::before{transform:translateX(18px)}
   /* Buttons */
   .bs{padding:5px 9px;font-size:.72rem}
   /* Chat */
-  .chat-layout-outer{height:calc(100dvh - 80px)}
-  .ch-sidebar{width:52px!important;min-width:52px}
-  .ch-item-name,.ch-category-name span,.ch-sidebar-title,.ch-sidebar-footer{display:none}
-  .ch-item{padding:8px;justify-content:center;margin:1px 4px}
-  .ch-item-hash{opacity:.9;font-size:1rem}
-  .ch-category{padding:10px 6px 4px;justify-content:center}
-  .chat-bubble-wrap{max-width:85%}
-  .chat-actions{opacity:1!important}
-  .chat-act-btn{font-size:.85rem;padding:3px 6px}
-  .emoji-bar{gap:3px;overflow-x:auto;flex-wrap:nowrap;padding-bottom:2px}
-  .emoji-bar::-webkit-scrollbar{display:none}
-  .emoji-btn{padding:3px 5px;font-size:.9rem;flex-shrink:0}
+  #sec-chat{padding:0!important}
+  .chat-layout-outer{height:calc(100dvh - 56px);border-radius:0;border-left:none;border-right:none}
+  /* Slim icon sidebar */
+  .ch-sidebar{width:50px!important;min-width:50px;max-width:50px}
+  .ch-sidebar-title,.ch-item-name,.ch-category-name,.ch-item-del{display:none!important}
+  .ch-sidebar-header{padding:8px 0;justify-content:center;gap:4px;flex-direction:column}
+  .sidebarAdminBtns,.ch-sidebar-add{width:32px!important;height:32px!important;margin:0 auto;padding:0!important;font-size:.7rem!important}
+  .ch-sidebar-body{padding:4px 0}
+  .ch-items{padding:0}
+  .ch-item{padding:0;width:36px;height:36px;justify-content:center;margin:2px auto;border-radius:10px;display:flex;align-items:center}
+  .ch-item-hash{opacity:.55;font-size:1rem;margin:0}
+  .ch-item.active{background:var(--purple)}
+  .ch-item.active .ch-item-hash{opacity:1;color:#fff}
+  .ch-category{padding:6px 0 2px;justify-content:center}
+  .ch-category-add,.ch-category-arrow,.ch-category-name{display:none!important}
+  /* Topbar */
+  .ch-topbar{padding:8px 10px;gap:6px}
+  .ch-topbar-name{font-size:.88rem}
+  .ch-topbar-desc{display:none}
+  .ch-members-btn{padding:4px 7px;font-size:.72rem;gap:3px}
+  .ch-edit-btn{padding:3px 7px}
+  /* Members panel hidden on mobile */
+  .ch-members-panel{display:none!important}
+  /* Messages */
+  .chat-bubble-wrap{max-width:82%}
+  .chat-actions-wrap{opacity:1}
+  .chat-act-btn{font-size:.8rem;padding:3px 6px}
+  /* Input area */
+  .ch-input-area{padding:8px 10px 10px}
+  .ch-input-row{gap:6px}
+  .chat-input{font-size:.88rem;padding:9px 12px;min-height:40px;border-radius:12px}
+  .chat-send{width:40px;height:40px;border-radius:10px;flex-shrink:0}
+  .ch-emoji-btn{width:40px;height:40px;font-size:1rem;flex-shrink:0;border-radius:10px}
+  /* Other */
   .week-stat-grid{grid-template-columns:1fr 1fr!important}
   .b-gcal{font-size:.68rem;padding:4px 8px}
 }
@@ -2365,7 +2387,7 @@ window.switchChannel=function switchChannel(channelId){
 function renderMembersPanel(ch){
   const el=document.getElementById('chMembersList');if(!el)return;
   const allU=window._users||{};
-  const onlineSet=new Set(Object.keys(window._onlineData||{}));
+  const now50=Date.now();const onlineSet=new Set(Object.entries(window._onlineData||{}).filter(([,d])=>d.t&&(now50-d.t)<50000).map(([k])=>k));
   let members;
   if(!ch||ch.isGeneral){
     members=Object.values(allU).filter(u=>u.role!=='pending').sort((a,b)=>a.name.localeCompare(b.name,'cs'));
