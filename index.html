@@ -520,16 +520,24 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 @media(max-width:900px){.ch-sidebar{width:190px}}
 @media(max-width:700px){
   .chat-layout-outer{height:calc(100dvh - 80px)}
-  .ch-sidebar{width:52px;flex-shrink:0}
-  .ch-sidebar-title,.ch-item-name,.ch-category-name span,.ch-item-del{display:none}
-  .ch-sidebar-header{padding:10px 8px;justify-content:center}
-  .ch-sidebar-add{margin:0 auto}
-  .ch-sidebar-body{padding:4px 0}
-  .ch-item{padding:8px;justify-content:center;margin:2px 4px}
-  .ch-item-hash{font-size:1rem;opacity:.7}
+  /* Sidebar jako úzký ikonkový panel */
+  .ch-sidebar{width:48px;flex-shrink:0;min-width:48px}
+  .ch-sidebar-title,.ch-item-name,.ch-category-name,.ch-item-del,.ch-topbar-desc{display:none!important}
+  .ch-sidebar-header{padding:8px 4px;justify-content:center;flex-direction:column;gap:6px}
+  .ch-sidebar-add{margin:0;width:30px;height:30px}
+  .ch-sidebar-body{padding:4px 2px}
+  .ch-item{padding:7px 4px;justify-content:center;margin:2px 3px;border-radius:10px}
+  .ch-item-hash{font-size:1rem;opacity:.6;flex-shrink:0}
   .ch-item.active .ch-item-hash{opacity:1}
-  .ch-category{padding:8px 4px;justify-content:center}
-  .ch-category-add{display:none}
+  .ch-category{padding:8px 4px 2px;justify-content:center}
+  .ch-category-add,.ch-category-arrow{display:none}
+  /* Topbar na mobilu */
+  .ch-topbar{padding:8px 12px}
+  .ch-topbar-name{font-size:.88rem}
+  .ch-topbar-right{display:none}
+  /* Input na mobilu */
+  .ch-input-area{padding:8px 10px}
+  .chat-layout-outer{height:calc(100dvh - 80px);min-height:0}
 }
 /* STATS */
 .chart-wrap{background:var(--card-bg);border:1px solid var(--border);border-radius:14px;padding:19px;margin-bottom:14px}
@@ -1005,9 +1013,12 @@ input:checked+.slider::before{transform:translateX(18px)}
         <div class="ch-sidebar" id="channelSidebar">
           <div class="ch-sidebar-header">
             <span class="ch-sidebar-title">💬 Kanály</span>
-            <button class="ch-sidebar-add admin-only" id="addChannelBtn" onclick="showAddChannelModal()" title="Nový kanál" style="display:none">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            </button>
+            <div class="admin-only" id="sidebarAdminBtns" style="display:none;display:flex;gap:4px">
+              <button class="ch-sidebar-add" onclick="showManageCatsModal()" title="Spravovat kategorie" style="font-size:.75rem;width:auto;padding:0 8px;border-radius:6px">⚙</button>
+              <button class="ch-sidebar-add" id="addChannelBtn" onclick="showAddChannelModal()" title="Nový kanál">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              </button>
+            </div>
           </div>
           <div class="ch-sidebar-body" id="channelList"></div>
         </div>
@@ -2307,6 +2318,33 @@ window.switchChannel=function switchChannel(channelId){
   );
 }
 
+window.showManageCatsModal=()=>{
+  document.getElementById('manageCatsModal')?.remove();
+  const cats=[...new Set(_channels.filter(c=>!c.isGeneral).map(c=>c.category||DEFAULT_CAT))].filter(Boolean);
+  const m=document.createElement('div');m.className='modal-bg';m.id='manageCatsModal';
+  m.innerHTML=`<div class="modal" onclick="event.stopPropagation()" style="max-width:380px">
+    <button class="modal-close" onclick="closeModal('manageCatsModal')">✕</button>
+    <h2>⚙ Spravovat kategorie</h2>
+    <p style="color:var(--muted);font-size:.83rem;margin-bottom:16px">Smazáním kategorie se kanály přesunou do výchozí kategorie.</p>
+    ${cats.length?cats.map(cat=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--card-bg);border:1px solid var(--border);border-radius:10px;margin-bottom:7px">
+      <span style="font-size:.87rem;font-weight:700;color:var(--text)">📁 ${esc(cat)}</span>
+      <button class="bs b-del" onclick="deleteCat('${esc(cat)}')">🗑 Smazat</button>
+    </div>`).join(''):'<div style="color:var(--muted);font-size:.85rem;text-align:center;padding:20px">Žádné vlastní kategorie.</div>'}
+  </div>`;
+  m.addEventListener('click',e=>{if(e.target===m)closeModal('manageCatsModal');});
+  document.body.appendChild(m);
+};
+window.deleteCat=async(cat)=>{
+  confirmDialog(`Smazat kategorii "${cat}"? Kanály se přesunou do "${DEFAULT_CAT}".`,async()=>{
+    const toUpdate=_channels.filter(c=>c.category===cat&&!c.isGeneral);
+    for(const ch of toUpdate){
+      try{await updateDoc(doc(db,'channels',ch._id),{category:DEFAULT_CAT});}catch(e){}
+    }
+    toast(`Kategorie "${cat}" smazána`);
+    closeModal('manageCatsModal');
+  });
+};
+
 window.showAddChannelModal=(defaultCat)=>{
   document.getElementById('addChannelModal')?.remove();
   const allUsers=Object.values(window._users||{}).filter(u=>u.role!=='pending'&&u.username!==CU.username).sort((a,b)=>a.name.localeCompare(b.name,'cs'));
@@ -2382,7 +2420,7 @@ window.delChannel=async id=>{
 function initEmojiBar(){
   const overlay=document.getElementById('emojiPickerOverlay');if(!overlay)return;
   const grid=overlay.querySelector('#emojiPickerGrid')||overlay.querySelector('div');
-  if(grid)grid.innerHTML=EMOJIS.map(e=>`<button onclick="insertEmoji('${e}');document.getElementById('emojiPickerOverlay').style.display='none'" style="background:none;border:none;cursor:pointer;font-size:1.35rem;padding:5px;border-radius:8px;transition:background .1s,transform .1s;line-height:1;width:36px;height:36px;display:flex;align-items:center;justify-content:center" onmouseover="this.style.background='rgba(123,47,190,.2)';this.style.transform='scale(1.15)'" onmouseout="this.style.background='';this.style.transform=''">${e}</button>`).join('');
+  if(grid)grid.innerHTML=EMOJIS.map(e=>`<button onclick="insertEmoji('${e}');document.getElementById('emojiPickerOverlay').style.display='none'" style="background:none;border:none;cursor:pointer;font-size:1.35rem;padding:5px;border-radius:8px;transition:background .1s,transform .1s;line-height:1;width:36px;height:36px;display:flex;align-items:center;justify-content:center" onmouseover="this.style.background='rgba(123,47,190,.2)';this.style.transform='scale(1.15)'" onmouseout="this.style.background='transparent';this.style.transform=''">${e}</button>`).join('');
 }
 window.toggleEmojiPicker=(ev)=>{
   const overlay=document.getElementById('emojiPickerOverlay');if(!overlay)return;
