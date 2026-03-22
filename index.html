@@ -1185,7 +1185,7 @@ async function restoreSession(){
   const un=localStorage.getItem('oxygen_un');if(!un)return;
   try{const snap=await getDoc(doc(db,'users',un));if(snap.exists()){CU=snap.data();if(CU.notifSettings)notifSettings=CU.notifSettings;enterApp();}else localStorage.removeItem('oxygen_un');}catch(e){}
 }
-window.doLogout=()=>{CU=null;_prayerLoaded=false;_prayerDays=new Set();localStorage.removeItem('oxygen_un');unsubs.forEach(u=>u());unsubs=[];location.reload();};
+window.doLogout=()=>{stopTyping();CU=null;_prayerLoaded=false;_prayerDays=new Set();localStorage.removeItem('oxygen_un');unsubs.forEach(u=>u());unsubs=[];location.reload();};
 
 function enterApp(){
   document.getElementById('authWrap').style.display='none';
@@ -1255,6 +1255,13 @@ function startListeners(){
     const aPend=document.getElementById('aPending');if(aPend&&aPend.style.display!=='none')renderAdminPending();
     const aUsers=document.getElementById('aUsers');if(aUsers&&aUsers.style.display!=='none')renderAdminUsers();
   }));
+  // Pinned message listener
+  unsubs.push(onSnapshot(doc(db,'chatMeta','pinned'),snap=>{
+    _pinnedMsg=snap.exists()?{...snap.data()}:null;
+    renderPinned();
+  }));
+  // Start typing listener
+  startTypingListener();
   unsubs.push(onSnapshot(query(collection(db,'chat'),orderBy('ts','asc'),limit(300)),snap=>{
     const prev=window._chat||[];window._chat=snap.docs.map(d=>({...d.data(),_id:d.id}));
     const chatOn=document.getElementById('sec-chat').classList.contains('on');
@@ -1423,7 +1430,8 @@ function renderReqs(){
         ${canAns?`<button class="bs b-ans${r.answered?' on':''}" onclick="toggleAns('${r._id}')">${r.answered?'↩ Odznačit':'✓ Vyslyšeno'}</button>`:''}
         ${!canAns&&r.answered?`<span class="ab">✓ Vyslyšeno</span>`:''}
         ${r.answered&&r.answerStory?`<div style="margin-top:8px;padding:8px 12px;background:rgba(6,214,160,.08);border-left:3px solid var(--green);border-radius:0 8px 8px 0;font-size:.82rem;color:var(--text)"><span style="font-size:.7rem;font-weight:800;color:var(--green);display:block;margin-bottom:3px">🙏 Jak Bůh odpověděl:</span>${esc(r.answerStory)}</div>`:''}
-        ${canDel?`<button class="bs b-del" style="margin-left:auto" onclick="delReq('${r._id}')">🗑</button>`:''}
+        <button class="bs" style="background:rgba(155,79,222,.1);border-color:rgba(155,79,222,.3);color:var(--purple-xl);margin-left:auto" onclick="shareToChat('${r._id}')" title="Sdílet do chatu">💬</button>
+        ${canDel?`<button class="bs b-del" onclick="delReq('${r._id}')">🗑</button>`:''}
       </div>
       ${cmtsHTML('requests',r._id,'false',r.createdBy)}
     </div>`;
