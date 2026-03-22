@@ -458,7 +458,7 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 .react-emoji{font-size:1.35rem;cursor:pointer;padding:5px;border-radius:9px;transition:background .1s,transform .1s;line-height:1}
 .react-emoji:hover{background:rgba(123,47,190,.2);transform:scale(1.18)}
 /* Mobile */
-@media(max-width:700px){.ch-sidebar{width:52px}.ch-sidebar-title,.ch-sidebar-sub,.ch-item-name,.ch-category-name span:not(:first-child),.ch-category-add,.ch-item-del{display:none}.ch-item{padding:8px;justify-content:center}.ch-category{padding:12px 8px 4px;justify-content:center}}
+
 /* CHANNELS — Discord-style layout */
 /* Outer layout: chat area left, channel sidebar right */
 .chat-layout-outer{display:flex;height:calc(100vh - 170px);min-height:420px;border-radius:14px;overflow:hidden;background:var(--bg-dark)}
@@ -514,8 +514,19 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 .ch-input-row{display:flex;gap:8px;align-items:flex-end}
 .ch-emoji-btn{background:none;border:1px solid var(--border);border-radius:10px;color:var(--muted);cursor:pointer;font-size:1.1rem;width:44px;height:44px;display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0}
 .ch-emoji-btn:hover{background:rgba(123,47,190,.15);border-color:var(--border-l);color:var(--purple-xl)}
-@media(max-width:900px){.ch-sidebar{width:200px}}
-@media(max-width:700px){.ch-sidebar{width:44px;border-left:none;border-right:1px solid var(--border);order:-1}.ch-item-name,.ch-category-name span,.ch-sidebar-title{display:none}.ch-item{padding:7px;justify-content:center;margin:1px 4px}.ch-item-hash{opacity:.8;font-size:1rem}.ch-category{padding:10px 6px 4px;justify-content:center}}
+@media(max-width:900px){.ch-sidebar{width:190px}}
+@media(max-width:700px){
+  #chSidebarToggle{display:block!important}
+  /* Na mobilu: sidebar se schová, přidáme toggle tlačítko */
+  .chat-layout-outer{flex-direction:column;height:calc(100dvh - 80px)}
+  .ch-sidebar{width:100%;height:auto;max-height:0;overflow:hidden;border-right:none;border-bottom:1px solid var(--border);transition:max-height .3s ease;flex-shrink:0;order:-1}
+  .ch-sidebar.mobile-open{max-height:280px}
+  .ch-sidebar-header{display:flex;align-items:center;justify-content:space-between;cursor:pointer}
+  .ch-sidebar-body{padding:4px 0}
+  .ch-item{padding:8px 14px}
+  .ch-main{flex:1;min-height:0}
+  .chat-layout-outer>.ch-sidebar-toggle{display:flex}
+}
 /* STATS */
 .chart-wrap{background:var(--card-bg);border:1px solid var(--border);border-radius:14px;padding:19px;margin-bottom:14px}
 .chart-title{font-family:'Cinzel',serif;font-size:.88rem;color:var(--purple-xl);margin-bottom:13px}
@@ -644,9 +655,11 @@ input:checked+.slider::before{transform:translateX(18px)}
   .bs{padding:5px 9px;font-size:.72rem}
   /* Chat */
   .chat-layout-outer{height:calc(100dvh - 80px)}
-  .channel-sidebar{width:44px}
-  .channel-item span:not(.channel-hash){display:none}
-  .channel-sidebar-title>span:first-child{display:none}
+  .ch-sidebar{width:52px!important;min-width:52px}
+  .ch-item-name,.ch-category-name span,.ch-sidebar-title,.ch-sidebar-footer{display:none}
+  .ch-item{padding:8px;justify-content:center;margin:1px 4px}
+  .ch-item-hash{opacity:.9;font-size:1rem}
+  .ch-category{padding:10px 6px 4px;justify-content:center}
   .chat-bubble-wrap{max-width:85%}
   .chat-actions{opacity:1!important}
   .chat-act-btn{font-size:.85rem;padding:3px 6px}
@@ -990,13 +1003,14 @@ input:checked+.slider::before{transform:translateX(18px)}
             <span class="ch-sidebar-title">💬 Kanály</span>
           </div>
           <div class="ch-sidebar-body" id="channelList"></div>
-          <div class="ch-sidebar-footer admin-only" id="addChannelFooter" style="display:none">
-            <button class="bp" style="padding:7px;font-size:.8rem;width:100%" onclick="showAddChannelModal()">+ Nový kanál</button>
+          <div class="ch-sidebar-footer" id="addChannelFooter" style="display:none">
+            <button class="bp" style="padding:8px;font-size:.82rem;width:100%;opacity:.9" onclick="showAddChannelModal()">＋ Nový kanál</button>
           </div>
         </div>
         <!-- Main chat area -->
         <div class="ch-main">
           <div class="ch-topbar">
+            <button onclick="document.getElementById('channelSidebar').classList.toggle('mobile-open')" style="display:none;background:none;border:none;color:var(--muted);cursor:pointer;font-size:1rem;padding:0 6px 0 0;flex-shrink:0" id="chSidebarToggle" title="Kanály">☰</button>
             <span class="ch-hash">#</span>
             <span class="ch-topbar-name" id="channelHeaderName">obecný</span>
             <span class="ch-topbar-desc" id="channelHeaderDesc"></span>
@@ -2257,7 +2271,7 @@ window.toggleCat=cat=>{
   renderChannelList();
 };
 
-function switchChannel(channelId){
+window.switchChannel=function switchChannel(channelId){
   _activeChannelId=channelId;
   const ch=_channels.find(c=>c._id===channelId);
   const nameEl=document.getElementById('channelHeaderName');
@@ -2293,58 +2307,47 @@ function switchChannel(channelId){
 window.showAddChannelModal=(defaultCat)=>{
   document.getElementById('addChannelModal')?.remove();
   const allUsers=Object.values(window._users||{}).filter(u=>u.role!=='pending'&&u.username!==CU.username).sort((a,b)=>a.name.localeCompare(b.name,'cs'));
-  // Get existing categories for dropdown
-  const existingCats=[...new Set(_channels.map(c=>c.category||DEFAULT_CAT))];
-  const catOptions=existingCats.map(c=>`<option value="${esc(c)}" ${c===(defaultCat||DEFAULT_CAT)?'selected':''}>${esc(c)}</option>`).join('');
+  const existingCats=[...new Set(_channels.map(c=>c.category||DEFAULT_CAT))].filter(Boolean);
+  // Build category buttons
+  const catBtns=existingCats.map(c=>`<button type="button" class="bs b-ghost" style="font-size:.8rem;padding:5px 12px" onclick="document.getElementById('newChCat').value=this.textContent;document.querySelectorAll('.cat-btn').forEach(b=>b.classList.remove('on'));this.classList.add('on')">${esc(c)}</button>`).join('');
   const m=document.createElement('div');m.className='modal-bg';m.id='addChannelModal';
   m.innerHTML=`<div class="modal" onclick="event.stopPropagation()" style="max-width:440px">
     <button class="modal-close" onclick="closeModal('addChannelModal')">✕</button>
-    <h2>💬 Nový textový kanál</h2>
-    <div class="fg" style="margin-bottom:10px"><label>Kategorie</label>
-      <select id="newChCat" style="color-scheme:dark">
-        ${catOptions}
-        <option value="__new__">+ Nová kategorie…</option>
-      </select>
-    </div>
-    <div class="fg" id="newChCatCustomWrap" style="margin-bottom:10px;display:none">
-      <label>Název nové kategorie</label>
-      <input type="text" id="newChCatCustom" placeholder="napr. Vedení" maxlength="40">
-    </div>
-    <div class="fg" style="margin-bottom:10px"><label>Název kanálu</label>
+    <h2>💬 Nový kanál</h2>
+    <div class="fg" style="margin-bottom:12px">
+      <label>Název kanálu</label>
       <input type="text" id="newChName" placeholder="napr. modlitba-vedení" maxlength="40">
     </div>
-    <div class="fg" style="margin-bottom:14px"><label>Popis (nepovinné)</label>
+    <div class="fg" style="margin-bottom:12px">
+      <label>Popis <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted)">(nepovinné)</span></label>
       <input type="text" id="newChDesc" placeholder="Krátký popis účelu kanálu" maxlength="100">
     </div>
-    <div class="lbl" style="margin-bottom:6px">Přístup členů <span style="font-weight:400;text-transform:none;color:var(--muted)">(prázdné = všichni)</span></div>
-    <div style="max-height:180px;overflow-y:auto;border:1px solid var(--border);border-radius:10px;padding:6px;margin-bottom:16px;background:rgba(0,0,0,.1)">
-      ${allUsers.map(u=>`<label style="display:flex;align-items:center;gap:8px;padding:6px 6px;cursor:pointer;border-radius:6px;transition:background .1s" onmouseover="this.style.background='rgba(123,47,190,.1)'" onmouseout="this.style.background=''">
-        <input type="checkbox" class="newChMember" value="${u.username}" style="accent-color:var(--purple);width:14px;height:14px">
-        <div style="width:24px;height:24px;border-radius:50%;background:linear-gradient(135deg,var(--purple),var(--purple-d));display:flex;align-items:center;justify-content:center;font-size:.58rem;font-weight:800;color:#fff;flex-shrink:0">${u.emoji||ini(u.name)}</div>
-        <span style="font-size:.85rem;flex:1">${esc(u.name)}</span>
-        <span style="font-size:.7rem;color:var(--muted)">@${esc(u.username)}</span>
-      </label>`).join('')}
+    <div style="margin-bottom:12px">
+      <div class="lbl" style="margin-bottom:6px">Sekce <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted)">(volitelné)</span></div>
+      <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:6px">${catBtns}</div>
+      <input type="text" id="newChCat" placeholder="Nebo napiš novou sekci…" value="${defaultCat||''}" maxlength="40" style="width:100%;padding:8px 12px;background:rgba(255,255,255,.06);border:1px solid var(--border);border-radius:9px;color:var(--text);font-family:'Nunito',sans-serif;font-size:.87rem;outline:none">
+    </div>
+    <div style="margin-bottom:14px">
+      <div class="lbl" style="margin-bottom:6px">Přístup <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted)">(prázdné = celý tým)</span></div>
+      <div style="max-height:170px;overflow-y:auto;border:1px solid var(--border);border-radius:10px;padding:4px;background:rgba(0,0,0,.1)">
+        ${allUsers.map(u=>`<label style="display:flex;align-items:center;gap:8px;padding:6px 8px;cursor:pointer;border-radius:7px;transition:background .1s" onmouseover="this.style.background='rgba(123,47,190,.1)'" onmouseout="this.style.background=''">
+          <input type="checkbox" class="newChMember" value="${u.username}" style="accent-color:var(--purple);width:15px;height:15px;flex-shrink:0">
+          <div style="width:26px;height:26px;border-radius:50%;background:${u.emoji?'var(--surface)':'linear-gradient(135deg,var(--purple),var(--purple-d))'};display:flex;align-items:center;justify-content:center;font-size:${u.emoji?'.9rem':'.6rem'};font-weight:800;color:#fff;flex-shrink:0">${u.emoji||ini(u.name)}</div>
+          <span style="font-size:.85rem;flex:1">${esc(u.name)}</span>
+          <span style="font-size:.7rem;color:var(--muted)">@${esc(u.username)}</span>
+        </label>`).join('')}
+      </div>
     </div>
     <button class="bp" onclick="createChannel()">Vytvořit kanál</button>
     <div id="addChMsg" class="amsg" style="margin-top:10px"></div>
   </div>`;
   m.addEventListener('click',e=>{if(e.target===m)closeModal('addChannelModal');});
   document.body.appendChild(m);
-  setTimeout(()=>{
-    // Přidat onchange pro zobrazení pole nové kategorie
-    const selEl=m.querySelector('#newChCat');
-    if(selEl)selEl.onchange=()=>{
-      const wrap=m.querySelector('#newChCatCustomWrap');
-      if(wrap)wrap.style.display=selEl.value==='__new__'?'block':'none';
-    };
-    document.getElementById('newChName')?.focus();
-  },50);
+  setTimeout(()=>document.getElementById('newChName')?.focus(),50);
 };
 
 window.createChannel=async()=>{
-  const selCat=document.getElementById('newChCat')?.value||DEFAULT_CAT;
-  const customCat=selCat==='__new__'?document.getElementById('newChCatCustom')?.value.trim():''
-  const category=(selCat==='__new__'?(customCat||DEFAULT_CAT):selCat)||DEFAULT_CAT;
+  const category=document.getElementById('newChCat')?.value.trim()||DEFAULT_CAT;
   const rawName=document.getElementById('newChName')?.value.trim();
   const name=rawName.toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-čšžýáíéůúěřďťňó]/g,'');
   const desc=document.getElementById('newChDesc')?.value.trim()||'';
