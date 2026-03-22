@@ -517,6 +517,23 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 .ch-input-row{display:flex;gap:8px;align-items:flex-end}
 .ch-emoji-btn{background:none;border:1px solid var(--border);border-radius:10px;color:var(--muted);cursor:pointer;font-size:1.1rem;width:44px;height:44px;display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0}
 .ch-emoji-btn:hover{background:rgba(123,47,190,.15);border-color:var(--border-l);color:var(--purple-xl)}
+/* Member panel & topbar buttons */
+.ch-members-btn{background:none;border:1px solid var(--border);border-radius:8px;color:var(--muted);cursor:pointer;font-size:.78rem;padding:4px 10px;font-family:'Nunito',sans-serif;font-weight:700;transition:all .15s;display:flex;align-items:center;gap:5px;white-space:nowrap;line-height:1}
+.ch-members-btn:hover{background:rgba(123,47,190,.15);border-color:var(--border-l);color:var(--text)}
+.ch-members-btn.active{background:rgba(123,47,190,.2);border-color:var(--purple-l);color:var(--purple-xl)}
+.ch-edit-btn{background:none;border:1px solid var(--border);border-radius:8px;color:var(--muted);cursor:pointer;font-size:.85rem;padding:4px 9px;transition:all .15s;line-height:1}
+.ch-edit-btn:hover{background:rgba(123,47,190,.15);border-color:var(--border-l);color:var(--purple-xl)}
+.ch-members-panel{width:0;flex-shrink:0;border-left:0px solid var(--border);background:var(--bg-dark);display:flex;flex-direction:column;overflow:hidden;transition:width .25s ease,border-width .25s ease}
+.ch-members-panel.open{width:200px;border-left-width:1px}
+.ch-members-panel-header{padding:12px 14px 8px;font-size:.68rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;border-bottom:1px solid var(--border);flex-shrink:0;white-space:nowrap}
+.ch-member-row{display:flex;align-items:center;gap:8px;padding:7px 14px;cursor:pointer;transition:background .1s}
+.ch-member-row:hover{background:rgba(123,47,190,.1)}
+.ch-member-av{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--purple),var(--purple-d));display:flex;align-items:center;justify-content:center;font-size:.6rem;font-weight:800;color:#fff;flex-shrink:0;position:relative}
+.ch-member-av.ea{background:var(--surface);font-size:.9rem}
+.ch-member-online::after{content:'';position:absolute;bottom:-1px;right:-1px;width:8px;height:8px;border-radius:50%;background:#23d18b;border:2px solid var(--bg-dark)}
+.ch-member-name{font-size:.82rem;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+.ch-member-status{font-size:.67rem;color:var(--muted)}
+.ch-members-group-label{padding:8px 14px 2px;font-size:.64rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em;white-space:nowrap}
 @media(max-width:900px){.ch-sidebar{width:190px}}
 @media(max-width:700px){
   .chat-layout-outer{height:calc(100dvh - 80px)}
@@ -2543,10 +2560,12 @@ window.toggleEmojiPicker=(ev)=>{
 window.insertEmoji=e=>{const inp=document.getElementById('chatInput');const pos=inp.selectionStart||inp.value.length;inp.value=inp.value.slice(0,pos)+e+inp.value.slice(pos);inp.selectionStart=inp.selectionEnd=pos+e.length;inp.focus();autoResizeChatInput();};
 function autoResizeChatInput(){
   const el=document.getElementById('chatInput');if(!el)return;
-  const prev=el.style.height;
-  el.style.height='auto';
-  const next=Math.min(el.scrollHeight,160)+'px';
-  if(prev!==next){el.style.height=next;}
+  // Reset to min to measure correctly without jump
+  el.style.height='44px';
+  const h=Math.min(el.scrollHeight,160);
+  el.style.height=h+'px';
+  // Keep scroll at bottom
+  el.scrollTop=el.scrollHeight;
 }
 
 // ── TYPING INDICATOR ──────────────────────────────────────────────────────
@@ -2616,7 +2635,7 @@ window.sendChat=async()=>{
   if(!_activeChannelId){toast('Vyber kanál');return;}
   const payload={text,author:CU.username,authorName:CU.name,authorEmoji:CU.emoji||'',ts:serverTimestamp()};
   if(_replyTo){payload.replyTo={id:_replyTo._id,author:_replyTo.authorName||_replyTo.author,text:_replyTo.text.slice(0,100)};cancelReply();}
-  inp.value='';inp.style.height='';stopTyping();
+  inp.value='';inp.style.height='44px';stopTyping();
   const _sb=document.querySelector('.chat-send');if(_sb){_sb.classList.add('sending');setTimeout(()=>_sb.classList.remove('sending'),300);}
   try{await addDoc(collection(db,'channels',_activeChannelId,'messages'),payload);}catch(e){toast('Chyba: '+e.message);}
 };
