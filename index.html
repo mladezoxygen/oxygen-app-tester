@@ -1255,11 +1255,17 @@ function startListeners(){
     const aPend=document.getElementById('aPending');if(aPend&&aPend.style.display!=='none')renderAdminPending();
     const aUsers=document.getElementById('aUsers');if(aUsers&&aUsers.style.display!=='none')renderAdminUsers();
   }));
-  // Pinned message listener
-  unsubs.push(onSnapshot(doc(db,'chatMeta','pinned'),snap=>{
-    _pinnedMsg=snap.exists()?{...snap.data()}:null;
-    renderPinned();
-  }));
+  // Pinned message listener (graceful fallback on permission error)
+  try{
+    const pUnsub=onSnapshot(doc(db,'chatMeta','pinned'),snap=>{
+      _pinnedMsg=snap.exists()?{...snap.data()}:null;
+      renderPinned();
+    },err=>{
+      // Permission denied — pinned messages unavailable, continue silently
+      _pinnedMsg=null;renderPinned();
+    });
+    unsubs.push(pUnsub);
+  }catch(e){}
   // Start typing listener
   startTypingListener();
   unsubs.push(onSnapshot(query(collection(db,'chat'),orderBy('ts','asc'),limit(300)),snap=>{
@@ -1989,74 +1995,167 @@ window.delDiary=async id=>{const e=(window._diary||[]).find(x=>x._id===id);if(!e
 
 // ── CHAT ──────────────────────────────────────────────────────────────────
 function initEmojiBar(){
-  document.getElementById('emojiBar').innerHTML=EMOJIS.map(e=>`<button class="emoji-btn" onclick="insertEmoji('${e}')">${e}</button>`).join('');
+  document.getElementById('emojiBar').innerHTML=EMOJIS.map(e=>`<button class="emoji-btn" onclick="insertEmoji('${e}')" title="${e}">${e}</button>`).join('');
 }
-window.insertEmoji=e=>{const inp=document.getElementById('chatInput');inp.value+=e;inp.focus();};
+window.insertEmoji=e=>{const inp=document.getElementById('chatInput');const pos=inp.selectionStart||inp.value.length;inp.value=inp.value.slice(0,pos)+e+inp.value.slice(pos);inp.selectionStart=inp.selectionEnd=pos+e.length;inp.focus();autoResizeChatInput();};
+function autoResizeChatInput(){const el=document.getElementById('chatInput');if(!el)return;el.style.height='auto';el.style.height=Math.min(el.scrollHeight,120)+'px';}
 
+// ── TYPING INDICATOR ──────────────────────────────────────────────────────
+let _typingTimeout=null;let _isTyping=false;
+window.onChatInput=()=>{
+  autoResizeChatInput();
+  if(!_isTyping){
+    _isTyping=true;
+    updateDoc(doc(db,'online',CU.username),{typing:true,typingTs:serverTimestamp()}).catch(()=>{});
+  }
+  clearTimeout(_typingTimeout);
+  _typingTimeout=setTimeout(stopTyping,3000);
+};
+window.stopTyping=()=>{
+  if(!_isTyping)return;_isTyping=false;
+  clearTimeout(_typingTimeout);
+  updateDoc(doc(db,'online',CU.username),{typing:false}).catch(()=>{});
+};
+function startTypingListener(){
+  setInterval(()=>{
+    const el=document.getElementById('chatTyping');if(!el)return;
+    if(!document.getElementById('sec-chat')?.classList.contains('on')){el.textContent='';return;}
+    const now=Date.now();
+    const typers=Object.values(window._onlineData||{}).filter(u=>
+      u.username!==CU.username&&u.typing&&u.typingTs&&(now-((u.typingTs?.toDate?.()?.getTime?.())||0)<4000)
+    );
+    if(!typers.length){el.textContent='';return;}
+    const names=typers.map(u=>u.name?.split(' ')[0]||u.username);
+    el.textContent=names.length===1?`${names[0]} píše…`:names.slice(0,-1).join(', ')+' a '+names.at(-1)+' píší…';
+  },1000);
+}
+
+// ── PINNED MESSAGE ────────────────────────────────────────────────────────
+let _pinnedMsg=null;
+function renderPinned(){
+  const el=document.getElementById('chatPinned');if(!el)return;
+  if(!_pinnedMsg){el.innerHTML='';return;}
+  const m=_pinnedMsg;
+  el.innerHTML=`<div class="chat-pinned" onclick="scrollToMsg('${m._id||m.msgId||''}')">
+    <span class="chat-pinned-icon">📌</span>
+    <div class="chat-pinned-text"><strong>Připnutá zpráva · ${esc(m.authorName||m.author||'')}</strong>${esc((m.text||'').slice(0,120))}${(m.text||'').length>120?'…':''}</div>
+    ${isAdmin()?`<button class="chat-pinned-close" onclick="event.stopPropagation();unpinMsg()" title="Odepnout">✕</button>`:''}
+  </div>`;
+}
+window.pinMsg=async id=>{
+  const m=(window._chat||[]).find(x=>x._id===id);if(!m)return;
+  try{await setDoc(doc(db,'chatMeta','pinned'),{msgId:id,text:m.text,authorName:m.authorName||m.author,_id:id,ts:serverTimestamp()});toast('📌 Zpráva připnuta');}
+  catch(e){toast('Pro připínání nastav pravidla Firebase pro chatMeta.');}
+};
+window.unpinMsg=async()=>{try{await deleteDoc(doc(db,'chatMeta','pinned'));toast('Zpráva odepnuta');}catch(e){toast('Chyba.');}};
+window.scrollToMsg=id=>{
+  const el=document.getElementById('cm-'+id);if(!el)return;
+  el.scrollIntoView({behavior:'smooth',block:'center'});
+  el.style.transition='background .3s';el.style.background='rgba(255,209,102,.12)';
+  setTimeout(()=>{el.style.background='';},1400);
+};
+
+// ── SEND CHAT ─────────────────────────────────────────────────────────────
 window.sendChat=async()=>{
   const inp=document.getElementById('chatInput');const text=inp.value.trim();if(!text)return;
   const payload={text,author:CU.username,authorName:CU.name,authorEmoji:CU.emoji||'',ts:serverTimestamp()};
-  if(_replyTo){payload.replyTo={id:_replyTo._id,author:_replyTo.authorName,text:_replyTo.text.slice(0,80)};cancelReply();}
-  try{await addDoc(collection(db,'chat'),payload);inp.value='';}catch(e){toast('Chyba: '+e.message);}
+  if(_replyTo){payload.replyTo={id:_replyTo._id,author:_replyTo.authorName||_replyTo.author,text:_replyTo.text.slice(0,100)};cancelReply();}
+  inp.value='';inp.style.height='';stopTyping();
+  try{await addDoc(collection(db,'chat'),payload);}catch(e){toast('Chyba: '+e.message);}
 };
 
+window.shareToChat=async(reqId)=>{
+  const r=(window._req||[]).find(x=>x._id===reqId);if(!r)return;
+  const text=`🙏 Sdílím žádost: „${r.text.slice(0,120)}${r.text.length>120?'…':''}"`;
+  try{
+    await addDoc(collection(db,'chat'),{text,author:CU.username,authorName:CU.name,authorEmoji:CU.emoji||'',sharedReqId:reqId,ts:serverTimestamp()});
+    navigate('chat');setTimeout(scrollChatBottom,200);toast('🙏 Žádost sdílena do chatu');
+  }catch(e){toast('Chyba: '+e.message);}
+};
+
+// ── RENDER CHAT ───────────────────────────────────────────────────────────
+let _lastReadTs=0;
 function renderChat(){
   const el=document.getElementById('chatMsgs');const msgs=window._chat||[];
   if(!msgs.length){el.innerHTML='<div class="empty"><div class="ei">💬</div><p>Zatím žádné zprávy. Buď první!</p></div>';return;}
-  const atBottom=el.scrollHeight-el.clientHeight-el.scrollTop<100;
-  el.innerHTML=msgs.map(m=>{
+  const atBottom=el.scrollHeight-el.clientHeight-el.scrollTop<120;
+  const allU=window._users||{};
+  let html='';let lastDate='';let lastAuthor='';let lastTs=0;let unreadShown=false;
+  msgs.forEach(m=>{
+    const msgDate=m.ts?.toDate?m.ts.toDate():new Date(m.ts||0);
+    const dateStr=msgDate.toDateString();
+    if(dateStr!==lastDate){
+      lastDate=dateStr;lastAuthor='';
+      const today=new Date().toDateString();const yest=new Date(Date.now()-86400000).toDateString();
+      const label=dateStr===today?'Dnes':dateStr===yest?'Včera':msgDate.toLocaleDateString('cs-CZ',{day:'numeric',month:'long'});
+      html+=`<div class="chat-date-sep"><span>${label}</span></div>`;
+    }
+    if(!unreadShown&&_lastReadTs&&(m.ts?.seconds||0)*1000>_lastReadTs&&m.author!==CU.username){
+      unreadShown=true;html+=`<div class="chat-unread-sep"><span>Nepřečtené zprávy</span></div>`;
+    }
     const mine=m.author===CU.username;
-    const avEl=m.authorEmoji?`<div class="chat-av ea profile-clickable" onclick="showUserProfile('${m.author}')">${m.authorEmoji}</div>`:`<div class="chat-av profile-clickable" onclick="showUserProfile('${m.author}')">${ini(m.authorName||'?')}</div>`;
+    const grouped=m.author===lastAuthor&&(msgDate-new Date(lastTs))<300000;
+    lastAuthor=m.author;lastTs=msgDate;
+    const u=allU[m.author];
+    const avEl=grouped?`<div class="chat-av hidden"></div>`:(u?.emoji?`<div class="chat-av ea" onclick="showUserProfile('${m.author}')">${u.emoji}</div>`:`<div class="chat-av" onclick="showUserProfile('${m.author}')">${ini(m.authorName||'?')}</div>`);
     const reacts=m.reactions||{};
-    const reactHTML=Object.entries(reacts).filter(([,v])=>v.length>0).map(([emoji,users])=>`<span class="reaction ${users.includes(CU.username)?'mine':''}" onclick="toggleReact('${m._id}','${emoji}')">${emoji} <span class="reaction-count">${users.length}</span></span>`).join('');
+    const reactHTML=Object.entries(reacts).filter(([,v])=>v.length>0).map(([emoji,users])=>{
+      const names=users.map(un=>allU[un]?.name?.split(' ')[0]||un).join(', ');
+      return`<span class="reaction${users.includes(CU.username)?' mine':''}" onclick="toggleReact('${m._id}','${emoji}')"><span class="reaction-tooltip">${esc(names)}</span>${emoji}<span class="reaction-count">${users.length}</span></span>`;
+    }).join('');
     const canDel=isAdmin()||m.author===CU.username;
-    return`<div class="chat-msg ${mine?'mine':''}" id="cm-${m._id}">
+    const timeStr=msgDate.toLocaleTimeString('cs-CZ',{hour:'2-digit',minute:'2-digit'});
+    const sharedReq=m.sharedReqId?(window._req||[]).find(r=>r._id===m.sharedReqId):null;
+    const sharedHTML=sharedReq?`<div class="chat-prayer-share" onclick="navigate('requests')"><div class="chat-prayer-share-label">🙏 Žádost o modlitbu</div><div class="chat-prayer-share-text">${esc(sharedReq.text.slice(0,140))}${sharedReq.text.length>140?'…':''}</div></div>`:'';
+    const replyHTML=m.replyTo?`<div class="chat-reply-quote" onclick="scrollToMsg('${m.replyTo.id||''}')"><strong>${esc(m.replyTo.author||'')}</strong>${esc((m.replyTo.text||'').slice(0,80))}</div>`:'';
+    html+=`<div class="chat-msg-group${mine?' mine':''}${grouped?' grouped':''}" id="cm-${m._id}">
       ${avEl}
       <div class="chat-bubble-wrap">
-        <div class="chat-name profile-clickable" onclick="showUserProfile('${m.author}')">${esc(m.authorName||m.author)}</div>
+        ${!grouped?`<div class="chat-header">${!mine?`<span class="chat-name" onclick="showUserProfile('${m.author}')">${esc(m.authorName||m.author)}</span>`:''}<span class="chat-time-top">${timeStr}</span></div>`:''}
         <div class="chat-bubble">
-          ${m.replyTo?`<div style="background:rgba(123,47,190,.15);border-left:3px solid var(--purple-l);border-radius:0 7px 7px 0;padding:5px 9px;margin-bottom:6px;font-size:.77rem;color:var(--muted)"><strong style="color:var(--purple-xl)">${esc(m.replyTo.author)}</strong><br>${esc(m.replyTo.text)}</div>`:''}
-          <div class="chat-text">${esc(m.text)}</div>
-          <div class="chat-footer">
-            <span class="chat-time">${fmtTs(m.ts)}</span>
-            <div class="chat-actions">
-              <button class="chat-act-btn" onclick="openReactPicker('${m._id}',event)" title="Reakce">😊</button>
-              <button class="chat-act-btn" onclick="setReply('${m._id}')" title="Odpovědět">↩</button>
-              ${canDel?`<button class="chat-act-btn" onclick="delChat('${m._id}')" title="Smazat" style="color:var(--red)">🗑</button>`:''}
-            </div>
-          </div>
+          ${replyHTML}<div class="chat-text">${esc(m.text)}</div>${sharedHTML}
+          ${grouped?`<div class="chat-bubble-footer"><span class="chat-time-bottom">${timeStr}</span></div>`:''}
         </div>
-        ${reactHTML?`<div class="reactions">${reactHTML}</div>`:''}
+        ${reactHTML?`<div class="chat-reactions">${reactHTML}</div>`:''}
+      </div>
+      <div class="chat-actions-wrap">
+        <button class="chat-act-btn" onclick="openReactPicker('${m._id}',event)" title="Reakce">😊</button>
+        <button class="chat-act-btn" onclick="setReply('${m._id}')" title="Odpovědět">↩</button>
+        ${isAdmin()?`<button class="chat-act-btn" onclick="pinMsg('${m._id}')" title="Připnout">📌</button>`:''}
+        ${canDel?`<button class="chat-act-btn del" onclick="delChat('${m._id}')" title="Smazat">🗑</button>`:''}
       </div>
     </div>`;
-  }).join('');
+  });
+  el.innerHTML=html;
   if(atBottom)scrollChatBottom();
+  if(msgs.length)_lastReadTs=Math.max(_lastReadTs,(msgs[msgs.length-1].ts?.seconds||0)*1000);
 }
 function scrollChatBottom(){const el=document.getElementById('chatMsgs');if(el)el.scrollTo({top:el.scrollHeight,behavior:'smooth'});}
 
 window.delChat=async id=>{const m=(window._chat||[]).find(x=>x._id===id);if(!m)return;if(!isAdmin()&&m.author!==CU.username){toast('Nemáš oprávnění.');return;}confirmDialog('Smazat tuto zprávu?',async()=>{try{await deleteDoc(doc(db,'chat',id));toast('Zpráva smazána');}catch(e){toast('Chyba: '+e.message);}})};
 
-window.setReply=id=>{const m=(window._chat||[]).find(x=>x._id===id);if(!m)return;_replyTo=m;const bar=document.getElementById('replyBar');bar.style.display='block';bar.innerHTML=`<div class="reply-preview"><strong>↩ Odpověď: ${esc(m.authorName)}</strong>${esc(m.text.slice(0,60))}<button class="reply-cancel" onclick="cancelReply()">✕</button></div>`;document.getElementById('chatInput').focus();};
+window.setReply=id=>{
+  const m=(window._chat||[]).find(x=>x._id===id);if(!m)return;_replyTo=m;
+  const bar=document.getElementById('replyBar');bar.style.display='block';
+  bar.innerHTML=`<div class="reply-preview"><strong>↩ ${esc(m.authorName||m.author)}</strong>${esc((m.text||'').slice(0,80))}<button class="reply-cancel" onclick="cancelReply()">✕</button></div>`;
+  document.getElementById('chatInput').focus();
+};
 window.cancelReply=()=>{_replyTo=null;const bar=document.getElementById('replyBar');bar.style.display='none';bar.innerHTML='';};
 
-// Reaction picker
 let reactPickerMsg=null;
 window.openReactPicker=(id,e)=>{
-  document.getElementById('reactPicker').style.display='none';
-  reactPickerMsg=id;
+  document.getElementById('reactPicker').style.display='none';reactPickerMsg=id;
   const picker=document.getElementById('reactPicker');
   picker.innerHTML=REACT_EMOJIS.map(em=>`<span class="react-emoji" onclick="toggleReact('${id}','${em}')">${em}</span>`).join('');
   picker.style.display='flex';
   const rect=e.currentTarget.getBoundingClientRect();
-  picker.style.top=(rect.top+window.scrollY-50)+'px';
-  picker.style.left=Math.min(rect.left,window.innerWidth-200)+'px';
+  picker.style.top=Math.max(8,rect.top-54)+'px';picker.style.left=Math.max(8,Math.min(rect.left,window.innerWidth-220))+'px';
 };
 document.addEventListener('click',e=>{if(!e.target.closest('#reactPicker')&&!e.target.closest('.chat-act-btn'))document.getElementById('reactPicker').style.display='none';});
 window.toggleReact=async(id,emoji)=>{
   document.getElementById('reactPicker').style.display='none';
   const m=(window._chat||[]).find(x=>x._id===id);if(!m)return;
-  const reacts=m.reactions||{};const users=reacts[emoji]||[];
-  const hasIt=users.includes(CU.username);
+  const reacts=m.reactions||{};const users=reacts[emoji]||[];const hasIt=users.includes(CU.username);
   const newReacts={...reacts,[emoji]:hasIt?users.filter(u=>u!==CU.username):[...users,CU.username]};
   try{await updateDoc(doc(db,'chat',id),{reactions:newReacts});}catch(e){toast('Chyba: '+e.message);}
 };
@@ -2289,6 +2388,8 @@ function startOnline(){
 
   // Sleduj všechny online
   onSnapshot(collection(db,'online'),snap=>{
+    window._onlineData={};
+    snap.docs.forEach(d=>{window._onlineData[d.id]={...d.data(),username:d.id};});
     const now=Date.now();
     const online=snap.docs
       .map(d=>d.data())
