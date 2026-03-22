@@ -2791,7 +2791,7 @@ function initCustomSelects(root=document){
     const onScroll=()=>{if(dropdown){const r=trigger.getBoundingClientRect();const dH=dropdown.offsetHeight||200;const spaceBelow=window.innerHeight-r.bottom-6;const top=spaceBelow>dH?r.bottom+4:r.top-dH-4;dropdown.style.top=Math.max(6,top)+'px';dropdown.style.left=r.left+'px';}};
     window.addEventListener('scroll',onScroll,true);
     window.addEventListener('resize',onScroll);
-    const outsideClose=e=>{if(!wrap.contains(e.target))closeDrop();};
+    const outsideClose=e=>{if(!wrap.contains(e.target)&&(!dropdown||!dropdown.contains(e.target)))closeDrop();};
     trigger.addEventListener('click',e=>{e.stopPropagation();openDrop();});
     // Re-sync if select value changed programmatically
     const observer=new MutationObserver(syncLabel);
