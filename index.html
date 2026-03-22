@@ -311,8 +311,8 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 .dt{color:var(--text);line-height:1.68;font-size:.88rem;margin-top:8px}
 .ds{margin-top:9px;padding:8px 12px;background:rgba(255,209,102,.07);border-left:3px solid var(--gold);border-radius:0 6px 6px 0;color:var(--gold);font-style:italic;font-size:.83rem}
 /* CHAT */
-.chat-wrap{display:flex;flex-direction:column;height:calc(100vh - 210px);min-height:420px}
-#sec-chat{padding-bottom:0!important;overflow:hidden;padding-top:20px}
+.chat-wrap{display:flex;flex-direction:column;height:calc(100vh - 170px);min-height:420px;padding:0!important}
+#sec-chat{padding-bottom:0!important;overflow:hidden;padding-top:0}
 #sec-chat .ph{margin-bottom:10px}
 .chat-msgs{flex:1;overflow-y:auto;padding:0 2px 8px;display:flex;flex-direction:column;scroll-behavior:smooth}
 .chat-msgs::-webkit-scrollbar{width:3px}
@@ -1231,7 +1231,7 @@ function enterApp(){
   if(CU.role==='pending'){document.getElementById('pendScreen').style.display='flex';return;}
   document.getElementById('mainApp').style.display='block';
   document.getElementById('notifBtn').style.display='flex';
-  initUI();startListeners();initEmojiBar();startOnline();loadPrayerLog().then(()=>{renderStreakDash();renderCountdownDash();});
+  initUI();startListeners();initEmojiBar();startOnline();loadPrayerLog().then(()=>{renderStreakDash();renderCountdownDash();});initChannels();
   setTimeout(requestPush,2000);
 }
 
@@ -1311,7 +1311,7 @@ function startListeners(){
     const prev=window._chat||[];window._chat=snap.docs.map(d=>({...d.data(),_id:d.id}));
     const chatOn=document.getElementById('sec-chat').classList.contains('on');
     if(!_fl.chat){const nn=window._chat.filter(m=>!prev.find(p=>p._id===m._id)&&m.author!==CU.username);if(nn.length){if(!chatOn){document.getElementById('bChat').style.display='inline';}if(notifSettings.newChat)addNotif('💬 Nová zpráva',nn[nn.length-1].authorName+': '+nn[nn.length-1].text.slice(0,50),'chat');}}
-    _fl.chat=false;renderChat();if(chatOn)scrollChatBottom();
+    _fl.chat=false;// messages now handled per-channel by switchChannel
   }));
   // prayerLog – real-time streak (načte data okamžitě při startu)
   unsubs.push(onSnapshot(query(collection(db,'prayerLog')),snap=>{
@@ -2032,10 +2032,154 @@ async function markDiaryRead(ids){
 }
 window.delDiary=async id=>{const e=(window._diary||[]).find(x=>x._id===id);if(!e)return;if(!isAdmin()&&e.createdBy!==CU.username){toast('Nemáš oprávnění.');return;}confirmDialog('Smazat zápis z deníku?',async()=>{try{await deleteDoc(doc(db,'diary',id));toast('Smazáno');}catch(e){toast('Chyba: '+e.message);}})};
 
+// ── CHANNELS ──────────────────────────────────────────────────────────────
+let _activeChannelId=null;
+let _channels=[];
+let _chatUnsub=null;
+let _pinnedUnsub=null;
+
+async function initChannels(){
+  // Listen to channels
+  onSnapshot(query(collection(db,'channels'),orderBy('createdAt','asc')),async snap=>{
+    _channels=snap.docs.map(d=>({...d.data(),_id:d.id}));
+    // Ensure general channel exists
+    if(!_channels.find(c=>c.isGeneral)){
+      const r=await addDoc(collection(db,'channels'),{name:'obecný',description:'Hlavní kanál týmu',isGeneral:true,members:[],createdBy:'system',createdAt:serverTimestamp()});
+      return; // snapshot will re-fire
+    }
+    renderChannelList();
+    // Switch to general if no active channel
+    if(!_activeChannelId){
+      const general=_channels.find(c=>c.isGeneral);
+      if(general)switchChannel(general._id);
+    }
+  });
+}
+
+function renderChannelList(){
+  const el=document.getElementById('channelList');if(!el)return;
+  const admin=isAdmin();
+  el.innerHTML=_channels.map(ch=>{
+    const active=ch._id===_activeChannelId;
+    // Check membership (general is open to all)
+    const canView=ch.isGeneral||isAdmin()||(ch.members||[]).includes(CU.username);
+    if(!canView)return'';
+    return`<div class="channel-item${active?' active':''}" onclick="switchChannel('${ch._id}')">
+      <span class="channel-hash">#</span>
+      <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(ch.name)}</span>
+      ${admin&&!ch.isGeneral?`<button class="channel-del-btn" onclick="event.stopPropagation();delChannel('${ch._id}')" title="Smazat">🗑</button>`:''}
+    </div>`;
+  }).join('');
+  // Show add button for admin
+  const addBtn=document.getElementById('addChannelBtn');
+  if(addBtn)addBtn.style.display=admin?'block':'none';
+}
+
+function switchChannel(channelId){
+  _activeChannelId=channelId;
+  const ch=_channels.find(c=>c._id===channelId);
+  // Update header
+  const nameEl=document.getElementById('channelHeaderName');
+  const descEl=document.getElementById('channelHeaderDesc');
+  const cntEl=document.getElementById('channelMemberCount');
+  if(nameEl)nameEl.textContent=ch?.name||'';
+  if(descEl)descEl.textContent=ch?.description?'· '+ch.description:'';
+  if(cntEl)cntEl.textContent=ch?.isGeneral?'':(ch?.members?.length?`👥 ${ch.members.length}`:'');
+  // Update active state
+  renderChannelList();
+  // Reset pinned
+  if(_pinnedUnsub){_pinnedUnsub();_pinnedUnsub=null;}
+  document.getElementById('chatPinned').innerHTML='';
+  // Subscribe to pinned
+  try{
+    _pinnedUnsub=onSnapshot(doc(db,'channelPinned',channelId),snap=>{
+      _pinnedMsg=snap.exists()?{...snap.data()}:null;
+      renderPinned();
+    },()=>{_pinnedMsg=null;renderPinned();});
+  }catch(e){}
+  // Subscribe to messages
+  if(_chatUnsub){_chatUnsub();_chatUnsub=null;}
+  document.getElementById('chatMsgs').innerHTML='<div class="loading"><div class="spin"></div>Načítám…</div>';
+  _chatUnsub=onSnapshot(
+    query(collection(db,'channels',channelId,'messages'),orderBy('ts','asc'),limit(200)),
+    snap=>{
+      window._chat=snap.docs.map(d=>({...d.data(),_id:d.id}));
+      const chatOn=document.getElementById('sec-chat')?.classList.contains('on');
+      renderChat();
+      if(chatOn)scrollChatBottom();
+    }
+  );
+}
+
+window.showAddChannelModal=()=>{
+  document.getElementById('addChannelModal')?.remove();
+  const allUsers=Object.values(window._users||{}).filter(u=>u.role!=='pending'&&u.username!==CU.username).sort((a,b)=>a.name.localeCompare(b.name,'cs'));
+  const m=document.createElement('div');m.className='modal-bg';m.id='addChannelModal';
+  m.innerHTML=`<div class="modal" onclick="event.stopPropagation()" style="max-width:420px">
+    <button class="modal-close" onclick="closeModal('addChannelModal')">✕</button>
+    <h2>💬 Nový kanál</h2>
+    <div class="fg" style="margin-bottom:10px"><label>Název kanálu</label><input type="text" id="newChName" placeholder="modlitba-vedení" maxlength="40" style="text-transform:lowercase"></div>
+    <div class="fg" style="margin-bottom:14px"><label>Popis (nepovinné)</label><input type="text" id="newChDesc" placeholder="Krátký popis kanálu" maxlength="100"></div>
+    <div class="lbl" style="margin-bottom:8px">Členové</div>
+    <div style="max-height:200px;overflow-y:auto;background:rgba(0,0,0,.1);border-radius:10px;padding:8px;margin-bottom:16px">
+      ${allUsers.map(u=>`<label style="display:flex;align-items:center;gap:9px;padding:6px 4px;cursor:pointer;border-radius:7px;transition:background .12s" onmouseover="this.style.background='rgba(123,47,190,.1)'" onmouseout="this.style.background=''">
+        <input type="checkbox" value="${u.username}" style="accent-color:var(--purple);width:15px;height:15px">
+        <div style="width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,var(--purple),var(--purple-d));display:flex;align-items:center;justify-content:center;font-size:.6rem;font-weight:800;color:#fff;flex-shrink:0">${u.emoji||ini(u.name)}</div>
+        <span style="font-size:.87rem">${esc(u.name)}</span>
+        <span style="font-size:.72rem;color:var(--muted);margin-left:auto">@${esc(u.username)}</span>
+      </label>`).join('')}
+    </div>
+    <button class="bp" onclick="createChannel()">Vytvořit kanál</button>
+  </div>`;
+  m.addEventListener('click',e=>{if(e.target===m)closeModal('addChannelModal');});
+  document.body.appendChild(m);
+  setTimeout(()=>document.getElementById('newChName')?.focus(),100);
+};
+
+window.createChannel=async()=>{
+  const name=document.getElementById('newChName')?.value.trim().toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'');
+  const desc=document.getElementById('newChDesc')?.value.trim()||'';
+  if(!name){toast('Zadej název kanálu');return;}
+  const members=[...document.querySelectorAll('#addChannelModal input[type=checkbox]:checked')].map(cb=>cb.value);
+  members.push(CU.username); // creator is always member
+  try{
+    const r=await addDoc(collection(db,'channels'),{name,description:desc,isGeneral:false,members,createdBy:CU.username,createdAt:serverTimestamp()});
+    closeModal('addChannelModal');
+    toast(`# ${name} vytvořen`);
+    switchChannel(r.id);
+  }catch(e){toast('Chyba: '+e.message);}
+};
+
+window.delChannel=async id=>{
+  const ch=_channels.find(c=>c._id===id);if(!ch||ch.isGeneral)return;
+  confirmDialog(`Smazat kanál #${ch.name}?`,async()=>{
+    try{
+      await deleteDoc(doc(db,'channels',id));
+      if(_activeChannelId===id){const g=_channels.find(c=>c.isGeneral);if(g)switchChannel(g._id);}
+      toast('Kanál smazán');
+    }catch(e){toast('Chyba: '+e.message);}
+  });
+};
+
 // ── CHAT ──────────────────────────────────────────────────────────────────
 function initEmojiBar(){
-  document.getElementById('emojiBar').innerHTML=EMOJIS.map(e=>`<button class="emoji-btn" onclick="insertEmoji('${e}')" title="${e}">${e}</button>`).join('');
+  // Build emoji picker overlay content
+  const overlay=document.getElementById('emojiPickerOverlay');
+  if(overlay){
+    overlay.querySelector('div').innerHTML=EMOJIS.map(e=>`<button onclick="insertEmoji('${e}');toggleEmojiPicker()" style="background:none;border:none;cursor:pointer;font-size:1.4rem;padding:5px;border-radius:8px;transition:background .1s,transform .1s;line-height:1" onmouseover="this.style.background='rgba(123,47,190,.2)';this.style.transform='scale(1.2)'" onmouseout="this.style.background='';this.style.transform=''">${e}</button>`).join('');
+  }
 }
+window.toggleEmojiPicker=(e)=>{
+  const overlay=document.getElementById('emojiPickerOverlay');if(!overlay)return;
+  if(overlay.style.display!=='none'){overlay.style.display='none';return;}
+  // Position above input
+  const inp=document.getElementById('chatInput');
+  const rect=inp?.getBoundingClientRect();
+  if(rect){overlay.style.bottom=(window.innerHeight-rect.top+8)+'px';overlay.style.left=rect.left+'px';}
+  overlay.style.display='block';
+  const close=ev=>{if(!overlay.contains(ev.target)&&!ev.target.closest('[onclick*="toggleEmojiPicker"]')){overlay.style.display='none';document.removeEventListener('click',close);}};
+  setTimeout(()=>document.addEventListener('click',close),50);
+};
 window.insertEmoji=e=>{const inp=document.getElementById('chatInput');const pos=inp.selectionStart||inp.value.length;inp.value=inp.value.slice(0,pos)+e+inp.value.slice(pos);inp.selectionStart=inp.selectionEnd=pos+e.length;inp.focus();autoResizeChatInput();};
 function autoResizeChatInput(){const el=document.getElementById('chatInput');if(!el)return;el.style.height='auto';el.style.height=Math.min(el.scrollHeight,120)+'px';}
 
@@ -2075,18 +2219,24 @@ function renderPinned(){
   const el=document.getElementById('chatPinned');if(!el)return;
   if(!_pinnedMsg){el.innerHTML='';return;}
   const m=_pinnedMsg;
-  el.innerHTML=`<div class="chat-pinned" onclick="scrollToMsg('${m._id||m.msgId||''}')">
+  el.innerHTML=`<div class="chat-pinned">
     <span class="chat-pinned-icon">📌</span>
-    <div class="chat-pinned-text"><strong>Připnutá zpráva · ${esc(m.authorName||m.author||'')}</strong><span>${esc((m.text||'').slice(0,120))}${(m.text||'').length>120?'…':''}</span></div>
-    ${isAdmin()?`<button class="chat-pinned-close" onclick="event.stopPropagation();unpinMsg()" title="Odepnout">✕</button>`:''}
+    <div class="chat-pinned-content" onclick="scrollToMsg('${m._id||m.msgId||''}')">
+      <div class="chat-pinned-label">Připnutá zpráva · ${esc(m.authorName||m.author||'')}</div>
+      <div class="chat-pinned-msg">${esc((m.text||'').slice(0,120))}${(m.text||'').length>120?'…':''}</div>
+    </div>
+    ${isAdmin()?`<button class="chat-pinned-unpin" onclick="unpinMsg()">Odepnout</button>`:''}
   </div>`;
 }
 window.pinMsg=async id=>{
-  const m=(window._chat||[]).find(x=>x._id===id);if(!m)return;
-  try{await setDoc(doc(db,'chatMeta','pinned'),{msgId:id,text:m.text,authorName:m.authorName||m.author,_id:id,ts:serverTimestamp()});toast('📌 Zpráva připnuta');}
-  catch(e){toast('Pro připínání nastav pravidla Firebase pro chatMeta.');}
+  const m=(window._chat||[]).find(x=>x._id===id);if(!m||!_activeChannelId)return;
+  try{await setDoc(doc(db,'channelPinned',_activeChannelId),{msgId:id,text:m.text,authorName:m.authorName||m.author,_id:id,ts:serverTimestamp()});toast('📌 Zpráva připnuta');}
+  catch(e){toast('Chyba: '+e.message);}
 };
-window.unpinMsg=async()=>{try{await deleteDoc(doc(db,'chatMeta','pinned'));toast('Zpráva odepnuta');}catch(e){toast('Chyba.');}};
+window.unpinMsg=async()=>{
+  if(!_activeChannelId)return;
+  try{await deleteDoc(doc(db,'channelPinned',_activeChannelId));toast('Zpráva odepnuta');}catch(e){toast('Chyba: '+e.message);}
+};
 window.scrollToMsg=id=>{
   const el=document.getElementById('cm-'+id);if(!el)return;
   el.scrollIntoView({behavior:'smooth',block:'center'});
@@ -2097,17 +2247,19 @@ window.scrollToMsg=id=>{
 // ── SEND CHAT ─────────────────────────────────────────────────────────────
 window.sendChat=async()=>{
   const inp=document.getElementById('chatInput');const text=inp.value.trim();if(!text)return;
+  if(!_activeChannelId){toast('Vyber kanál');return;}
   const payload={text,author:CU.username,authorName:CU.name,authorEmoji:CU.emoji||'',ts:serverTimestamp()};
   if(_replyTo){payload.replyTo={id:_replyTo._id,author:_replyTo.authorName||_replyTo.author,text:_replyTo.text.slice(0,100)};cancelReply();}
   inp.value='';inp.style.height='';stopTyping();
-  try{await addDoc(collection(db,'chat'),payload);}catch(e){toast('Chyba: '+e.message);}
+  try{await addDoc(collection(db,'channels',_activeChannelId,'messages'),payload);}catch(e){toast('Chyba: '+e.message);}
 };
 
 window.shareToChat=async(reqId)=>{
   const r=(window._req||[]).find(x=>x._id===reqId);if(!r)return;
   const text=`🙏 Sdílím žádost: „${r.text.slice(0,120)}${r.text.length>120?'…':''}"`;
   try{
-    await addDoc(collection(db,'chat'),{text,author:CU.username,authorName:CU.name,authorEmoji:CU.emoji||'',sharedReqId:reqId,ts:serverTimestamp()});
+    if(!_activeChannelId){toast('Otevři chat a vyber kanál');return;}
+    await addDoc(collection(db,'channels',_activeChannelId,'messages'),{text,author:CU.username,authorName:CU.name,authorEmoji:CU.emoji||'',sharedReqId:reqId,ts:serverTimestamp()});
     navigate('chat');setTimeout(scrollChatBottom,200);toast('🙏 Žádost sdílena do chatu');
   }catch(e){toast('Chyba: '+e.message);}
 };
@@ -2184,7 +2336,7 @@ function renderChat(){
 }
 function scrollChatBottom(){const el=document.getElementById('chatMsgs');if(el)el.scrollTo({top:el.scrollHeight,behavior:'smooth'});}
 
-window.delChat=async id=>{const m=(window._chat||[]).find(x=>x._id===id);if(!m)return;if(!isAdmin()&&m.author!==CU.username){toast('Nemáš oprávnění.');return;}confirmDialog('Smazat tuto zprávu?',async()=>{try{await deleteDoc(doc(db,'chat',id));toast('Zpráva smazána');}catch(e){toast('Chyba: '+e.message);}})};
+window.delChat=async id=>{const m=(window._chat||[]).find(x=>x._id===id);if(!m)return;if(!isAdmin()&&m.author!==CU.username){toast('Nemáš oprávnění.');return;}confirmDialog('Smazat tuto zprávu?',async()=>{try{await deleteDoc(doc(db,'channels',_activeChannelId,'messages',id));toast('Zpráva smazána');}catch(e){toast('Chyba: '+e.message);}})};
 
 window.setReply=id=>{
   const m=(window._chat||[]).find(x=>x._id===id);if(!m)return;_replyTo=m;
@@ -2209,7 +2361,7 @@ window.toggleReact=async(id,emoji)=>{
   const m=(window._chat||[]).find(x=>x._id===id);if(!m)return;
   const reacts=m.reactions||{};const users=reacts[emoji]||[];const hasIt=users.includes(CU.username);
   const newReacts={...reacts,[emoji]:hasIt?users.filter(u=>u!==CU.username):[...users,CU.username]};
-  try{await updateDoc(doc(db,'chat',id),{reactions:newReacts});}catch(e){toast('Chyba: '+e.message);}
+  try{await updateDoc(doc(db,'channels',_activeChannelId,'messages',id),{reactions:newReacts});}catch(e){toast('Chyba: '+e.message);}
 };
 
 // ── STATS ──────────────────────────────────────────────────────────────────
