@@ -250,6 +250,8 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 /* WATCH LIST CARDS */
 .wc{background:var(--card-bg);border:1px solid var(--border);border-radius:14px;padding:0;margin-bottom:12px;animation:fu .3s ease;overflow:hidden}
 .wc.wc-curr{border-color:rgba(255,209,102,.35);animation:fu .3s ease,wc-curr-glow 3.5s ease 1s infinite}
+@keyframes past-reveal{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.wc-past-new{animation:past-reveal .35s ease both}
 @keyframes wc-curr-glow{0%,100%{box-shadow:0 0 0 1px rgba(255,209,102,.06),0 2px 16px rgba(255,209,102,.06)}50%{box-shadow:0 0 0 1px rgba(255,209,102,.15),0 4px 28px rgba(255,209,102,.18)}}
 @keyframes join-pop{0%{transform:scale(1)}40%{transform:scale(1.18)}70%{transform:scale(.94)}100%{transform:scale(1)}}
 @keyframes part-count-in{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
@@ -1671,13 +1673,20 @@ window.toggleJoinWatch=async(id,btn)=>{
     if(watchCard){
       const partsNow=w.participants||[];
       const secLabel=watchCard.querySelector('.wc-participants-label');
-      const secNames=watchCard.querySelector('.wc-participants-section > div:last-child');
       if(secLabel){
         const pc=partsNow.length;
         const lbl=pc===0?'vedoucí, zatím žádní účastníci':pc===1?'vedoucí + 1 účastník':pc<5?`vedoucí + ${pc} účastníci`:`vedoucí + ${pc} účastníků`;
         secLabel.textContent='👥 '+lbl;
         secLabel.classList.remove('part-count-updated');void secLabel.offsetWidth;secLabel.classList.add('part-count-updated');
       }
+    }
+    // Refresh dashboard participant count if this watch is shown there
+    const dashPc=document.querySelector('#dashWatch [data-watch-parts]');
+    if(dashPc&&dashPc.dataset.watchParts===id){
+      const partsNow=w.participants||[];
+      const pc=partsNow.length;
+      dashPc.textContent=pc?`👥 ${pc} účastník${pc===1?'':pc<5?'í':'ů'}`:'';
+      dashPc.classList.remove('part-count-updated');void dashPc.offsetWidth;dashPc.classList.add('part-count-updated');
     }
   }catch(e){toast('Chyba: '+e.message);}
 };
@@ -1728,8 +1737,8 @@ window.renderWatch=function renderWatch(){
   if(WF==='all'){
     const currFut=list.filter(w=>!watchTiming(w).isPast);
     const past=list.filter(w=>watchTiming(w).isPast);
-    const showAll=_showAllPast||false;
-    list=[...currFut,...(showAll?past:past.slice(-PAST_LIMIT))];
+    const showAll=window._showAllPast===true;
+    list=[...currFut,...(showAll?past:past.slice(0,PAST_LIMIT))];
     window._pastWatchTotal=past.length;
     window._pastWatchShown=showAll?past.length:Math.min(past.length,PAST_LIMIT);
   }
@@ -1758,7 +1767,8 @@ window.renderWatch=function renderWatch(){
     const partAvatars=parts.slice(0,6).map(un=>watchAvatarEl(un,false)).join('');
     const extraAv=parts.length>6?`<div class="wc-av" style="background:var(--surface);color:var(--muted);font-size:.6rem">+${parts.length-6}</div>`:'';
     const partNames=parts.slice(0,5).map(un=>{const u=userByUn(un);return u?.name?.split(' ')[0]||un;}).join(', ')+(parts.length>5?' a další':'');
-    const wc_extra_cls=isCurr?' wc-curr':isFuture?' wc-future':'';
+    const animatePast=isPast&&window._animatePast;
+    const wc_extra_cls=isCurr?' wc-curr':isFuture?' wc-future':animatePast?' wc-past-new':'';
     return`<div class="wc${wc_extra_cls}">
       <div class="wc-header">
         <div class="wc-header-left">
@@ -1790,7 +1800,8 @@ window.renderWatch=function renderWatch(){
         </div>
       </div>
     </div>`;
-  }).join('')+(pastMore?`<div style="text-align:center;padding:14px 0"><button class="bs b-ghost" onclick="window._showAllPast=true;renderWatch()" style="font-size:.82rem">📜 Zobrazit všechny minulé stráže (${window._pastWatchTotal})</button></div>`:'');
+  window._animatePast=false;
+  }).join('')+(pastMore?`<div style="text-align:center;padding:14px 0"><button class="bs b-ghost" onclick="window._showAllPast=true;window._animatePast=true;renderWatch()" style="font-size:.82rem">📜 Zobrazit všechny minulé stráže (${window._pastWatchTotal})</button></div>`:'');
 }
 
 window.delWatch=async id=>{
