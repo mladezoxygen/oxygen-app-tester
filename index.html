@@ -3600,7 +3600,7 @@ function initCustomSelects(root=document){
 window.initCustomSelects=initCustomSelects;
 
 // ── MOBILE CHANNEL SIDEBAR DRAWER ─────────────────────────────────────────
-function openMobChannelSidebar(){
+window.openMobChannelSidebar=function openMobChannelSidebar(){
   const sb=document.getElementById('channelSidebar');
   const ov=document.getElementById('channelSidebarOverlay');
   if(!sb)return;
@@ -3608,7 +3608,7 @@ function openMobChannelSidebar(){
   if(ov)ov.classList.add('active');
   document.body.style.overflow='hidden';
 }
-function closeMobChannelSidebar(){
+window.closeMobChannelSidebar=function closeMobChannelSidebar(){
   const sb=document.getElementById('channelSidebar');
   const ov=document.getElementById('channelSidebarOverlay');
   if(!sb)return;
@@ -3619,7 +3619,7 @@ function closeMobChannelSidebar(){
 // Auto-close drawer when a channel is selected on mobile
 document.addEventListener('click',function(e){
   if(e.target.closest('.ch-item')&&window.innerWidth<=700){
-    setTimeout(closeMobChannelSidebar,140);
+    setTimeout(window.closeMobChannelSidebar,140);
   }
 });
 // Swipe left to close / swipe right from edge to open
@@ -3632,8 +3632,8 @@ document.addEventListener('click',function(e){
     if(Math.abs(dx)>Math.abs(dy)+10){
       const sb=document.getElementById('channelSidebar');
       if(!sb)return;
-      if(sb.classList.contains('mob-open')&&dx<-50)closeMobChannelSidebar();
-      if(!sb.classList.contains('mob-open')&&dx>60&&sx<30)openMobChannelSidebar();
+      if(sb.classList.contains('mob-open')&&dx<-50)window.closeMobChannelSidebar();
+      if(!sb.classList.contains('mob-open')&&dx>60&&sx<30)window.openMobChannelSidebar();
     }
   },{passive:true});
 })();
