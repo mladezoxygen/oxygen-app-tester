@@ -1710,7 +1710,7 @@ function watchAvatarEl(un,isLeader){
   return u?.emoji?`<div class="${cls}" title="${esc(title)}" ${click}>${u.emoji}</div>`:`<div class="${cls}" title="${esc(title)}" ${click}>${ini(u?.name||un)}</div>`;
 }
 
-function renderWatch(){
+window.renderWatch=function renderWatch(){
   const allW=[...(window._watch||[])];
   allW.sort((a,b)=>{
     const ta=watchTiming(a),tb=watchTiming(b);
