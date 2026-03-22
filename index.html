@@ -42,7 +42,7 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 @keyframes pub-card-out{from{opacity:1;transform:scale(1) translateY(0)}to{opacity:0;transform:scale(.94) translateY(12px)}}
 @keyframes fu{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:translateY(0)}}
 @keyframes logo-pop{0%{transform:scale(0) rotate(-15deg);opacity:0}60%{transform:scale(1.12) rotate(4deg)}80%{transform:scale(.96) rotate(-2deg)}100%{transform:scale(1) rotate(0);opacity:1}}
-@keyframes logo-pulse{0%,100%{box-shadow:0 8px 28px rgba(123,47,190,.5)}50%{box-shadow:0 8px 36px rgba(123,47,190,.85),0 0 0 6px rgba(123,47,190,.15)}}
+@keyframes logo-pulse{0%,100%{box-shadow:0 8px 28px hsla(var(--theme-h,270),65%,47%,.5)}50%{box-shadow:0 8px 36px hsla(var(--theme-h,270),65%,47%,.85),0 0 0 6px hsla(var(--theme-h,270),65%,47%,.15)}}
 @keyframes fg-in{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
 @keyframes form-out{from{opacity:1;transform:translateX(0)}to{opacity:0;transform:translateX(-18px)}}
 @keyframes form-in{from{opacity:0;transform:translateX(18px)}to{opacity:1;transform:translateX(0)}}
@@ -128,9 +128,13 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 .online-person{display:flex;align-items:center;gap:7px;font-size:.78rem;color:var(--text);cursor:pointer;border-radius:8px;padding:2px 4px;margin:-2px -4px;transition:background .15s}
 .online-person:hover{background:rgba(123,47,190,.15)}
 @keyframes online-join{from{opacity:0;transform:translateX(-12px)}to{opacity:1;transform:translateX(0)}}
-@keyframes online-leave{from{opacity:1;transform:translateX(0)}to{opacity:0;transform:translateX(12px)}}
+@keyframes online-leave{
+  0%{opacity:1;transform:translateX(0);max-height:48px;margin-top:0;margin-bottom:0;padding-top:2px;padding-bottom:2px}
+  55%{opacity:0;transform:translateX(14px);max-height:48px}
+  100%{opacity:0;transform:translateX(14px);max-height:0;margin-top:-4px;margin-bottom:-4px;padding-top:0;padding-bottom:0}
+}
 .online-person.joining{animation:online-join .3s ease forwards}
-.online-person.leaving{animation:online-leave .25s ease forwards}
+.online-person.leaving{animation:online-leave .38s ease forwards;overflow:hidden;pointer-events:none}
 .online-av-sm{width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,var(--purple),var(--purple-d));display:flex;align-items:center;justify-content:center;font-size:.58rem;font-weight:800;color:#fff;flex-shrink:0}
 .online-av-sm.ea{background:var(--surface);font-size:.78rem}
 .blogout{width:100%;padding:8px;background:rgba(239,71,111,.1);border:1px solid rgba(239,71,111,.2);border-radius:9px;color:var(--red);font-family:'Nunito',sans-serif;font-size:.82rem;font-weight:700;cursor:pointer;transition:background .2s}
@@ -279,11 +283,12 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 .watch-parts-row{max-height:0;overflow:hidden;opacity:0;margin-top:0;transition:max-height .35s ease,opacity .3s ease,margin-top .3s ease}
 .watch-parts-row.visible{max-height:40px;opacity:1;margin-top:5px}
 .wc.wc-future{border-color:rgba(155,79,222,.3)}
-.wc-header{padding:14px 16px 10px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.wc-header{padding:14px 16px 10px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:flex-start;gap:8px;flex-wrap:wrap}
 .wc-header-left{flex:1;min-width:0}
-.wc-status{font-size:.68rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;margin-bottom:5px;display:flex;align-items:center;gap:6px}
+.wc-status{font-size:.68rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;margin-bottom:5px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;line-height:1.5}
 .wc-status.curr{color:var(--gold)}.wc-status.future{color:var(--purple-xl)}.wc-status.past{color:var(--muted)}
 .wc-status-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.wc-leader-badge{color:var(--gold);font-size:.68rem;font-weight:800;letter-spacing:.04em;white-space:nowrap}
 .wc-status.curr .wc-status-dot{background:var(--gold);box-shadow:0 0 6px var(--gold);animation:pulse-gold 2s infinite}
 .wc-status.future .wc-status-dot{background:var(--purple-xl)}
 .wc-status.past .wc-status-dot{background:var(--muted)}
@@ -535,6 +540,100 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 .ch-member-status{font-size:.67rem;color:var(--muted)}
 .ch-members-group-label{padding:8px 14px 2px;font-size:.64rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em;white-space:nowrap}
 @media(max-width:900px){.ch-sidebar{width:190px}}
+
+/* Sidebar close/open buttons — skryté na desktopu */
+.ch-sidebar-close{display:none}
+.ch-open-sidebar-btn{display:none}
+.ch-sidebar-overlay{display:none;position:absolute;inset:0;background:rgba(0,0,0,.5);z-index:49}
+.ch-sidebar-overlay.active{display:block}
+
+@media(max-width:700px){
+  /* ── CHAT MOBILE ── */
+  #sec-chat{padding:0!important;margin:0!important}
+  .chat-layout-outer{
+    position:fixed;top:52px;left:0;right:0;bottom:0;
+    height:auto;border-radius:0;border:none;
+    display:flex;flex-direction:row;overflow:hidden;
+  }
+  /* Channel sidebar jako výsuvný drawer */
+  .ch-sidebar{
+    position:absolute;top:0;left:0;bottom:0;
+    width:82%!important;max-width:280px!important;min-width:0!important;
+    background:var(--bg-dark2);border-right:1px solid var(--border-l);
+    display:flex;flex-direction:column;overflow:hidden;
+    transform:translateX(-100%);
+    transition:transform .28s cubic-bezier(.22,.68,0,1.2);
+    z-index:50;box-shadow:none;
+  }
+  .ch-sidebar.mob-open{
+    transform:translateX(0);
+    box-shadow:4px 0 32px rgba(0,0,0,.55);
+  }
+  .ch-sidebar-header{
+    padding:14px 14px 10px;justify-content:space-between;align-items:center;
+    flex-direction:row;gap:8px;border-bottom:1px solid var(--border);flex-shrink:0;
+  }
+  .ch-sidebar-title{display:block!important;font-family:'Cinzel',serif;font-size:.85rem;color:var(--white);letter-spacing:.04em}
+  .ch-sidebar-close{
+    display:flex!important;background:rgba(255,255,255,.07);border:1px solid var(--border);
+    border-radius:8px;color:var(--muted);cursor:pointer;
+    width:30px;height:30px;align-items:center;justify-content:center;
+    font-size:1rem;flex-shrink:0;transition:background .15s;
+  }
+  .ch-sidebar-close:hover{background:rgba(239,71,111,.15);color:var(--red)}
+  .ch-sidebar-body{flex:1;overflow-y:auto;padding:8px 0;scrollbar-width:none}
+  .ch-sidebar-body::-webkit-scrollbar{display:none}
+  .ch-category{padding:12px 14px 4px;justify-content:space-between}
+  .ch-category-name{display:flex!important;font-size:.67rem}
+  .ch-category-add{display:flex!important}
+  .ch-category-arrow{display:inline-block!important}
+  .ch-items{display:flex;flex-direction:column;align-items:stretch}
+  .ch-item{
+    display:flex;align-items:center;gap:7px;
+    padding:8px 14px;margin:1px 6px;border-radius:8px;
+    width:auto;height:auto;
+  }
+  .ch-item-hash{font-size:.9rem;opacity:.6;flex-shrink:0;margin:0}
+  .ch-item-name{display:block!important;font-size:.87rem;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .ch-item-del{display:none}
+  .ch-item.active{background:rgba(123,47,190,.3)}
+  .ch-item.active .ch-item-hash{opacity:1;color:#fff}
+  /* Open sidebar button in chat topbar */
+  .ch-open-sidebar-btn{
+    display:flex!important;background:rgba(123,47,190,.15);border:1px solid var(--border);
+    border-radius:8px;color:var(--purple-xl);cursor:pointer;
+    width:32px;height:32px;align-items:center;justify-content:center;
+    font-size:1rem;flex-shrink:0;transition:background .15s;
+  }
+  .ch-open-sidebar-btn:hover{background:rgba(123,47,190,.3)}
+  /* Main area */
+  .ch-main{flex:1;min-width:0;display:flex;flex-direction:column;background:var(--bg);overflow:hidden;width:100%}
+  /* Topbar */
+  .ch-topbar{padding:10px 12px;gap:8px;background:var(--bg-dark2);border-bottom:1px solid var(--border);flex-shrink:0}
+  .ch-topbar-desc{display:block!important;font-size:.72rem;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+  .ch-hash{font-size:1rem}
+  .ch-topbar-name{font-size:.88rem;font-weight:800}
+  .ch-topbar-right{display:flex!important;gap:6px;align-items:center;flex-shrink:0;margin-left:auto}
+  .ch-members-btn{padding:4px 8px;font-size:.72rem}
+  .ch-edit-btn{padding:3px 7px;font-size:.8rem}
+  .ch-members-panel{display:none!important}
+  /* Messages */
+  .chat-msgs{flex:1;padding:8px 6px 4px;min-height:0;overflow-y:auto}
+  .chat-bubble-wrap{max-width:80%}
+  .chat-msg-group{padding:2px 6px}
+  .chat-actions-wrap{opacity:1!important}
+  .chat-act-btn{font-size:.78rem;padding:3px 5px}
+  .chat-typing{padding:3px 12px;font-size:.72rem}
+  /* Input */
+  .ch-input-area{
+    padding:8px 10px calc(8px + env(safe-area-inset-bottom));
+    background:var(--bg-dark2);border-top:1px solid var(--border);flex-shrink:0;
+  }
+  .ch-input-row{gap:6px;align-items:flex-end}
+  .chat-input{font-size:.9rem;padding:9px 13px;min-height:40px;max-height:100px;border-radius:20px;background:var(--surface);line-height:1.4}
+  .chat-send{width:40px;height:40px;border-radius:50%;flex-shrink:0}
+  .ch-emoji-btn{width:36px;height:40px;font-size:1.1rem;flex-shrink:0;border-radius:10px;border:none;background:none}
+}
 /* STATS */
 .chart-wrap{background:var(--card-bg);border:1px solid var(--border);border-radius:14px;padding:19px;margin-bottom:14px}
 .chart-title{font-family:'Cinzel',serif;font-size:.88rem;color:var(--purple-xl);margin-bottom:13px}
@@ -661,119 +760,14 @@ input:checked+.slider::before{transform:translateX(18px)}
   .modal{padding:18px}
   /* Buttons */
   .bs{padding:5px 9px;font-size:.72rem}
-  /* ── CHAT MOBILE ── */
-  #sec-chat{padding:0!important;margin:0!important}
-  .chat-layout-outer{
-    position:fixed;top:52px;left:0;right:0;bottom:0;
-    height:auto;border-radius:0;border:none;
-    display:flex;flex-direction:row;
-    overflow:hidden;
-  }
-  /* === Channel sidebar jako výsuvný drawer zleva === */
-  .ch-sidebar{
-    position:absolute;top:0;left:0;bottom:0;
-    width:82%!important;max-width:280px!important;min-width:0!important;
-    background:var(--bg-dark2);border-right:1px solid var(--border-l);
-    display:flex;flex-direction:column;overflow:hidden;
-    transform:translateX(-100%);
-    transition:transform .28s cubic-bezier(.22,.68,0,1.2);
-    z-index:50;
-    box-shadow:none;
-  }
-  .ch-sidebar.mob-open{
-    transform:translateX(0);
-    box-shadow:4px 0 32px rgba(0,0,0,.55);
-  }
-  /* Overlay za drawerem */
-  .ch-sidebar-overlay{
-    display:none;position:absolute;inset:0;background:rgba(0,0,0,.5);z-index:49;
-  }
-  .ch-sidebar.mob-open~.ch-sidebar-overlay,.ch-sidebar-overlay.active{display:block}
-  /* Sidebar header s názvem + tlačítko zavřít */
-  .ch-sidebar-header{
-    padding:14px 14px 10px;justify-content:space-between;align-items:center;
-    flex-direction:row;gap:8px;border-bottom:1px solid var(--border);flex-shrink:0;
-  }
-  .ch-sidebar-title{display:block!important;font-family:'Cinzel',serif;font-size:.85rem;color:var(--white);letter-spacing:.04em}
-  .ch-sidebar-close{display:flex!important;background:rgba(255,255,255,.07);border:1px solid var(--border);border-radius:8px;color:var(--muted);cursor:pointer;width:30px;height:30px;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;transition:background .15s}
-  .ch-sidebar-close:hover{background:rgba(239,71,111,.15);color:var(--red)}
-  .ch-sidebar-body{flex:1;overflow-y:auto;padding:8px 0;scrollbar-width:none}
-  .ch-sidebar-body::-webkit-scrollbar{display:none}
-  .ch-category{padding:12px 14px 4px;justify-content:space-between}
-  .ch-category-name{display:flex!important;font-size:.67rem}
-  .ch-category-add{display:flex!important}
-  .ch-category-arrow{display:inline-block!important}
-  .ch-items{display:flex;flex-direction:column;align-items:stretch}
-  .ch-item{
-    display:flex;align-items:center;gap:7px;
-    padding:8px 14px;margin:1px 6px;border-radius:8px;
-    width:auto;height:auto;
-  }
-  .ch-item-hash{font-size:.9rem;opacity:.6;flex-shrink:0;margin:0}
-  .ch-item-name{display:block!important;font-size:.87rem;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .ch-item.active .ch-item-hash{opacity:1;color:#fff}
-  .ch-item.active{background:rgba(123,47,190,.3)}
-  .ch-item-del{display:none}
-  /* Main area */
-  .ch-main{
-    flex:1;min-width:0;display:flex;flex-direction:column;
-    background:var(--bg);overflow:hidden;
-    width:100%;
-  }
-  /* Topbar */
-  .ch-topbar{
-    padding:10px 12px;gap:8px;
-    background:var(--bg-dark2);
-    border-bottom:1px solid var(--border);flex-shrink:0;
-  }
-  /* Tlačítko pro otevření channel draweru v topbaru chatu */
-  .ch-open-sidebar-btn{
-    display:flex!important;background:rgba(123,47,190,.15);border:1px solid var(--border);
-    border-radius:8px;color:var(--purple-xl);cursor:pointer;
-    width:32px;height:32px;align-items:center;justify-content:center;
-    font-size:1rem;flex-shrink:0;transition:background .15s;
-  }
-  .ch-open-sidebar-btn:hover{background:rgba(123,47,190,.3);border-color:var(--border-l)}
-  .ch-topbar-desc{display:block!important;font-size:.72rem;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
-  .ch-hash{font-size:1rem}
-  .ch-topbar-name{font-size:.88rem;font-weight:800}
-  .ch-topbar-right{display:flex!important;gap:6px;align-items:center;flex-shrink:0;margin-left:auto}
-  .ch-members-btn{padding:4px 8px;font-size:.72rem}
-  .ch-edit-btn{padding:3px 7px;font-size:.8rem}
-  .ch-members-panel{display:none!important}
-  /* Messages */
-  .chat-msgs{flex:1;padding:8px 6px 4px;min-height:0;overflow-y:auto}
-  .chat-bubble-wrap{max-width:80%}
-  .chat-msg-group{padding:2px 6px}
-  .chat-actions-wrap{opacity:1!important}
-  .chat-act-btn{font-size:.78rem;padding:3px 5px}
-  /* Typing */
-  .chat-typing{padding:3px 12px;font-size:.72rem}
-  /* Input */
-  .ch-input-area{
-    padding:8px 10px calc(8px + env(safe-area-inset-bottom));
-    background:var(--bg-dark2);border-top:1px solid var(--border);
-    flex-shrink:0;
-  }
-  .ch-input-row{gap:6px;align-items:flex-end}
-  .chat-input{
-    font-size:.9rem;padding:9px 13px;
-    min-height:40px;max-height:100px;
-    border-radius:20px;background:var(--surface);
-    line-height:1.4;
-  }
-  .chat-send{width:40px;height:40px;border-radius:50%;flex-shrink:0}
-  .ch-emoji-btn{width:36px;height:40px;font-size:1.1rem;flex-shrink:0;border-radius:10px;border:none;background:none}
+  /* Watch card header on mobile */
+  .wc-header{flex-direction:column;gap:6px}
+  .wc-header-right{flex-direction:row!important;align-self:flex-start}
+  .wc-status{font-size:.65rem}
   /* Other */
   .week-stat-grid{grid-template-columns:1fr 1fr!important}
   .b-gcal{font-size:.68rem;padding:4px 8px}
 }
-
-/* Sidebar close/open buttons — skryté na desktopu */
-.ch-sidebar-close{display:none}
-.ch-open-sidebar-btn{display:none}
-.ch-sidebar-overlay{display:none}
-
 .mob-topbar{display:none;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--bg-dark2);border-bottom:1px solid var(--border);backdrop-filter:blur(12px);position:fixed;top:0;left:0;right:0;z-index:90;height:52px}
 .mob-topbar-title{font-family:'Cinzel',serif;font-size:1rem;color:var(--white);letter-spacing:.05em}
 .mob-topbar-btn{background:rgba(123,47,190,.15);border:1px solid var(--border);border-radius:8px;color:var(--purple-xl);padding:6px 10px;cursor:pointer;font-size:.9rem;line-height:1;-webkit-tap-highlight-color:transparent}
@@ -1124,7 +1118,7 @@ input:checked+.slider::before{transform:translateX(18px)}
         <div class="ch-main">
           <div class="ch-topbar">
             <button class="ch-open-sidebar-btn" id="openChannelSidebarBtn" onclick="openMobChannelSidebar()" title="Kanály">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
             </button>
             <span class="ch-hash">#</span>
             <span class="ch-topbar-name" id="channelHeaderName">obecný</span>
@@ -2179,7 +2173,7 @@ window.renderWatch=function renderWatch(){
       <div class="wc-header">
         <div class="wc-header-left">
           <div class="wc-status ${statusCls}">
-            <div class="wc-status-dot"></div>${statusIcon} ${statusTxt}${isLeader?' · <span style="color:var(--gold)">👑 Ty vedeš tuto stráž</span>':iJoin?' · <span style="color:var(--green)">✓ Účastníš se</span>':''}
+            <div class="wc-status-dot"></div>${statusIcon} ${statusTxt}${isLeader?'<span class="wc-leader-badge">👑 Ty vedeš tuto stráž</span>':iJoin?'<span class="wc-leader-badge" style="color:var(--green)">✓ Účastníš se</span>':''}
           </div>
           <div class="wc-leader">${esc(ldrName)}</div>
           <div class="wc-leader-sub">${esc(w.date)}</div>
@@ -3098,6 +3092,7 @@ function startOnline(){
     [...list.querySelectorAll('[data-uname]')].forEach(el=>{
       if(!existingNames.has(el.getAttribute('data-uname'))&&!el.classList.contains('leaving')){
         el.classList.add('leaving');
+        setTimeout(()=>el.remove(),420);
       }
     });
 
@@ -3144,7 +3139,7 @@ function startOnline(){
     [...list.querySelectorAll('[data-uname]')].forEach(el=>{
       if(!newNames.has(el.getAttribute('data-uname'))&&!el.classList.contains('leaving')){
         el.classList.add('leaving');
-        setTimeout(()=>el.remove(),300);
+        setTimeout(()=>el.remove(),420);
       }
     });
   });
@@ -3610,7 +3605,7 @@ function openMobChannelSidebar(){
   const ov=document.getElementById('channelSidebarOverlay');
   if(!sb)return;
   sb.classList.add('mob-open');
-  if(ov){ov.classList.add('active');}
+  if(ov)ov.classList.add('active');
   document.body.style.overflow='hidden';
 }
 function closeMobChannelSidebar(){
@@ -3618,27 +3613,27 @@ function closeMobChannelSidebar(){
   const ov=document.getElementById('channelSidebarOverlay');
   if(!sb)return;
   sb.classList.remove('mob-open');
-  if(ov){ov.classList.remove('active');}
+  if(ov)ov.classList.remove('active');
   document.body.style.overflow='';
 }
-// Automaticky zavřít drawer při výběru kanálu na mobilu
+// Auto-close drawer when a channel is selected on mobile
 document.addEventListener('click',function(e){
-  const item=e.target.closest('.ch-item');
-  if(item && window.innerWidth<=700){
-    setTimeout(closeMobChannelSidebar,120);
+  if(e.target.closest('.ch-item')&&window.innerWidth<=700){
+    setTimeout(closeMobChannelSidebar,140);
   }
 });
-// Swipe doleva pro zavření draweru
+// Swipe left to close / swipe right from edge to open
 (function(){
-  let startX=0,startY=0;
-  document.addEventListener('touchstart',e=>{startX=e.touches[0].clientX;startY=e.touches[0].clientY},{passive:true});
+  let sx=0,sy=0;
+  document.addEventListener('touchstart',e=>{sx=e.touches[0].clientX;sy=e.touches[0].clientY},{passive:true});
   document.addEventListener('touchend',e=>{
-    const dx=e.changedTouches[0].clientX-startX;
-    const dy=e.changedTouches[0].clientY-startY;
-    if(Math.abs(dx)>Math.abs(dy)){
+    const dx=e.changedTouches[0].clientX-sx;
+    const dy=e.changedTouches[0].clientY-sy;
+    if(Math.abs(dx)>Math.abs(dy)+10){
       const sb=document.getElementById('channelSidebar');
-      if(sb && sb.classList.contains('mob-open') && dx<-50){closeMobChannelSidebar();}
-      if(sb && !sb.classList.contains('mob-open') && dx>60 && startX<30){openMobChannelSidebar();}
+      if(!sb)return;
+      if(sb.classList.contains('mob-open')&&dx<-50)closeMobChannelSidebar();
+      if(!sb.classList.contains('mob-open')&&dx>60&&sx<30)openMobChannelSidebar();
     }
   },{passive:true});
 })();
