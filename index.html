@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#1A0833">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Oxygen">
 <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%237B2FBE'/><rect x='14' y='4' width='4' height='24' rx='2' fill='white'/><rect x='6' y='10' width='20' height='4' rx='2' fill='white'/></svg>">
@@ -466,7 +467,9 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 #sec-chat .ph{display:none}
 /* Channel sidebar */
 .ch-sidebar{width:240px;flex-shrink:0;display:flex;flex-direction:column;border-left:1px solid var(--border);background:var(--bg-dark2);overflow:hidden}
-.ch-sidebar-header{padding:14px 16px 10px;border-bottom:1px solid var(--border);flex-shrink:0}
+.ch-sidebar-header{padding:14px 16px 10px;border-bottom:1px solid var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:space-between}
+.ch-sidebar-add{background:rgba(123,47,190,.15);border:1px solid var(--border);border-radius:7px;color:var(--purple-xl);cursor:pointer;width:26px;height:26px;display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0}
+.ch-sidebar-add:hover{background:rgba(123,47,190,.3);border-color:var(--border-l)}
 .ch-sidebar-title{font-family:'Cinzel',serif;font-size:.82rem;color:var(--white);letter-spacing:.04em}
 .ch-sidebar-body{flex:1;overflow-y:auto;padding:8px 0}
 .ch-sidebar-body::-webkit-scrollbar{width:3px}
@@ -516,16 +519,17 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 .ch-emoji-btn:hover{background:rgba(123,47,190,.15);border-color:var(--border-l);color:var(--purple-xl)}
 @media(max-width:900px){.ch-sidebar{width:190px}}
 @media(max-width:700px){
-  #chSidebarToggle{display:block!important}
-  /* Na mobilu: sidebar se schová, přidáme toggle tlačítko */
-  .chat-layout-outer{flex-direction:column;height:calc(100dvh - 80px)}
-  .ch-sidebar{width:100%;height:auto;max-height:0;overflow:hidden;border-right:none;border-bottom:1px solid var(--border);transition:max-height .3s ease;flex-shrink:0;order:-1}
-  .ch-sidebar.mobile-open{max-height:280px}
-  .ch-sidebar-header{display:flex;align-items:center;justify-content:space-between;cursor:pointer}
+  .chat-layout-outer{height:calc(100dvh - 80px)}
+  .ch-sidebar{width:52px;flex-shrink:0}
+  .ch-sidebar-title,.ch-item-name,.ch-category-name span,.ch-item-del{display:none}
+  .ch-sidebar-header{padding:10px 8px;justify-content:center}
+  .ch-sidebar-add{margin:0 auto}
   .ch-sidebar-body{padding:4px 0}
-  .ch-item{padding:8px 14px}
-  .ch-main{flex:1;min-height:0}
-  .chat-layout-outer>.ch-sidebar-toggle{display:flex}
+  .ch-item{padding:8px;justify-content:center;margin:2px 4px}
+  .ch-item-hash{font-size:1rem;opacity:.7}
+  .ch-item.active .ch-item-hash{opacity:1}
+  .ch-category{padding:8px 4px;justify-content:center}
+  .ch-category-add{display:none}
 }
 /* STATS */
 .chart-wrap{background:var(--card-bg);border:1px solid var(--border);border-radius:14px;padding:19px;margin-bottom:14px}
@@ -1001,16 +1005,15 @@ input:checked+.slider::before{transform:translateX(18px)}
         <div class="ch-sidebar" id="channelSidebar">
           <div class="ch-sidebar-header">
             <span class="ch-sidebar-title">💬 Kanály</span>
+            <button class="ch-sidebar-add admin-only" id="addChannelBtn" onclick="showAddChannelModal()" title="Nový kanál" style="display:none">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            </button>
           </div>
           <div class="ch-sidebar-body" id="channelList"></div>
-          <div class="ch-sidebar-footer" id="addChannelFooter" style="display:none">
-            <button class="bp" style="padding:8px;font-size:.82rem;width:100%;opacity:.9" onclick="showAddChannelModal()">＋ Nový kanál</button>
-          </div>
         </div>
         <!-- Main chat area -->
         <div class="ch-main">
           <div class="ch-topbar">
-            <button onclick="document.getElementById('channelSidebar').classList.toggle('mobile-open')" style="display:none;background:none;border:none;color:var(--muted);cursor:pointer;font-size:1rem;padding:0 6px 0 0;flex-shrink:0" id="chSidebarToggle" title="Kanály">☰</button>
             <span class="ch-hash">#</span>
             <span class="ch-topbar-name" id="channelHeaderName">obecný</span>
             <span class="ch-topbar-desc" id="channelHeaderDesc"></span>
