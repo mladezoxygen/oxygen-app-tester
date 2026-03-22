@@ -1046,20 +1046,33 @@ input:checked+.slider::before{transform:translateX(18px)}
             <span class="ch-topbar-name" id="channelHeaderName">obecný</span>
             <span class="ch-topbar-desc" id="channelHeaderDesc"></span>
             <div class="ch-topbar-right">
-              <span id="channelMemberCount" style="font-size:.74rem;color:var(--muted)"></span>
+              <button class="ch-members-btn" id="chMembersBtn" onclick="toggleMembersPanel()" title="Členové kanálu">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                <span id="chMembersCount"></span>
+              </button>
+              <button class="ch-edit-btn admin-only" id="chEditBtn" onclick="showEditChannelModal()" title="Upravit kanál" style="display:none">⚙</button>
             </div>
           </div>
-          <div id="chatPinned"></div>
-          <div class="chat-msgs" id="chatMsgs"><div class="loading"><div class="spin"></div>Načítám…</div></div>
-          <div class="chat-typing" id="chatTyping"></div>
-          <div class="ch-input-area">
-            <div id="replyBar" style="display:none"></div>
-            <div class="ch-input-row">
-              <button class="ch-emoji-btn" onclick="toggleEmojiPicker(event)" title="Emoji">😊</button>
-              <textarea class="chat-input" id="chatInput" placeholder="Napiš zprávu…" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChat()}" oninput="onChatInput()" onblur="stopTyping()"></textarea>
-              <button class="chat-send" onclick="sendChat()">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-              </button>
+          <div style="display:flex;flex:1;min-height:0;overflow:hidden">
+            <div style="flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden">
+              <div id="chatPinned"></div>
+              <div class="chat-msgs" id="chatMsgs"><div class="loading"><div class="spin"></div>Načítám…</div></div>
+              <div class="chat-typing" id="chatTyping"></div>
+              <div class="ch-input-area">
+                <div id="replyBar" style="display:none"></div>
+                <div class="ch-input-row">
+                  <button class="ch-emoji-btn" onclick="toggleEmojiPicker(event)" title="Emoji">😊</button>
+                  <textarea class="chat-input" id="chatInput" placeholder="Napiš zprávu…" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChat()}" oninput="onChatInput()" onblur="stopTyping()"></textarea>
+                  <button class="chat-send" onclick="sendChat()">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+            <!-- Members panel -->
+            <div class="ch-members-panel" id="chMembersPanel">
+              <div class="ch-members-panel-header">Členové</div>
+              <div style="flex:1;overflow-y:auto;overflow-x:hidden" id="chMembersList"></div>
             </div>
           </div>
         </div>
@@ -1468,6 +1481,7 @@ window.navigate=function navigate(id){
   if(id==='my-stats')renderMyStats();
   if(id==='admin')renderAdminSec();
   if(id==='watch'){renderCalendar();renderWatch();}
+  if(id==='chat'){setTimeout(()=>{const el=document.getElementById('chatInput');if(el){el.style.height='44px';}},50);}
   setTimeout(initCustomSelects,30);
 }
 
@@ -2560,12 +2574,14 @@ window.toggleEmojiPicker=(ev)=>{
 window.insertEmoji=e=>{const inp=document.getElementById('chatInput');const pos=inp.selectionStart||inp.value.length;inp.value=inp.value.slice(0,pos)+e+inp.value.slice(pos);inp.selectionStart=inp.selectionEnd=pos+e.length;inp.focus();autoResizeChatInput();};
 function autoResizeChatInput(){
   const el=document.getElementById('chatInput');if(!el)return;
-  // Reset to min to measure correctly without jump
+  // Temporarily shrink to measure true scrollHeight
+  el.style.overflow='hidden';
   el.style.height='44px';
   const h=Math.min(el.scrollHeight,160);
-  el.style.height=h+'px';
-  // Keep scroll at bottom
-  el.scrollTop=el.scrollHeight;
+  if(parseInt(el.style.height)!==h){
+    el.style.height=h+'px';
+  }
+  el.style.overflow=h>=160?'auto':'hidden';
 }
 
 // ── TYPING INDICATOR ──────────────────────────────────────────────────────
