@@ -1259,19 +1259,25 @@ function renderDash(){
   const lblEl=document.getElementById('dashWatchLabel');
   if(lblEl)lblEl.textContent=curWatch?'⌚ Aktuální modlitební stráž':'📅 Nadcházející modlitební stráž';
   document.getElementById('dashWatch').innerHTML=cur
-    ?`<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;flex-wrap:wrap">
-        <div>
-          <strong style="color:var(--white)">${esc(cur.person)}</strong>
-          <span style="color:var(--muted);font-size:.77rem;margin-left:6px">${esc(cur.date)}</span>
-          <div class="wt" style="margin-top:6px">${(cur.topics||[]).map(t=>`<span class="wtag">${esc(t)}</span>`).join('')}</div>
-          ${(cur.participants||[]).length?`<div style="margin-top:6px;font-size:.75rem;color:var(--muted)">👥 ${(cur.participants||[]).length} účastník${(cur.participants||[]).length===1?'':((cur.participants||[]).length<5?'í':'ů')}</div>`:''}
+    ?`<div>
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;flex-wrap:wrap;margin-bottom:8px">
+          <div onclick="navigate('watch')" style="cursor:pointer;flex:1;min-width:0">
+            <strong style="color:var(--white)">${esc(cur.person)}</strong>
+            <span style="color:var(--muted);font-size:.77rem;margin-left:6px">${esc(cur.date)}</span>
+            <div class="wt" style="margin-top:6px">${(cur.topics||[]).map(t=>`<span class="wtag">${esc(t)}</span>`).join('')}</div>
+            ${(()=>{const pc=(cur.participants||[]).length;return pc?`<div style="margin-top:5px;font-size:.75rem;color:var(--muted)">👥 ${pc} účastník${pc===1?'':pc<5?'í':'ů'}</div>`:''})()}
+          </div>
+          <div style="display:flex;gap:4px;align-items:center;flex-shrink:0">
+            ${makeGCalUrl(cur)?`<a href="${makeGCalUrl(cur)}" target="_blank" rel="noopener" class="bs b-gcal" style="text-decoration:none" title="Přidat do Google Kalendáře">📅</a>`:''}
+            ${cur.assignedTo===CU.username?`<span style="font-size:.78rem;color:var(--gold);font-weight:700">👑 Vedoucí</span>`:`<button class="bs b-join${(cur.participants||[]).includes(CU.username)?' on':''}" onclick="toggleJoinWatch('${cur._id}',this)">${(cur.participants||[]).includes(CU.username)?'✓ Účastním se':'+ Přidám se'}</button>`}
+          </div>
         </div>
-        <div style="display:flex;gap:5px;align-items:flex-start;flex-wrap:wrap;flex-shrink:0">
-          ${makeGCalUrl(cur)?`<a href="${makeGCalUrl(cur)}" target="_blank" rel="noopener" class="bs b-gcal" style="text-decoration:none">📅</a>`:''}
-          ${cur.assignedTo===CU.username?`<span style="font-size:.78rem;color:var(--gold);font-weight:700">👑 Jsi vedoucí</span>`:`<button class="bs b-join${(cur.participants||[]).includes(CU.username)?' on':''}" onclick="toggleJoinWatch('${cur._id}',this)">${(cur.participants||[]).includes(CU.username)?'✓ Účastním se':'+ Přidám se'}</button>`}
-        </div>
+        <div onclick="navigate('watch')" style="cursor:pointer;font-size:.75rem;color:var(--purple-xl);font-weight:700;display:flex;align-items:center;gap:4px">⌚ Zobrazit stráž →</div>
       </div>`
-    :'<span style="color:var(--muted)">Žádná stráž nebyla přiřazena</span>';
+    :(()=>{
+      if(lblEl)lblEl.textContent='⌚ Modlitební stráž';
+      return '<span style="color:var(--muted);font-size:.85rem">Žádná stráž nebyla přiřazena</span>';
+    })();
   renderStreakDash();renderCountdownDash();
   const rec=reqs.slice(0,3);
   document.getElementById('dashRecent').innerHTML=rec.length
@@ -1629,8 +1635,19 @@ window.toggleJoinWatch=async(id,btn)=>{
   const iJoin=parts.includes(CU.username);
   try{
     await updateDoc(doc(db,'watch',id),{participants:iJoin?arrayRemove(CU.username):arrayUnion(CU.username)});
-    if(btn){btn.textContent=iJoin?'+ Přidám se':'✓ Účastním se';btn.classList.toggle('on',!iJoin);}
     toast(iJoin?'Odhlášen/a ze stráže.':'🙏 Přihlášen/a ke stráži!');
+    // Update local state immediately so popup re-render is accurate
+    w.participants=iJoin?parts.filter(u=>u!==CU.username):[...parts,CU.username];
+    // Update button in popup if present
+    if(btn){btn.textContent=iJoin?'+ Přidám se':'✓ Účastním se';btn.classList.toggle('on',!iJoin);}
+    // Refresh participant count label in popup if visible
+    const popupItem=btn?.closest('.watch-popup-item');
+    if(popupItem){
+      const partsNow=w.participants||[];
+      const partNamesNow=partsNow.slice(0,4).map(un=>{const u=userByUn(un);return u?.name?.split(' ')[0]||un;}).join(', ')+(partsNow.length>4?' …':'');
+      let pDiv=popupItem.querySelector('.wpi-parts');
+      if(pDiv)pDiv.textContent=partsNow.length?`👥 ${partsNow.length} účastník${partsNow.length===1?'':partsNow.length<5?'í':'ů'}: ${partNamesNow}`:'Zatím žádní účastníci';
+    }
   }catch(e){toast('Chyba: '+e.message);}
 };
 
@@ -1645,11 +1662,12 @@ function makeGCalUrl(w){
   const ldrName=ldr?ldr.name:(w.person||'');
   const parts=(w.participants||[]).map(un=>{const u=userByUn(un);return u?u.name:un;});
   const allNames=[ldrName,...parts];
+  const nl='\n';
   let details='🙏 Modlitební stráž Oxygen';
-  if((w.topics||[]).length)details+='\\nTémata: '+(w.topics||[]).join(', ');
-  details+='\\n\\nVedoucí: '+ldrName;
-  if(parts.length)details+='\\nÚčastníci: '+parts.join(', ');
-  details+='\\n\\n(Seznam účastníků platný ke: '+new Date().toLocaleDateString('cs-CZ')+')';
+  if((w.topics||[]).length)details+=nl+'Témata: '+(w.topics||[]).join(', ');
+  details+=nl+nl+'Vedoucí: '+ldrName;
+  if(parts.length)details+=nl+'Účastníci: '+parts.join(', ');
+  details+=nl+nl+'(Seznam účastníků platný ke: '+new Date().toLocaleDateString('cs-CZ')+')';
   return`https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${fmt(sd)}/${fmt(edExcl)}&details=${encodeURIComponent(details)}`;
 }
 
