@@ -2290,11 +2290,23 @@ window.switchChannel=function switchChannel(channelId){
   const ch=_channels.find(c=>c._id===channelId);
   const nameEl=document.getElementById('channelHeaderName');
   const descEl=document.getElementById('channelHeaderDesc');
-  const cntEl=document.getElementById('channelMemberCount');
   if(nameEl)nameEl.textContent=ch?.name||'';
-  if(descEl)descEl.textContent=ch?.description||'';
-  if(cntEl)cntEl.textContent=ch?.isGeneral?'Všichni členové':(ch?.members?.length?`${ch.members.length} členů`:'');
+  if(descEl)descEl.textContent=ch?.description?'· '+ch.description:'';
+  // Member count button
+  const cntEl=document.getElementById('chMembersCount');
+  const membersBtn=document.getElementById('chMembersBtn');
+  if(cntEl){
+    const cnt=ch?.isGeneral?Object.values(window._users||{}).filter(u=>u.role!=='pending').length:(ch?.members?.length||0);
+    cntEl.textContent=cnt||'';
+  }
+  // Edit button — only for non-general channels, admin only
+  const editBtn=document.getElementById('chEditBtn');
+  if(editBtn)editBtn.style.display=(isAdmin()&&ch&&!ch.isGeneral)?'block':'none';
+  // Close members panel when switching
+  const panel=document.getElementById('chMembersPanel');
+  if(panel){panel.classList.remove('open');document.getElementById('chMembersBtn')?.classList.remove('active');}
   renderChannelList();
+  renderMembersPanel(ch);
   // Pinned
   if(_pinnedUnsub){_pinnedUnsub();_pinnedUnsub=null;}
   _pinnedMsg=null;
@@ -2317,6 +2329,96 @@ window.switchChannel=function switchChannel(channelId){
     }
   );
 }
+
+// ── MEMBERS PANEL ─────────────────────────────────────────────────────────
+function renderMembersPanel(ch){
+  const el=document.getElementById('chMembersList');if(!el)return;
+  const allU=window._users||{};
+  const onlineSet=new Set(Object.keys(window._onlineData||{}));
+  let members;
+  if(!ch||ch.isGeneral){
+    members=Object.values(allU).filter(u=>u.role!=='pending').sort((a,b)=>a.name.localeCompare(b.name,'cs'));
+  } else {
+    members=(ch.members||[]).map(un=>allU[un]).filter(Boolean).sort((a,b)=>a.name.localeCompare(b.name,'cs'));
+  }
+  // Sort: online first
+  members.sort((a,b)=>{const ao=onlineSet.has(a.username),bo=onlineSet.has(b.username);return bo-ao||a.name.localeCompare(b.name,'cs');});
+  if(!members.length){el.innerHTML='<div style="padding:16px;color:var(--muted);font-size:.8rem;text-align:center">Žádní členové</div>';return;}
+  // Group: online / offline
+  const online=members.filter(u=>onlineSet.has(u.username));
+  const offline=members.filter(u=>!onlineSet.has(u.username));
+  let html='';
+  if(online.length){html+=`<div style="padding:8px 14px 3px;font-size:.65rem;font-weight:800;color:var(--green);text-transform:uppercase;letter-spacing:.06em">Online — ${online.length}</div>`;}
+  online.forEach(u=>{html+=memberRow(u,true);});
+  if(offline.length){html+=`<div style="padding:8px 14px 3px;font-size:.65rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-top:4px">Offline — ${offline.length}</div>`;}
+  offline.forEach(u=>{html+=memberRow(u,false);});
+  el.innerHTML=html;
+}
+function memberRow(u,online){
+  return`<div class="ch-member-row" onclick="showUserProfile('${u.username}')">
+    <div class="ch-member-av${u.emoji?' ea':''}${online?' ch-member-online':''}">${u.emoji||ini(u.name)}</div>
+    <div style="flex:1;min-width:0">
+      <div class="ch-member-name">${esc(u.name)}</div>
+      <div class="ch-member-status">${online?'Online':'Offline'}</div>
+    </div>
+  </div>`;
+}
+window.toggleMembersPanel=()=>{
+  const panel=document.getElementById('chMembersPanel');
+  const btn=document.getElementById('chMembersBtn');
+  if(!panel)return;
+  const open=panel.classList.toggle('open');
+  btn?.classList.toggle('active',open);
+  if(open){
+    const ch=_channels.find(c=>c._id===_activeChannelId);
+    renderMembersPanel(ch);
+  }
+};
+
+// ── EDIT CHANNEL MODAL ────────────────────────────────────────────────────
+window.showEditChannelModal=()=>{
+  const ch=_channels.find(c=>c._id===_activeChannelId);if(!ch||ch.isGeneral)return;
+  document.getElementById('editChannelModal')?.remove();
+  const allUsers=Object.values(window._users||{}).filter(u=>u.role!=='pending').sort((a,b)=>a.name.localeCompare(b.name,'cs'));
+  const m=document.createElement('div');m.className='modal-bg';m.id='editChannelModal';
+  m.innerHTML=`<div class="modal" onclick="event.stopPropagation()" style="max-width:440px">
+    <button class="modal-close" onclick="closeModal('editChannelModal')">✕</button>
+    <h2>⚙ Upravit kanál #${esc(ch.name)}</h2>
+    <div class="fg" style="margin-bottom:10px"><label>Název kanálu</label>
+      <input type="text" id="editChName" value="${esc(ch.name)}" maxlength="40"></div>
+    <div class="fg" style="margin-bottom:14px"><label>Popis</label>
+      <input type="text" id="editChDesc" value="${esc(ch.description||'')}" placeholder="Krátký popis kanálu" maxlength="100"></div>
+    <div class="lbl" style="margin-bottom:6px">Členové <span style="font-weight:400;text-transform:none;color:var(--muted)">(prázdné = všichni)</span></div>
+    <div style="max-height:200px;overflow-y:auto;border:1px solid var(--border);border-radius:10px;padding:6px;margin-bottom:16px;background:rgba(0,0,0,.1)">
+      ${allUsers.map(u=>`<label style="display:flex;align-items:center;gap:8px;padding:6px;cursor:pointer;border-radius:6px;transition:background .1s" onmouseover="this.style.background='rgba(123,47,190,.1)'" onmouseout="this.style.background=''">
+        <input type="checkbox" class="editChMember" value="${u.username}" ${(ch.members||[]).includes(u.username)?'checked':''} style="accent-color:var(--purple);width:14px;height:14px">
+        <div style="width:24px;height:24px;border-radius:50%;background:linear-gradient(135deg,var(--purple),var(--purple-d));display:flex;align-items:center;justify-content:center;font-size:.58rem;font-weight:800;color:#fff;flex-shrink:0">${u.emoji||ini(u.name)}</div>
+        <span style="font-size:.85rem;flex:1">${esc(u.name)}</span>
+        <span style="font-size:.7rem;color:var(--muted)">@${esc(u.username)}</span>
+      </label>`).join('')}
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="bp" onclick="saveChannelEdit('${ch._id}')" style="flex:1">Uložit změny</button>
+      <button class="bs b-del" onclick="delChannel('${ch._id}')" style="padding:10px 16px">🗑 Smazat kanál</button>
+    </div>
+    <div id="editChMsg" class="amsg" style="margin-top:10px"></div>
+  </div>`;
+  m.addEventListener('click',e=>{if(e.target===m)closeModal('editChannelModal');});
+  document.body.appendChild(m);
+};
+window.saveChannelEdit=async(id)=>{
+  const name=document.getElementById('editChName')?.value.trim().toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-čšžýáíéůúěřďťňó]/g,'');
+  const desc=document.getElementById('editChDesc')?.value.trim()||'';
+  const msgEl=document.getElementById('editChMsg');
+  if(!name){if(msgEl){msgEl.className='amsg err';msgEl.textContent='Zadej název';msgEl.style.display='block';}return;}
+  const members=[...document.querySelectorAll('.editChMember:checked')].map(cb=>cb.value);
+  if(members.length&&!members.includes(CU.username))members.push(CU.username);
+  try{
+    await updateDoc(doc(db,'channels',id),{name,description:desc,members});
+    closeModal('editChannelModal');
+    toast('Kanál upraven');
+  }catch(e){if(msgEl){msgEl.className='amsg err';msgEl.textContent='Chyba: '+e.message;msgEl.style.display='block';}}
+};
 
 window.showManageCatsModal=()=>{
   document.getElementById('manageCatsModal')?.remove();
@@ -2439,7 +2541,13 @@ window.toggleEmojiPicker=(ev)=>{
   },60);
 };
 window.insertEmoji=e=>{const inp=document.getElementById('chatInput');const pos=inp.selectionStart||inp.value.length;inp.value=inp.value.slice(0,pos)+e+inp.value.slice(pos);inp.selectionStart=inp.selectionEnd=pos+e.length;inp.focus();autoResizeChatInput();};
-function autoResizeChatInput(){const el=document.getElementById('chatInput');if(!el)return;el.style.height='auto';el.style.height=Math.min(el.scrollHeight,120)+'px';}
+function autoResizeChatInput(){
+  const el=document.getElementById('chatInput');if(!el)return;
+  const prev=el.style.height;
+  el.style.height='auto';
+  const next=Math.min(el.scrollHeight,160)+'px';
+  if(prev!==next){el.style.height=next;}
+}
 
 // ── TYPING INDICATOR ──────────────────────────────────────────────────────
 let _typingTimeout=null;let _isTyping=false;
@@ -2853,6 +2961,8 @@ function startOnline(){
   onSnapshot(collection(db,'online'),snap=>{
     window._onlineData={};
     snap.docs.forEach(d=>{window._onlineData[d.id]={...d.data(),username:d.id};});
+    // Re-render members panel if open
+    if(document.getElementById('chMembersPanel')?.classList.contains('open')){const ch=_channels.find(c=>c._id===_activeChannelId);renderMembersPanel(ch);}
     const now=Date.now();
     const online=snap.docs
       .map(d=>d.data())
