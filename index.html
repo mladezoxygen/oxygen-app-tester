@@ -310,89 +310,200 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 .da{font-weight:800;color:var(--purple-xl);font-size:.85rem}.dd{color:var(--muted);font-size:.7rem}
 .dt{color:var(--text);line-height:1.68;font-size:.88rem;margin-top:8px}
 .ds{margin-top:9px;padding:8px 12px;background:rgba(255,209,102,.07);border-left:3px solid var(--gold);border-radius:0 6px 6px 0;color:var(--gold);font-style:italic;font-size:.83rem}
-/* CHAT */
-.chat-wrap{display:flex;flex-direction:column;height:calc(100vh - 170px);min-height:420px;padding:0!important}
-#sec-chat{padding-bottom:0!important;overflow:hidden;padding-top:0}
-#sec-chat .ph{margin-bottom:10px}
-.chat-msgs{flex:1;overflow-y:auto;padding:0 2px 8px;display:flex;flex-direction:column;scroll-behavior:smooth}
+/* CHAT — Discord-style */
+#sec-chat{padding:0!important;overflow:hidden}
+.chat-root{display:flex;height:calc(100vh - 56px);overflow:hidden;border-radius:14px;border:1px solid var(--border);background:var(--card-bg)}
+/* ── Channel sidebar ── */
+.ch-sidebar{width:240px;flex-shrink:0;display:flex;flex-direction:column;background:var(--bg-dark);border-right:1px solid var(--border);overflow:hidden}
+.ch-sidebar-header{padding:16px 16px 12px;border-bottom:1px solid var(--border);flex-shrink:0}
+.ch-sidebar-title{display:block;font-family:'Cinzel',serif;font-size:.9rem;color:var(--white);font-weight:700}
+.ch-sidebar-sub{display:block;font-size:.68rem;color:var(--muted);margin-top:1px}
+.ch-sidebar-body{flex:1;overflow-y:auto;padding:8px 0}
+.ch-sidebar-body::-webkit-scrollbar{width:3px}
+.ch-sidebar-body::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+/* Category */
+.ch-category{padding:14px 12px 4px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none}
+.ch-category-name{font-size:.67rem;font-weight:800;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;display:flex;align-items:center;gap:5px;transition:color .15s}
+.ch-category:hover .ch-category-name{color:var(--text)}
+.ch-category-arrow{font-size:.6rem;color:var(--muted);transition:transform .2s}
+.ch-category.collapsed .ch-category-arrow{transform:rotate(-90deg)}
+.ch-category-add{background:none;border:none;color:var(--muted);cursor:pointer;font-size:.95rem;padding:0;line-height:1;transition:color .15s;opacity:0}
+.ch-category:hover .ch-category-add{opacity:1}
+.ch-category-add:hover{color:var(--purple-xl)}
+/* Channel item */
+.ch-item{display:flex;align-items:center;gap:7px;padding:5px 12px;margin:1px 6px;border-radius:6px;cursor:pointer;color:var(--muted);font-size:.88rem;font-weight:500;transition:all .12s;position:relative;user-select:none}
+.ch-item:hover{background:rgba(255,255,255,.06);color:var(--text)}
+.ch-item.active{background:rgba(123,47,190,.25);color:var(--white);font-weight:700}
+.ch-item-hash{font-size:.85rem;flex-shrink:0;opacity:.7}
+.ch-item.active .ch-item-hash{opacity:1}
+.ch-item-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ch-item-badge{background:var(--red);color:#fff;border-radius:10px;padding:1px 6px;font-size:.62rem;font-weight:800;flex-shrink:0}
+.ch-item-del{background:none;border:none;color:var(--muted);cursor:pointer;font-size:.72rem;opacity:0;transition:opacity .12s,color .12s;padding:2px 4px;border-radius:4px;flex-shrink:0}
+.ch-item:hover .ch-item-del{opacity:1}
+.ch-item-del:hover{color:var(--red)}
+/* ── Main chat ── */
+.ch-main{flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden}
+.ch-header{display:flex;align-items:center;gap:8px;padding:0 16px;height:48px;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--bg-dark)}
+.ch-header-hash{font-size:1.1rem;color:var(--muted);flex-shrink:0}
+.ch-header-name{font-weight:800;font-size:.92rem;color:var(--white);white-space:nowrap}
+.ch-header-sep{color:var(--border-l)}
+.ch-header-desc{font-size:.78rem;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ch-header-right{display:flex;gap:8px;align-items:center;flex-shrink:0;margin-left:auto}
+/* Pinned */
+.chat-pinned{background:rgba(255,209,102,.06);border-bottom:1px solid rgba(255,209,102,.15);padding:8px 16px;display:flex;align-items:center;gap:8px;flex-shrink:0}
+.chat-pinned-icon{font-size:.85rem;color:var(--gold);flex-shrink:0}
+.chat-pinned-content{flex:1;min-width:0;cursor:pointer}
+.chat-pinned-label{font-size:.65rem;color:var(--gold);font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:1px}
+.chat-pinned-msg{font-size:.8rem;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.chat-pinned-unpin{background:rgba(239,71,111,.1);border:1px solid rgba(239,71,111,.25);border-radius:6px;color:var(--red);cursor:pointer;font-size:.72rem;padding:3px 8px;font-family:'Nunito',sans-serif;white-space:nowrap;transition:all .15s;flex-shrink:0}
+.chat-pinned-unpin:hover{background:rgba(239,71,111,.2)}
+/* Messages */
+.chat-msgs{flex:1;overflow-y:auto;padding:8px 0;display:flex;flex-direction:column;scroll-behavior:smooth}
 .chat-msgs::-webkit-scrollbar{width:3px}
 .chat-msgs::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
-.chat-date-sep{display:flex;align-items:center;gap:10px;padding:14px 6px 6px;user-select:none}
+/* Date separator */
+.chat-date-sep{display:flex;align-items:center;gap:10px;padding:14px 16px 6px;user-select:none}
 .chat-date-sep::before,.chat-date-sep::after{content:'';flex:1;height:1px;background:var(--border)}
-.chat-date-sep span{font-size:.68rem;color:var(--muted);font-weight:700;letter-spacing:.04em;padding:3px 10px;background:var(--bg2);border-radius:20px;white-space:nowrap;border:1px solid var(--border)}
-.chat-unread-sep{display:flex;align-items:center;gap:10px;padding:8px 6px}
+.chat-date-sep span{font-size:.67rem;color:var(--muted);font-weight:700;letter-spacing:.04em;padding:2px 10px;background:var(--bg-dark);border-radius:20px;white-space:nowrap}
+/* Unread separator */
+.chat-unread-sep{display:flex;align-items:center;gap:10px;padding:8px 16px}
 .chat-unread-sep::before,.chat-unread-sep::after{content:'';flex:1;height:1px;background:rgba(6,214,160,.25)}
-.chat-unread-sep span{font-size:.68rem;color:var(--green);font-weight:700;padding:3px 10px;background:rgba(6,214,160,.08);border-radius:20px;white-space:nowrap;border:1px solid rgba(6,214,160,.2)}
-.chat-msg-group{display:flex;align-items:flex-end;gap:8px;padding:1px 6px;animation:msg-in .18s ease}
-@keyframes msg-in{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+.chat-unread-sep span{font-size:.67rem;color:var(--green);font-weight:700;padding:2px 10px;background:rgba(6,214,160,.08);border-radius:20px;white-space:nowrap;border:1px solid rgba(6,214,160,.2)}
+/* Message group */
+.chat-msg-group{display:flex;align-items:flex-start;gap:12px;padding:2px 16px;animation:msg-in .16s ease}
+@keyframes msg-in{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
 .chat-msg-group.mine{flex-direction:row-reverse}
-.chat-msg-group.grouped{padding-top:0}
-.chat-av{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--purple),var(--purple-d));display:flex;align-items:center;justify-content:center;font-size:.76rem;font-weight:800;color:#fff;flex-shrink:0;cursor:pointer;transition:opacity .15s;align-self:flex-end;margin-bottom:2px}
+.chat-msg-group.grouped{padding-top:1px}
+.chat-msg-group:hover{background:rgba(255,255,255,.02)}
+/* Avatar */
+.chat-av{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--purple),var(--purple-d));display:flex;align-items:center;justify-content:center;font-size:.78rem;font-weight:800;color:#fff;flex-shrink:0;cursor:pointer;transition:opacity .15s;margin-top:2px}
 .chat-av:hover{opacity:.75}
-.chat-av.ea{background:var(--surface);font-size:1.05rem}
-.chat-av.hidden{visibility:hidden}
-.chat-bubble-wrap{display:flex;flex-direction:column;max-width:min(68%,520px);gap:2px}
+.chat-av.ea{background:var(--surface);font-size:1.1rem}
+.chat-av.hidden{visibility:hidden;pointer-events:none}
+/* Bubble wrap */
+.chat-bubble-wrap{display:flex;flex-direction:column;max-width:min(70%,560px);gap:2px;flex:1;min-width:0}
 .chat-msg-group.mine .chat-bubble-wrap{align-items:flex-end}
-.chat-meta{display:flex;align-items:baseline;gap:6px;padding:0 4px;margin-bottom:3px}
+/* Meta */
+.chat-meta{display:flex;align-items:baseline;gap:7px;margin-bottom:3px;padding:0 2px}
 .chat-msg-group.mine .chat-meta{flex-direction:row-reverse}
-.chat-name{font-size:.73rem;font-weight:800;color:var(--purple-xl);cursor:pointer;transition:opacity .15s}
+.chat-name{font-size:.8rem;font-weight:800;color:var(--purple-xl);cursor:pointer;transition:opacity .15s}
 .chat-name:hover{opacity:.7}
-.chat-meta-time{font-size:.64rem;color:var(--muted)}
-.chat-bubble{background:var(--card-bg);border:1px solid var(--border);border-radius:18px 18px 18px 5px;padding:10px 14px;word-break:break-word;position:relative}
-.chat-msg-group.mine .chat-bubble{background:var(--purple);border-color:transparent;border-radius:18px 18px 5px 18px;box-shadow:0 2px 12px rgba(0,0,0,.2)}
-.chat-msg-group.grouped:not(.mine) .chat-bubble{border-radius:5px 18px 18px 5px}
-.chat-msg-group.grouped.mine .chat-bubble{border-radius:18px 5px 5px 18px}
+.chat-meta-time{font-size:.65rem;color:var(--muted)}
+/* Bubble */
+.chat-bubble{background:var(--surface);border:1px solid var(--border);border-radius:4px 16px 16px 16px;padding:10px 14px;word-break:break-word;transition:background .12s}
+.chat-msg-group.mine .chat-bubble{background:var(--purple);border-color:transparent;border-radius:16px 4px 16px 16px}
+.chat-msg-group.grouped:not(.mine) .chat-bubble{border-radius:4px 16px 16px 16px}
+.chat-msg-group.grouped.mine .chat-bubble{border-radius:16px 4px 16px 16px}
 .chat-text{font-size:.9rem;line-height:1.55;color:var(--text);white-space:pre-wrap}
 .chat-msg-group.mine .chat-text{color:#fff}
-.chat-time-inline{font-size:.63rem;color:var(--muted);text-align:right;margin-top:3px}
-.chat-msg-group.mine .chat-time-inline{color:rgba(255,255,255,.5)}
-.chat-reply-quote{background:rgba(0,0,0,.12);border-left:3px solid rgba(255,255,255,.4);border-radius:0 8px 8px 0;padding:5px 10px;margin-bottom:7px;font-size:.78rem;color:rgba(255,255,255,.65);cursor:pointer;transition:background .12s}
+.chat-time-inline{font-size:.62rem;color:var(--muted);text-align:right;margin-top:3px}
+.chat-msg-group.mine .chat-time-inline{color:rgba(255,255,255,.45)}
+/* Reply quote */
+.chat-reply-quote{background:rgba(0,0,0,.15);border-left:3px solid rgba(255,255,255,.35);border-radius:0 8px 8px 0;padding:5px 10px;margin-bottom:7px;font-size:.78rem;color:rgba(255,255,255,.6);cursor:pointer;transition:background .12s}
 .chat-msg-group:not(.mine) .chat-reply-quote{background:rgba(123,47,190,.1);border-left-color:var(--purple-l);color:var(--muted)}
 .chat-reply-quote strong{display:block;font-size:.7rem;margin-bottom:1px;color:rgba(255,255,255,.9)}
 .chat-msg-group:not(.mine) .chat-reply-quote strong{color:var(--purple-xl)}
-.chat-actions-wrap{display:flex;align-items:center;gap:2px;opacity:0;transition:opacity .15s;flex-shrink:0;padding-bottom:4px}
+/* Actions */
+.chat-actions-wrap{display:flex;align-items:center;gap:2px;opacity:0;transition:opacity .12s;flex-shrink:0;padding-top:6px}
 .chat-msg-group:hover .chat-actions-wrap{opacity:1}
-.chat-act-btn{background:var(--surface);border:1px solid var(--border);border-radius:8px;cursor:pointer;font-size:.82rem;color:var(--muted);padding:4px 8px;transition:all .12s;font-family:'Nunito',sans-serif;line-height:1}
+.chat-act-btn{background:var(--bg-dark);border:1px solid var(--border);border-radius:8px;cursor:pointer;font-size:.82rem;color:var(--muted);padding:4px 8px;transition:all .12s;font-family:'Nunito',sans-serif;line-height:1}
 .chat-act-btn:hover{background:rgba(123,47,190,.15);border-color:var(--border-l);color:var(--purple-xl)}
 .chat-act-btn.del:hover{color:var(--red);border-color:rgba(239,71,111,.3)}
-.chat-reactions{display:flex;flex-wrap:wrap;gap:3px;margin-top:4px;padding:0 2px}
+/* Reactions */
+.chat-reactions{display:flex;flex-wrap:wrap;gap:3px;margin-top:4px}
 .chat-msg-group.mine .chat-reactions{justify-content:flex-end}
-.reaction{background:var(--card-bg);border:1px solid var(--border);border-radius:20px;padding:3px 9px;font-size:.82rem;cursor:pointer;transition:all .12s;display:flex;align-items:center;gap:4px;user-select:none;position:relative}
-.reaction:hover{border-color:var(--border-l);background:var(--surface)}
-.reaction.mine{background:rgba(123,47,190,.18);border-color:var(--purple-l)}
+.reaction{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:3px 9px;font-size:.82rem;cursor:pointer;transition:all .12s;display:flex;align-items:center;gap:4px;user-select:none;position:relative}
+.reaction:hover{border-color:var(--border-l);background:rgba(123,47,190,.1)}
+.reaction.mine{background:rgba(123,47,190,.2);border-color:var(--purple-l)}
 .reaction-count{font-size:.74rem;font-weight:700;color:var(--muted)}
 .reaction.mine .reaction-count{color:var(--purple-xl)}
 .reaction-tooltip{position:absolute;bottom:calc(100%+5px);left:50%;transform:translateX(-50%);background:var(--bg);border:1px solid var(--border-l);border-radius:8px;padding:5px 10px;font-size:.72rem;color:var(--text);white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .15s;z-index:300;box-shadow:0 4px 16px rgba(0,0,0,.4)}
 .reaction:hover .reaction-tooltip{opacity:1}
-.chat-prayer-share{background:rgba(123,47,190,.1);border:1px solid var(--border-l);border-radius:10px;padding:9px 12px;margin-top:7px;cursor:pointer;transition:background .15s}
-.chat-prayer-share:hover{background:rgba(123,47,190,.2)}
-.chat-prayer-share-label{font-size:.68rem;color:var(--purple-xl);font-weight:800;text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px}
+/* Shared prayer */
+.chat-prayer-share{background:rgba(123,47,190,.1);border:1px solid var(--border-l);border-radius:8px;padding:8px 12px;margin-top:7px;cursor:pointer;transition:background .12s}
+.chat-prayer-share:hover{background:rgba(123,47,190,.18)}
+.chat-prayer-share-label{font-size:.67rem;color:var(--purple-xl);font-weight:800;text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px}
 .chat-prayer-share-text{font-size:.82rem;color:var(--text);line-height:1.4}
-.chat-pinned{background:rgba(255,209,102,.06);border:1px solid rgba(255,209,102,.18);border-radius:10px;padding:9px 14px;margin-bottom:8px;display:flex;align-items:center;gap:8px;cursor:pointer;transition:background .15s}
-.chat-pinned:hover{background:rgba(255,209,102,.11)}
-.chat-pinned-icon{font-size:.85rem;flex-shrink:0}
-.chat-pinned-text{flex:1;min-width:0}
-.chat-pinned-text strong{display:block;font-size:.68rem;color:var(--gold);font-weight:700;margin-bottom:1px}
-.chat-pinned-text span{font-size:.79rem;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block}
-.chat-pinned-close{background:none;border:none;color:var(--muted);cursor:pointer;font-size:.9rem;flex-shrink:0;padding:0 2px}
-.chat-pinned-close:hover{color:var(--red)}
-.chat-typing{font-size:.75rem;color:var(--muted);padding:4px 10px;min-height:20px;font-style:italic}
-.reply-preview{background:var(--card-bg);border:1px solid var(--border);border-left:3px solid var(--purple-l);border-radius:0 10px 10px 0;padding:7px 36px 7px 12px;margin-bottom:8px;font-size:.8rem;color:var(--muted);position:relative;animation:fu .15s ease}
+/* Typing */
+.chat-typing{font-size:.74rem;color:var(--muted);padding:4px 16px;min-height:20px;font-style:italic;flex-shrink:0}
+/* Reply bar */
+.reply-preview{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--purple-l);border-radius:0 8px 8px 0;padding:7px 36px 7px 12px;margin-bottom:8px;font-size:.8rem;color:var(--muted);position:relative;animation:fu .15s ease}
 .reply-preview strong{color:var(--purple-xl);display:block;font-size:.74rem;margin-bottom:2px}
 .reply-cancel{position:absolute;top:50%;right:10px;transform:translateY(-50%);background:none;border:none;color:var(--muted);cursor:pointer;font-size:1rem;line-height:1}
 .reply-cancel:hover{color:var(--red)}
-.chat-input-area{border-top:1px solid var(--border);padding-top:10px;margin-top:4px}
-.emoji-bar{display:flex;gap:2px;overflow-x:auto;margin-bottom:8px;padding-bottom:1px;scrollbar-width:none}
-.emoji-bar::-webkit-scrollbar{display:none}
-.emoji-btn{background:none;border:none;cursor:pointer;font-size:1.1rem;padding:4px 5px;border-radius:7px;transition:background .12s,transform .1s;line-height:1;flex-shrink:0}
-.emoji-btn:hover{background:rgba(123,47,190,.18);transform:scale(1.2)}
-.chat-input-row{display:flex;gap:8px;align-items:flex-end}
-.chat-input{flex:1;padding:11px 15px;background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:14px;color:var(--text);font-family:'Nunito',sans-serif;font-size:.9rem;outline:none;resize:none;min-height:44px;max-height:120px;transition:border-color .2s,box-shadow .2s;line-height:1.5}
+/* Input area */
+.ch-input-area{border-top:1px solid var(--border);padding:12px 14px;flex-shrink:0}
+.ch-input-row{display:flex;gap:8px;align-items:flex-end}
+.ch-emoji-btn{background:none;border:none;cursor:pointer;font-size:1.15rem;padding:8px;border-radius:10px;transition:background .12s,transform .1s;line-height:1;flex-shrink:0;color:var(--muted)}
+.ch-emoji-btn:hover{background:rgba(123,47,190,.15);transform:scale(1.1);color:var(--purple-xl)}
+.chat-input{flex:1;padding:11px 14px;background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:12px;color:var(--text);font-family:'Nunito',sans-serif;font-size:.9rem;outline:none;resize:none;min-height:44px;max-height:120px;transition:border-color .2s,box-shadow .2s;line-height:1.5}
 .chat-input:focus{border-color:var(--purple-l);box-shadow:0 0 0 3px rgba(123,47,190,.1)}
 .chat-input::placeholder{color:var(--muted)}
 .chat-send{width:44px;height:44px;background:var(--purple);border:none;border-radius:12px;color:#fff;cursor:pointer;transition:opacity .15s,transform .12s;box-shadow:0 3px 14px rgba(123,47,190,.35);display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .chat-send:hover{opacity:.88;transform:scale(1.05)}
 .chat-send:active{transform:scale(.95)}
+/* Reaction picker */
+.react-picker{position:fixed;background:var(--surface);border:1px solid var(--border-l);border-radius:14px;padding:8px 10px;display:flex;gap:4px;box-shadow:0 8px 32px rgba(0,0,0,.55);z-index:500;animation:fu .12s ease}
+.react-emoji{font-size:1.35rem;cursor:pointer;padding:5px;border-radius:9px;transition:background .1s,transform .1s;line-height:1}
+.react-emoji:hover{background:rgba(123,47,190,.2);transform:scale(1.18)}
+/* Mobile */
+@media(max-width:700px){.ch-sidebar{width:52px}.ch-sidebar-title,.ch-sidebar-sub,.ch-item-name,.ch-category-name span:not(:first-child),.ch-category-add,.ch-item-del{display:none}.ch-item{padding:8px;justify-content:center}.ch-category{padding:12px 8px 4px;justify-content:center}}
+/* CHANNELS — Discord-style layout */
+/* Outer layout: chat area left, channel sidebar right */
+.chat-layout-outer{display:flex;height:calc(100vh - 170px);min-height:420px;border-radius:14px;overflow:hidden;background:var(--bg-dark)}
+#sec-chat{padding:0!important;overflow:hidden}
+#sec-chat .ph{display:none}
+/* Channel sidebar */
+.ch-sidebar{width:240px;flex-shrink:0;display:flex;flex-direction:column;border-left:1px solid var(--border);background:var(--bg-dark2);overflow:hidden}
+.ch-sidebar-header{padding:14px 16px 10px;border-bottom:1px solid var(--border);flex-shrink:0}
+.ch-sidebar-title{font-family:'Cinzel',serif;font-size:.82rem;color:var(--white);letter-spacing:.04em}
+.ch-sidebar-body{flex:1;overflow-y:auto;padding:8px 0}
+.ch-sidebar-body::-webkit-scrollbar{width:3px}
+.ch-sidebar-body::-webkit-scrollbar-thumb{background:var(--border)}
+.ch-sidebar-footer{padding:10px 12px;border-top:1px solid var(--border);flex-shrink:0}
+/* Category */
+.ch-category{padding:14px 12px 4px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none}
+.ch-category-name{font-size:.68rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;display:flex;align-items:center;gap:5px;transition:color .15s}
+.ch-category:hover .ch-category-name{color:var(--text)}
+.ch-category-arrow{font-size:.6rem;color:var(--muted);transition:transform .2s}
+.ch-category.collapsed .ch-category-arrow{transform:rotate(-90deg)}
+.ch-category-add{background:none;border:none;color:var(--muted);cursor:pointer;font-size:.95rem;line-height:1;padding:2px 4px;border-radius:4px;transition:all .15s}
+.ch-category-add:hover{background:rgba(123,47,190,.2);color:var(--purple-xl)}
+/* Channel items */
+.ch-items{overflow:hidden;transition:max-height .2s ease}
+.ch-item{display:flex;align-items:center;gap:6px;padding:5px 10px 5px 14px;margin:1px 6px;border-radius:7px;cursor:pointer;font-size:.87rem;font-weight:600;color:var(--muted);transition:all .12s;user-select:none;position:relative}
+.ch-item:hover{background:rgba(123,47,190,.12);color:var(--text)}
+.ch-item.active{background:rgba(123,47,190,.25);color:var(--white)}
+.ch-item-hash{font-size:.88rem;flex-shrink:0;opacity:.55}
+.ch-item.active .ch-item-hash{opacity:.9}
+.ch-item-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ch-item-badge{background:var(--red);color:#fff;border-radius:10px;padding:1px 6px;font-size:.62rem;font-weight:800;flex-shrink:0}
+.ch-item-del{background:none;border:none;color:var(--muted);cursor:pointer;font-size:.72rem;padding:2px 5px;border-radius:4px;opacity:0;transition:all .12s;margin-left:auto;flex-shrink:0}
+.ch-item:hover .ch-item-del{opacity:.7}
+.ch-item-del:hover{opacity:1!important;color:var(--red)}
+/* Main area */
+.ch-main{flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden}
+.ch-topbar{padding:10px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;flex-shrink:0;background:rgba(0,0,0,.15)}
+.ch-hash{font-size:1.15rem;color:var(--muted);flex-shrink:0;line-height:1}
+.ch-topbar-name{font-weight:800;font-size:.93rem;color:var(--white)}
+.ch-topbar-desc{font-size:.74rem;color:var(--muted);margin-left:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ch-topbar-right{margin-left:auto;display:flex;gap:6px;align-items:center;flex-shrink:0}
+/* Pinned */
+.chat-pinned{background:rgba(255,209,102,.06);border-bottom:1px solid rgba(255,209,102,.15);padding:8px 16px;display:flex;align-items:center;gap:8px;flex-shrink:0}
+.chat-pinned-icon{font-size:.85rem;color:var(--gold);flex-shrink:0}
+.chat-pinned-content{flex:1;min-width:0;cursor:pointer}
+.chat-pinned-label{font-size:.64rem;color:var(--gold);font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:1px}
+.chat-pinned-msg{font-size:.8rem;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.chat-pinned-content:hover .chat-pinned-msg{text-decoration:underline}
+.chat-pinned-unpin{background:rgba(239,71,111,.08);border:1px solid rgba(239,71,111,.2);border-radius:6px;color:var(--red);cursor:pointer;font-size:.72rem;padding:3px 9px;font-family:'Nunito',sans-serif;white-space:nowrap;transition:all .15s;flex-shrink:0}
+.chat-pinned-unpin:hover{background:rgba(239,71,111,.2)}
+/* Input area */
+.ch-input-area{border-top:1px solid var(--border);padding:10px 14px;flex-shrink:0}
+.ch-input-row{display:flex;gap:8px;align-items:flex-end}
+.ch-emoji-btn{background:none;border:1px solid var(--border);border-radius:10px;color:var(--muted);cursor:pointer;font-size:1.1rem;width:44px;height:44px;display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0}
+.ch-emoji-btn:hover{background:rgba(123,47,190,.15);border-color:var(--border-l);color:var(--purple-xl)}
+@media(max-width:900px){.ch-sidebar{width:200px}}
+@media(max-width:700px){.ch-sidebar{width:44px;border-left:none;border-right:1px solid var(--border);order:-1}.ch-item-name,.ch-category-name span,.ch-sidebar-title{display:none}.ch-item{padding:7px;justify-content:center;margin:1px 4px}.ch-item-hash{opacity:.8;font-size:1rem}.ch-category{padding:10px 6px 4px;justify-content:center}}
 /* STATS */
 .chart-wrap{background:var(--card-bg);border:1px solid var(--border);border-radius:14px;padding:19px;margin-bottom:14px}
 .chart-title{font-family:'Cinzel',serif;font-size:.88rem;color:var(--purple-xl);margin-bottom:13px}
@@ -2037,18 +2148,20 @@ let _activeChannelId=null;
 let _channels=[];
 let _chatUnsub=null;
 let _pinnedUnsub=null;
+let _collapsedCats=new Set();
+
+// Kategorie — výchozí pokud kanál nemá kategorii
+const DEFAULT_CAT='Obecné';
 
 async function initChannels(){
-  // Listen to channels
   onSnapshot(query(collection(db,'channels'),orderBy('createdAt','asc')),async snap=>{
     _channels=snap.docs.map(d=>({...d.data(),_id:d.id}));
-    // Ensure general channel exists
+    // Ensure #obecný exists
     if(!_channels.find(c=>c.isGeneral)){
-      const r=await addDoc(collection(db,'channels'),{name:'obecný',description:'Hlavní kanál týmu',isGeneral:true,members:[],createdBy:'system',createdAt:serverTimestamp()});
-      return; // snapshot will re-fire
+      await addDoc(collection(db,'channels'),{name:'obecný',description:'Hlavní kanál celého týmu',category:DEFAULT_CAT,isGeneral:true,members:[],createdBy:'system',createdAt:serverTimestamp()});
+      return;
     }
     renderChannelList();
-    // Switch to general if no active channel
     if(!_activeChannelId){
       const general=_channels.find(c=>c.isGeneral);
       if(general)switchChannel(general._id);
@@ -2056,103 +2169,149 @@ async function initChannels(){
   });
 }
 
+function getVisibleChannels(){
+  return _channels.filter(ch=>{
+    if(ch.isGeneral)return true;
+    if(isAdmin()||canMgr())return true;
+    return(ch.members||[]).includes(CU.username);
+  });
+}
+
 function renderChannelList(){
   const el=document.getElementById('channelList');if(!el)return;
-  const admin=isAdmin();
-  el.innerHTML=_channels.map(ch=>{
-    const active=ch._id===_activeChannelId;
-    // Check membership (general is open to all)
-    const canView=ch.isGeneral||isAdmin()||(ch.members||[]).includes(CU.username);
-    if(!canView)return'';
-    return`<div class="channel-item${active?' active':''}" onclick="switchChannel('${ch._id}')">
-      <span class="channel-hash">#</span>
-      <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(ch.name)}</span>
-      ${admin&&!ch.isGeneral?`<button class="channel-del-btn" onclick="event.stopPropagation();delChannel('${ch._id}')" title="Smazat">🗑</button>`:''}
+  const visible=getVisibleChannels();
+  // Group by category
+  const cats={};
+  visible.forEach(ch=>{
+    const cat=ch.category||DEFAULT_CAT;
+    if(!cats[cat])cats[cat]=[];
+    cats[cat].push(ch);
+  });
+  const canAdd=isAdmin()||canMgr();
+  let html='';
+  Object.entries(cats).forEach(([cat,chs])=>{
+    const collapsed=_collapsedCats.has(cat);
+    html+=`<div class="ch-category${collapsed?' collapsed':''}" onclick="toggleCat('${esc(cat)}')">
+      <span class="ch-category-name"><span style="transition:transform .2s;display:inline-block;transform:rotate(${collapsed?'-90':'-0'}deg)">▾</span> ${esc(cat)}</span>
+      ${canAdd?`<button class="ch-category-add" onclick="event.stopPropagation();showAddChannelModal('${esc(cat)}')" title="Přidat kanál do ${esc(cat)}">+</button>`:''}
     </div>`;
-  }).join('');
-  // Show add button for admin
-  const addBtn=document.getElementById('addChannelBtn');
-  if(addBtn)addBtn.style.display=admin?'block':'none';
+    if(!collapsed){
+      html+=chs.map(ch=>{
+        const active=ch._id===_activeChannelId;
+        const canDel=!ch.isGeneral&&(isAdmin()||canMgr());
+        return`<div class="ch-item${active?' active':''}" onclick="switchChannel('${ch._id}')">
+          <span class="ch-item-hash">#</span>
+          <span class="ch-item-name">${esc(ch.name)}</span>
+          ${canDel?`<button class="ch-item-del" onclick="event.stopPropagation();delChannel('${ch._id}')" title="Smazat">🗑</button>`:''}
+        </div>`;
+      }).join('');
+    }
+  });
+  if(!html)html='<div style="padding:12px 16px;font-size:.8rem;color:var(--muted)">Žádné kanály</div>';
+  el.innerHTML=html;
 }
+
+window.toggleCat=cat=>{
+  if(_collapsedCats.has(cat))_collapsedCats.delete(cat);
+  else _collapsedCats.add(cat);
+  renderChannelList();
+};
 
 function switchChannel(channelId){
   _activeChannelId=channelId;
   const ch=_channels.find(c=>c._id===channelId);
-  // Update header
   const nameEl=document.getElementById('channelHeaderName');
   const descEl=document.getElementById('channelHeaderDesc');
   const cntEl=document.getElementById('channelMemberCount');
   if(nameEl)nameEl.textContent=ch?.name||'';
-  if(descEl)descEl.textContent=ch?.description?'· '+ch.description:'';
-  if(cntEl)cntEl.textContent=ch?.isGeneral?'':(ch?.members?.length?`👥 ${ch.members.length}`:'');
-  // Update active state
+  if(descEl)descEl.textContent=ch?.description||'';
+  if(cntEl)cntEl.textContent=ch?.isGeneral?'Všichni členové':(ch?.members?.length?`${ch.members.length} členů`:'');
   renderChannelList();
-  // Reset pinned
+  // Pinned
   if(_pinnedUnsub){_pinnedUnsub();_pinnedUnsub=null;}
-  const _pe=document.getElementById('chatPinned');if(_pe)_pe.innerHTML='';
-  // Subscribe to pinned
+  _pinnedMsg=null;
+  const pe=document.getElementById('chatPinned');if(pe)pe.innerHTML='';
   try{
     _pinnedUnsub=onSnapshot(doc(db,'channelPinned',channelId),snap=>{
-      _pinnedMsg=snap.exists()?{...snap.data()}:null;
-      renderPinned();
+      _pinnedMsg=snap.exists()?{...snap.data()}:null;renderPinned();
     },()=>{_pinnedMsg=null;renderPinned();});
   }catch(e){}
-  // Subscribe to messages
+  // Messages
   if(_chatUnsub){_chatUnsub();_chatUnsub=null;}
-  const _me=document.getElementById('chatMsgs');if(_me)_me.innerHTML='<div class="loading"><div class="spin"></div>Načítám…</div>';
+  const me=document.getElementById('chatMsgs');
+  if(me)me.innerHTML='<div class="loading" style="padding:30px 0"><div class="spin"></div></div>';
   _chatUnsub=onSnapshot(
     query(collection(db,'channels',channelId,'messages'),orderBy('ts','asc'),limit(200)),
     snap=>{
       window._chat=snap.docs.map(d=>({...d.data(),_id:d.id}));
-      const chatOn=document.getElementById('sec-chat')?.classList.contains('on');
       renderChat();
-      if(chatOn)scrollChatBottom();
+      if(document.getElementById('sec-chat')?.classList.contains('on'))scrollChatBottom();
     }
   );
 }
 
-window.showAddChannelModal=()=>{
+window.showAddChannelModal=(defaultCat)=>{
   document.getElementById('addChannelModal')?.remove();
   const allUsers=Object.values(window._users||{}).filter(u=>u.role!=='pending'&&u.username!==CU.username).sort((a,b)=>a.name.localeCompare(b.name,'cs'));
+  // Get existing categories for dropdown
+  const existingCats=[...new Set(_channels.map(c=>c.category||DEFAULT_CAT))];
+  const catOptions=existingCats.map(c=>`<option value="${esc(c)}" ${c===(defaultCat||DEFAULT_CAT)?'selected':''}>${esc(c)}</option>`).join('');
   const m=document.createElement('div');m.className='modal-bg';m.id='addChannelModal';
-  m.innerHTML=`<div class="modal" onclick="event.stopPropagation()" style="max-width:420px">
+  m.innerHTML=`<div class="modal" onclick="event.stopPropagation()" style="max-width:440px">
     <button class="modal-close" onclick="closeModal('addChannelModal')">✕</button>
-    <h2>💬 Nový kanál</h2>
-    <div class="fg" style="margin-bottom:10px"><label>Název kanálu</label><input type="text" id="newChName" placeholder="modlitba-vedení" maxlength="40" style="text-transform:lowercase"></div>
-    <div class="fg" style="margin-bottom:14px"><label>Popis (nepovinné)</label><input type="text" id="newChDesc" placeholder="Krátký popis kanálu" maxlength="100"></div>
-    <div class="lbl" style="margin-bottom:8px">Členové</div>
-    <div style="max-height:200px;overflow-y:auto;background:rgba(0,0,0,.1);border-radius:10px;padding:8px;margin-bottom:16px">
-      ${allUsers.map(u=>`<label style="display:flex;align-items:center;gap:9px;padding:6px 4px;cursor:pointer;border-radius:7px;transition:background .12s" onmouseover="this.style.background='rgba(123,47,190,.1)'" onmouseout="this.style.background=''">
-        <input type="checkbox" value="${u.username}" style="accent-color:var(--purple);width:15px;height:15px">
-        <div style="width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,var(--purple),var(--purple-d));display:flex;align-items:center;justify-content:center;font-size:.6rem;font-weight:800;color:#fff;flex-shrink:0">${u.emoji||ini(u.name)}</div>
-        <span style="font-size:.87rem">${esc(u.name)}</span>
-        <span style="font-size:.72rem;color:var(--muted);margin-left:auto">@${esc(u.username)}</span>
+    <h2>💬 Nový textový kanál</h2>
+    <div class="fg" style="margin-bottom:10px"><label>Kategorie</label>
+      <div style="display:flex;gap:6px">
+        <select id="newChCat" style="flex:1">${catOptions}</select>
+        <input type="text" id="newChCatCustom" placeholder="nebo nová kategorie…" style="flex:1">
+      </div>
+    </div>
+    <div class="fg" style="margin-bottom:10px"><label>Název kanálu</label>
+      <input type="text" id="newChName" placeholder="napr. modlitba-vedení" maxlength="40">
+    </div>
+    <div class="fg" style="margin-bottom:14px"><label>Popis (nepovinné)</label>
+      <input type="text" id="newChDesc" placeholder="Krátký popis účelu kanálu" maxlength="100">
+    </div>
+    <div class="lbl" style="margin-bottom:6px">Přístup členů <span style="font-weight:400;text-transform:none;color:var(--muted)">(prázdné = všichni)</span></div>
+    <div style="max-height:180px;overflow-y:auto;border:1px solid var(--border);border-radius:10px;padding:6px;margin-bottom:16px;background:rgba(0,0,0,.1)">
+      ${allUsers.map(u=>`<label style="display:flex;align-items:center;gap:8px;padding:6px 6px;cursor:pointer;border-radius:6px;transition:background .1s" onmouseover="this.style.background='rgba(123,47,190,.1)'" onmouseout="this.style.background=''">
+        <input type="checkbox" class="newChMember" value="${u.username}" style="accent-color:var(--purple);width:14px;height:14px">
+        <div style="width:24px;height:24px;border-radius:50%;background:linear-gradient(135deg,var(--purple),var(--purple-d));display:flex;align-items:center;justify-content:center;font-size:.58rem;font-weight:800;color:#fff;flex-shrink:0">${u.emoji||ini(u.name)}</div>
+        <span style="font-size:.85rem;flex:1">${esc(u.name)}</span>
+        <span style="font-size:.7rem;color:var(--muted)">@${esc(u.username)}</span>
       </label>`).join('')}
     </div>
     <button class="bp" onclick="createChannel()">Vytvořit kanál</button>
+    <div id="addChMsg" class="amsg" style="margin-top:10px"></div>
   </div>`;
   m.addEventListener('click',e=>{if(e.target===m)closeModal('addChannelModal');});
   document.body.appendChild(m);
-  setTimeout(()=>document.getElementById('newChName')?.focus(),100);
+  setTimeout(()=>{initCustomSelects(m);document.getElementById('newChName')?.focus();},50);
 };
 
 window.createChannel=async()=>{
-  const name=document.getElementById('newChName')?.value.trim().toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'');
+  const customCat=document.getElementById('newChCatCustom')?.value.trim();
+  const selCat=document.getElementById('newChCat')?.value||DEFAULT_CAT;
+  const category=customCat||selCat||DEFAULT_CAT;
+  const rawName=document.getElementById('newChName')?.value.trim();
+  const name=rawName.toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-čšžýáíéůúěřďťňó]/g,'');
   const desc=document.getElementById('newChDesc')?.value.trim()||'';
-  if(!name){toast('Zadej název kanálu');return;}
-  const members=[...document.querySelectorAll('#addChannelModal input[type=checkbox]:checked')].map(cb=>cb.value);
-  members.push(CU.username); // creator is always member
+  const msgEl=document.getElementById('addChMsg');
+  if(!name){if(msgEl){msgEl.className='amsg err';msgEl.textContent='Zadej název kanálu';msgEl.style.display='block';}return;}
+  if(_channels.find(c=>c.name===name)){if(msgEl){msgEl.className='amsg err';msgEl.textContent='Kanál s tímto názvem již existuje';msgEl.style.display='block';}return;}
+  const members=[...document.querySelectorAll('.newChMember:checked')].map(cb=>cb.value);
+  if(members.length)members.push(CU.username);
   try{
-    const r=await addDoc(collection(db,'channels'),{name,description:desc,isGeneral:false,members,createdBy:CU.username,createdAt:serverTimestamp()});
+    const r=await addDoc(collection(db,'channels'),{name,description:desc,category,isGeneral:false,members,createdBy:CU.username,createdAt:serverTimestamp()});
     closeModal('addChannelModal');
     toast(`# ${name} vytvořen`);
     switchChannel(r.id);
-  }catch(e){toast('Chyba: '+e.message);}
+  }catch(e){if(msgEl){msgEl.className='amsg err';msgEl.textContent='Chyba: '+e.message;msgEl.style.display='block';}}
 };
 
 window.delChannel=async id=>{
   const ch=_channels.find(c=>c._id===id);if(!ch||ch.isGeneral)return;
-  confirmDialog(`Smazat kanál #${ch.name}?`,async()=>{
+  confirmDialog(`Smazat kanál #${ch.name}? Zprávy budou ztraceny.`,async()=>{
     try{
       await deleteDoc(doc(db,'channels',id));
       if(_activeChannelId===id){const g=_channels.find(c=>c.isGeneral);if(g)switchChannel(g._id);}
@@ -2163,22 +2322,25 @@ window.delChannel=async id=>{
 
 // ── CHAT ──────────────────────────────────────────────────────────────────
 function initEmojiBar(){
-  // Build emoji picker overlay content
-  const overlay=document.getElementById('emojiPickerOverlay');
-  if(overlay){
-    overlay.querySelector('div').innerHTML=EMOJIS.map(e=>`<button onclick="insertEmoji('${e}');toggleEmojiPicker()" style="background:none;border:none;cursor:pointer;font-size:1.4rem;padding:5px;border-radius:8px;transition:background .1s,transform .1s;line-height:1" onmouseover="this.style.background='rgba(123,47,190,.2)';this.style.transform='scale(1.2)'" onmouseout="this.style.background='';this.style.transform=''">${e}</button>`).join('');
-  }
+  const overlay=document.getElementById('emojiPickerOverlay');if(!overlay)return;
+  const grid=overlay.querySelector('#emojiPickerGrid')||overlay.querySelector('div');
+  if(grid)grid.innerHTML=EMOJIS.map(e=>`<button onclick="insertEmoji('${e}');document.getElementById('emojiPickerOverlay').style.display='none'" style="background:none;border:none;cursor:pointer;font-size:1.35rem;padding:5px;border-radius:8px;transition:background .1s,transform .1s;line-height:1;width:36px;height:36px;display:flex;align-items:center;justify-content:center" onmouseover="this.style.background='rgba(123,47,190,.2)';this.style.transform='scale(1.15)'" onmouseout="this.style.background='';this.style.transform=''">${e}</button>`).join('');
 }
-window.toggleEmojiPicker=(e)=>{
+window.toggleEmojiPicker=(ev)=>{
   const overlay=document.getElementById('emojiPickerOverlay');if(!overlay)return;
   if(overlay.style.display!=='none'){overlay.style.display='none';return;}
-  // Position above input
-  const inp=document.getElementById('chatInput');
-  const rect=inp?.getBoundingClientRect();
-  if(rect){overlay.style.bottom=(window.innerHeight-rect.top+8)+'px';overlay.style.left=rect.left+'px';}
+  const btn=ev.currentTarget||ev.target;
+  const rect=btn.getBoundingClientRect();
+  const oW=292;const oH=overlay.offsetHeight||220;
+  let left=rect.left;let top=rect.top-oH-8;
+  if(left+oW>window.innerWidth-8)left=window.innerWidth-oW-8;
+  if(top<8)top=rect.bottom+8;
+  overlay.style.left=Math.max(8,left)+'px';overlay.style.top=Math.max(8,top)+'px';
   overlay.style.display='block';
-  const close=ev=>{if(!overlay.contains(ev.target)&&!ev.target.closest('[onclick*="toggleEmojiPicker"]')){overlay.style.display='none';document.removeEventListener('click',close);}};
-  setTimeout(()=>document.addEventListener('click',close),50);
+  setTimeout(()=>{
+    const close=e=>{if(!overlay.contains(e.target)&&!e.target.closest('.ch-emoji-btn')){overlay.style.display='none';document.removeEventListener('click',close);}};
+    document.addEventListener('click',close);
+  },60);
 };
 window.insertEmoji=e=>{const inp=document.getElementById('chatInput');const pos=inp.selectionStart||inp.value.length;inp.value=inp.value.slice(0,pos)+e+inp.value.slice(pos);inp.selectionStart=inp.selectionEnd=pos+e.length;inp.focus();autoResizeChatInput();};
 function autoResizeChatInput(){const el=document.getElementById('chatInput');if(!el)return;el.style.height='auto';el.style.height=Math.min(el.scrollHeight,120)+'px';}
