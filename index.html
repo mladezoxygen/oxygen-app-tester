@@ -63,21 +63,20 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 
 /* CUSTOM SELECT DROPDOWN */
 .cs-wrap{position:relative;width:100%}
-.cs-trigger{width:100%;padding:11px 40px 11px 15px;background:rgba(255,255,255,.06);border:1px solid var(--border);border-radius:11px;color:var(--text);font-family:'Nunito',sans-serif;font-size:.93rem;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:8px;transition:border-color .2s,box-shadow .2s,background .2s;user-select:none;text-align:left}
+/* Full size (in .fg groups) */
+.cs-trigger{width:100%;padding:11px 38px 11px 15px;background:rgba(255,255,255,.06);border:1px solid var(--border);border-radius:11px;color:var(--text);font-family:'Nunito',sans-serif;font-size:.93rem;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:8px;transition:border-color .2s,box-shadow .2s,background .2s;user-select:none;text-align:left;line-height:1.4}
 .cs-trigger:hover{background:rgba(255,255,255,.09);border-color:rgba(155,79,222,.35)}
 .cs-trigger.open{border-color:var(--purple-l);box-shadow:0 0 0 3px rgba(123,47,190,.18);background:rgba(255,255,255,.09)}
-.cs-arrow{width:16px;height:16px;flex-shrink:0;transition:transform .2s;color:var(--purple-xl)}
+.cs-arrow{width:14px;height:14px;flex-shrink:0;transition:transform .22s ease;color:var(--purple-xl);opacity:.8}
 .cs-trigger.open .cs-arrow{transform:rotate(180deg)}
-.cs-dropdown{position:absolute;top:calc(100% + 5px);left:0;right:0;background:var(--surface);border:1px solid var(--border-l);border-radius:11px;box-shadow:0 12px 40px rgba(0,0,0,.55);z-index:600;overflow:hidden;animation:fu .15s ease}
-.cs-option{padding:10px 15px;font-family:'Nunito',sans-serif;font-size:.9rem;color:var(--text);cursor:pointer;display:flex;align-items:center;gap:8px;transition:background .12s}
-.cs-option:hover{background:rgba(123,47,190,.18)}
-.cs-option.selected{background:rgba(123,47,190,.22);color:var(--purple-xl);font-weight:700}
-.cs-option:first-child{border-radius:11px 11px 0 0}
-.cs-option:last-child{border-radius:0 0 11px 11px}
+.cs-dropdown{position:fixed;background:var(--bg2);border:1px solid var(--border-l);border-radius:12px;box-shadow:0 16px 48px rgba(0,0,0,.65);z-index:1200;overflow:hidden;min-width:160px;animation:fu .15s ease}
+.cs-option{padding:10px 15px;font-family:'Nunito',sans-serif;font-size:.88rem;color:var(--text);cursor:pointer;transition:background .1s;white-space:nowrap}
+.cs-option:hover{background:rgba(123,47,190,.22);color:var(--purple-xl)}
+.cs-option.selected{background:rgba(123,47,190,.18);color:var(--purple-xl);font-weight:700}
 /* Small variant (admin panel role select) */
-.cs-wrap.sm .cs-trigger{padding:6px 30px 6px 10px;font-size:.77rem;border-radius:8px;font-weight:700}
-.cs-wrap.sm .cs-dropdown{border-radius:9px}
-.cs-wrap.sm .cs-option{padding:7px 10px;font-size:.77rem}
+.cs-wrap.sm{width:auto}
+.cs-wrap.sm .cs-trigger{padding:5px 28px 5px 10px;font-size:.77rem;border-radius:8px;font-weight:700;background:var(--surface);width:auto;min-width:110px}
+.cs-wrap.sm .cs-option{padding:8px 12px;font-size:.8rem}
 /* Auth form stagger animation */
 #loginForm .fg:nth-child(1){animation:fg-in .4s ease .5s both}
 #loginForm .fg:nth-child(2){animation:fg-in .4s ease .6s both}
@@ -373,7 +372,7 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 @keyframes ur-approve{0%{opacity:1;transform:translateX(0);max-height:80px}100%{opacity:0;transform:translateX(24px);max-height:0;padding:0;margin:0}}
 .ur-approving{animation:ur-approve .35s ease forwards}
 .ui{flex:1;min-width:0}.un2{font-weight:700;font-size:.87rem}.us{font-size:.72rem;color:var(--muted);margin-top:1px}
-.ua{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.ua{display:flex;gap:6px;align-items:center;flex-wrap:nowrap}
 .bs-placeholder{display:inline-flex;padding:5px 11px;border-radius:7px;font-size:.75rem;visibility:hidden;pointer-events:none;border:1px solid transparent;white-space:nowrap}
 select.rs{padding:5px 9px;font-size:.77rem;background:var(--surface);border:1px solid var(--border);border-radius:7px;color:var(--text);font-family:'Nunito',sans-serif;font-weight:700;outline:none;cursor:pointer;transition:border-color .2s;color-scheme:dark}
 select.rs:hover{border-color:var(--border-l)}
@@ -2767,13 +2766,20 @@ function initCustomSelects(root=document){
           sel.selectedIndex=i;
           sel.dispatchEvent(new Event('change',{bubbles:true}));
           syncLabel();
-          // Update selected class
           dropdown.querySelectorAll('.cs-option').forEach((o,j)=>o.classList.toggle('selected',j===i));
           closeDrop();
         });
         dropdown.appendChild(item);
       });
-      wrap.appendChild(dropdown);
+      // Position with fixed coords so it's never clipped by overflow:hidden parents
+      document.body.appendChild(dropdown);
+      const r=trigger.getBoundingClientRect();
+      const dH=dropdown.offsetHeight||200;
+      const spaceBelow=window.innerHeight-r.bottom-6;
+      const top=spaceBelow>dH?r.bottom+4:r.top-dH-4;
+      dropdown.style.top=Math.max(6,top)+'px';
+      dropdown.style.left=r.left+'px';
+      dropdown.style.width=Math.max(r.width,160)+'px';
       setTimeout(()=>document.addEventListener('click',outsideClose),10);
     };
     const closeDrop=()=>{
@@ -2781,6 +2787,10 @@ function initCustomSelects(root=document){
       trigger.classList.remove('open');
       document.removeEventListener('click',outsideClose);
     };
+    // Reposition on scroll/resize
+    const onScroll=()=>{if(dropdown){const r=trigger.getBoundingClientRect();const dH=dropdown.offsetHeight||200;const spaceBelow=window.innerHeight-r.bottom-6;const top=spaceBelow>dH?r.bottom+4:r.top-dH-4;dropdown.style.top=Math.max(6,top)+'px';dropdown.style.left=r.left+'px';}};
+    window.addEventListener('scroll',onScroll,true);
+    window.addEventListener('resize',onScroll);
     const outsideClose=e=>{if(!wrap.contains(e.target))closeDrop();};
     trigger.addEventListener('click',e=>{e.stopPropagation();openDrop();});
     // Re-sync if select value changed programmatically
