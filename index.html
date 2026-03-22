@@ -230,10 +230,35 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 .cal-popup h3{font-family:'Cinzel',serif;font-size:.9rem;color:var(--white);margin-bottom:12px}
 .cal-popup-close{float:right;background:none;border:none;color:var(--muted);cursor:pointer;font-size:1.1rem;line-height:1}
 /* WATCH */
-.wc{background:var(--card-bg);border:1px solid var(--border);border-radius:12px;padding:15px;margin-bottom:9px;animation:fu .3s ease}
-.wc.curr{border-color:rgba(255,209,102,.3)}.wc.future{border-color:rgba(155,79,222,.3)}
+.wc{background:var(--card-bg);border:1px solid var(--border);border-radius:14px;padding:17px;margin-bottom:10px;animation:fu .3s ease;transition:border-color .2s}
+.wc.curr{border-color:rgba(255,209,102,.35);box-shadow:0 0 0 1px rgba(255,209,102,.08)}
+.wc.future{border-color:rgba(155,79,222,.35)}
+.wc-badge{font-family:'Cinzel',serif;font-size:.72rem;letter-spacing:.04em;font-weight:700;margin-bottom:6px}
+.wc-badge.curr{color:var(--gold)}.wc-badge.future{color:var(--purple-xl)}.wc-badge.past{color:var(--muted)}
+.wc-name{font-weight:800;font-size:1rem;color:var(--white)}
+.wc-date{color:var(--muted);font-size:.76rem;margin-top:1px}
 .wt{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
-.wtag{background:rgba(123,47,190,.2);border:1px solid var(--border);border-radius:6px;padding:2px 8px;font-size:.74rem;color:var(--muted)}
+.wtag{background:rgba(123,47,190,.2);border:1px solid var(--border);border-radius:6px;padding:2px 8px;font-size:.74rem;color:var(--purple-xl)}
+/* Watch participants */
+.wc-participants{display:flex;align-items:center;gap:6px;margin-top:12px;padding-top:10px;border-top:1px solid var(--border)}
+.wc-av-stack{display:flex;margin-right:2px}
+.wc-av{width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,var(--purple),var(--purple-d));display:flex;align-items:center;justify-content:center;font-size:.6rem;font-weight:800;color:#fff;border:2px solid var(--surface);flex-shrink:0;margin-left:-7px;transition:transform .15s}
+.wc-av:first-child{margin-left:0}.wc-av.ea{background:var(--card);font-size:.85rem}
+.wc-av:hover{transform:scale(1.15);z-index:1}
+.wc-join-cnt{font-size:.76rem;color:var(--muted)}
+.b-join{background:rgba(6,214,160,.1);border-color:rgba(6,214,160,.3);color:var(--green)}
+.b-join:hover{background:rgba(6,214,160,.22)}
+.b-join.on{background:rgba(6,214,160,.25);border-color:var(--green);color:var(--green)}
+/* Watch detail modal */
+.watch-modal-hero{background:linear-gradient(135deg,rgba(123,47,190,.25),rgba(255,209,102,.08));border:1px solid rgba(255,209,102,.2);border-radius:12px;padding:16px;margin-bottom:16px}
+.watch-modal-participants-grid{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.wmp-chip{display:flex;align-items:center;gap:6px;background:rgba(123,47,190,.15);border:1px solid var(--border);border-radius:20px;padding:4px 10px 4px 4px;font-size:.79rem;color:var(--text)}
+.wmp-chip-av{width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,var(--purple),var(--purple-d));display:flex;align-items:center;justify-content:center;font-size:.55rem;font-weight:800;color:#fff;flex-shrink:0}
+.wmp-chip-av.ea{background:var(--card);font-size:.82rem}
+/* cal day multiple avatars */
+.cal-day-dots{display:flex;gap:2px;flex-wrap:wrap;margin-top:2px;justify-content:center}
+.cal-day-dot{width:5px;height:5px;border-radius:50%;background:var(--purple-l)}
+.cal-day-dot.gold{background:var(--gold)}
 /* DIARY */
 .de{background:var(--card-bg);border:1px solid var(--border);border-radius:12px;padding:17px;margin-bottom:10px;animation:fu .3s ease}
 .da{font-weight:800;color:var(--purple-xl);font-size:.85rem}.dd{color:var(--muted);font-size:.7rem}
@@ -690,7 +715,7 @@ input:checked+.slider::before{transform:translateX(18px)}
 
     <!-- WATCH -->
     <div class="sec" id="sec-watch">
-      <div class="ph"><h1>Modlitební stráž</h1><p>Klikni na den v kalendáři pro přidání stráže</p></div>
+      <div class="ph"><h1>Modlitební stráž</h1><p>Klikni na den v kalendáři pro detail nebo přidání stráže</p></div>
       <div class="cal-wrap">
         <div class="cal-header"><button class="cal-nav" onclick="calPrev()">←</button><div class="cal-title" id="calTitle">—</div><button class="cal-nav" onclick="calNext()">→</button></div>
         <div class="cal-grid" id="calGrid"></div>
@@ -698,6 +723,7 @@ input:checked+.slider::before{transform:translateX(18px)}
           <div style="display:flex;align-items:center;gap:5px;font-size:.72rem;color:var(--muted)"><div style="width:10px;height:10px;border-radius:50%;background:rgba(123,47,190,.5)"></div>Obsazeno</div>
           <div style="display:flex;align-items:center;gap:5px;font-size:.72rem;color:var(--muted)"><div style="width:10px;height:10px;border-radius:50%;background:transparent;border:2px solid var(--purple-l)"></div>Dnes</div>
           <div style="display:flex;align-items:center;gap:5px;font-size:.72rem;color:var(--muted)"><div style="width:10px;height:10px;border-radius:50%;background:rgba(255,209,102,.4)"></div>Budoucí</div>
+          <div style="display:flex;align-items:center;gap:5px;font-size:.72rem;color:var(--green)"><div style="width:10px;height:10px;border-radius:50%;background:rgba(6,214,160,.5)"></div>Účastním se</div>
         </div>
       </div>
       <div id="watchList"><div class="loading"><div class="spin"></div>Načítám…</div></div>
@@ -1207,8 +1233,16 @@ function renderDash(){
   if(lblEl)lblEl.textContent=curWatch?'⌚ Aktuální modlitební stráž':'📅 Nadcházející modlitební stráž';
   document.getElementById('dashWatch').innerHTML=cur
     ?`<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;flex-wrap:wrap">
-        <div><strong style="color:var(--white)">${esc(cur.person)}</strong> <span style="color:var(--muted);font-size:.77rem">${esc(cur.date)}</span><div class="wt" style="margin-top:6px">${(cur.topics||[]).map(t=>`<span class="wtag">${esc(t)}</span>`).join('')}</div></div>
-        ${makeGCalUrl(cur)?`<a href="${makeGCalUrl(cur)}" target="_blank" rel="noopener" class="bs b-gcal" style="text-decoration:none;flex-shrink:0">📅 Google Kalendář</a>`:''}
+        <div>
+          <strong style="color:var(--white)">${esc(cur.person)}</strong>
+          <span style="color:var(--muted);font-size:.77rem;margin-left:6px">${esc(cur.date)}</span>
+          <div class="wt" style="margin-top:6px">${(cur.topics||[]).map(t=>`<span class="wtag">${esc(t)}</span>`).join('')}</div>
+          ${(cur.participants||[]).length?`<div style="margin-top:6px;font-size:.75rem;color:var(--muted)">👥 ${(cur.participants||[]).length} účastník${(cur.participants||[]).length===1?'':((cur.participants||[]).length<5?'í':'ů')}</div>`:''}
+        </div>
+        <div style="display:flex;gap:5px;align-items:flex-start;flex-wrap:wrap;flex-shrink:0">
+          ${makeGCalUrl(cur)?`<a href="${makeGCalUrl(cur)}" target="_blank" rel="noopener" class="bs b-gcal" style="text-decoration:none">📅 GCal</a>`:''}
+          <button class="bs b-join${(cur.participants||[]).includes(CU.username)?' on':''}" onclick="toggleJoinWatch('${cur._id}',this)">${(cur.participants||[]).includes(CU.username)?'✓ Účastním se':'+ Přidám se'}</button>
+        </div>
       </div>`
     :'<span style="color:var(--muted)">Žádná stráž nebyla přiřazena</span>';
   renderStreakDash();renderCountdownDash();
@@ -1407,43 +1441,70 @@ function renderCalendar(){
   for(let i=0;i<fd;i++)html+=`<div class="cal-day cal-empty"></div>`;
   for(let d=1;d<=dim;d++){
     const dateObj=new Date(m.getFullYear(),m.getMonth(),d);
-    const isToday=dateObj.toDateString()===today.toDateString();
     const todayStart=new Date(today);todayStart.setHours(0,0,0,0);
     const dateStart=new Date(dateObj);dateStart.setHours(0,0,0,0);
     const isFuture=dateStart>todayStart;
     const isCurrentDay=dateStart.getTime()===todayStart.getTime();
     const w=watch.find(w=>{if(!w.startDate)return false;const sd=new Date(w.startDate);sd.setHours(0,0,0,0);const ed=w.endDate?new Date(w.endDate):new Date(w.startDate);ed.setHours(23,59,59,999);return dateStart>=sd&&dateStart<=ed;});
     let bgColor='';let borderColor='transparent';
-    if(w){if(isFuture){bgColor='rgba(255,209,102,.18)';borderColor='rgba(255,209,102,.4)';}else{bgColor='rgba(123,47,190,.25)';borderColor='rgba(123,47,190,.5)';}}
-    if(isCurrentDay){borderColor='var(--purple-l)';}
+    const iJoin=w&&(w.participants||[]).includes(CU.username);
+    if(w){
+      if(iJoin){bgColor='rgba(6,214,160,.12)';borderColor='rgba(6,214,160,.4)';}
+      else if(isFuture){bgColor='rgba(255,209,102,.14)';borderColor='rgba(255,209,102,.35)';}
+      else{bgColor='rgba(123,47,190,.2)';borderColor='rgba(123,47,190,.45)';}
+    }
+    if(isCurrentDay){borderColor=iJoin?'rgba(6,214,160,.7)':'var(--purple-l)';}
+    const pCount=w?(w.participants||[]).length:0;
+    const dotsHtml=w?`<div class="cal-day-dots">${Array.from({length:Math.min(pCount,5)}).map((_,i)=>`<div class="cal-day-dot${isFuture?' gold':''}"></div>`).join('')}</div>`:'';
     html+=`<div class="cal-day ${isCurrentDay?'cal-today':''} ${w?'cal-has':''}" style="background:${bgColor};border-color:${borderColor}" onclick="calClick(${m.getFullYear()},${m.getMonth()},${d},event)">
       <div class="cal-day-num">${d}</div>
-      ${w?`<div class="cal-day-person">${esc(w.person.split(' ')[0])}</div>`:''}
+      ${w?`<div class="cal-day-person">${esc(w.person.split(' ')[0])}</div>${dotsHtml}`:''}
     </div>`;
   }
   document.getElementById('calGrid').innerHTML=html;
 }
 window.calPrev=()=>{calMonth.setMonth(calMonth.getMonth()-1);renderCalendar();};
 window.calNext=()=>{calMonth.setMonth(calMonth.getMonth()+1);renderCalendar();};
+
 window.calClick=(y,mo,d,e)=>{
-  if(calPopup)calPopup.remove();if(!canMgr())return;
+  if(calPopup)calPopup.remove();
   const iso=`${y}-${String(mo+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
   const label=new Date(y,mo,d).toLocaleDateString('cs-CZ',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
   const existing=window._watch?.find(w=>{if(!w.startDate)return false;const sd=new Date(w.startDate);const ed=w.endDate?new Date(w.endDate):sd;const dt=new Date(y,mo,d);return dt>=sd&&dt<=ed;});
   const popup=document.createElement('div');popup.className='cal-popup';calPopup=popup;
+
   if(existing){
+    // Show detail + join button for everyone; add/delete for managers
     const gcalUrl=makeGCalUrl(existing);
     const canDel=existing.assignedTo===CU.username||existing.createdBy===CU.username||isAdmin();
-    popup.innerHTML=`<button class="cal-popup-close" onclick="document.querySelector('.cal-popup').remove();calPopup=null">✕</button><h3>${label}</h3><div style="color:var(--text);font-size:.88rem;margin-bottom:10px">Stráž: <strong>${esc(existing.person)}</strong><br>${esc(existing.date)}</div><div style="display:flex;gap:6px;flex-wrap:wrap">${gcalUrl?`<a href="${gcalUrl}" target="_blank" rel="noopener" class="bs b-gcal" style="text-decoration:none">📅 Google Kalendář</a>`:''} ${canDel?`<button class="bs b-del" onclick="delWatch('${existing._id}');document.querySelector('.cal-popup').remove();calPopup=null">🗑 Smazat stráž</button>`:''}</div>`;
-  }else{
-    // Build user selector — admin sees dropdown, others see just their name
+    const parts=existing.participants||[];
+    const iJoin=parts.includes(CU.username);
+    const partNames=parts.slice(0,5).map(un=>{const u=userByUn(un);return u?.name?.split(' ')[0]||un;}).join(', ');
+    const moreCount=parts.length>5?` +${parts.length-5}`:'';
+    popup.innerHTML=`<button class="cal-popup-close" onclick="document.querySelector('.cal-popup')?.remove();calPopup=null">✕</button>
+      <h3 style="margin-bottom:8px">${label}</h3>
+      <div style="font-size:.83rem;margin-bottom:4px;color:var(--text)">⌚ <strong style="color:var(--white)">${esc(existing.person)}</strong></div>
+      <div style="color:var(--muted);font-size:.74rem;margin-bottom:10px">${esc(existing.date)}</div>
+      ${(existing.topics||[]).length?`<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:10px">${(existing.topics||[]).map(t=>`<span class="wtag">${esc(t)}</span>`).join('')}</div>`:''}
+      <div style="font-size:.75rem;color:var(--muted);margin-bottom:6px">👥 ${parts.length} účastník${parts.length===1?'':'ů'}${parts.length?': '+partNames+moreCount:''}</div>
+      <div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:6px">
+        <button class="bs b-join${iJoin?' on':''}" onclick="toggleJoinWatch('${existing._id}',this)">${iJoin?'✓ Účastním se':'+ Přidám se'}</button>
+        ${gcalUrl?`<a href="${gcalUrl}" target="_blank" rel="noopener" class="bs b-gcal" style="text-decoration:none">📅 GCal</a>`:''}
+        ${canDel?`<button class="bs b-del" onclick="delWatch('${existing._id}');document.querySelector('.cal-popup')?.remove();calPopup=null">🗑</button>`:''}
+      </div>`;
+  } else if(canMgr()){
+    // Add new watch — only managers
     const allUsers=Object.values(window._users||{}).filter(u=>u.role!=='pending').sort((a,b)=>a.name.localeCompare(b.name,'cs'));
     const userOptions=allUsers.map(u=>`<option value="${u.username}" ${u.username===CU.username?'selected':''}>${esc(u.name)}</option>`).join('');
     const whoField=isAdmin()
       ?`<div class="fg"><label>Přiřadit uživateli</label><select id="cpU">${userOptions}</select></div>`
       :`<div class="fg"><label>Kdo</label><input type="text" id="cpP" value="${esc(CU.name)}" readonly style="opacity:.7;cursor:default"></div>`;
-    popup.innerHTML=`<button class="cal-popup-close" onclick="document.querySelector('.cal-popup').remove();calPopup=null">✕</button><h3>Přidat stráž</h3><div style="color:var(--muted);font-size:.79rem;margin-bottom:10px">${label}</div>${whoField}<div class="fg"><label>Do data</label><input type="date" id="cpE" value="${iso}"></div><div class="fg"><label>Témata (čárkou)</label><input type="text" id="cpT" placeholder="Mládež, vedení, …"></div><button class="bp" style="padding:9px" onclick="saveCalWatch('${iso}')">Uložit</button>`;
+    popup.innerHTML=`<button class="cal-popup-close" onclick="document.querySelector('.cal-popup')?.remove();calPopup=null">✕</button><h3>Přidat stráž</h3><div style="color:var(--muted);font-size:.79rem;margin-bottom:10px">${label}</div>${whoField}<div class="fg"><label>Do data</label><input type="date" id="cpE" value="${iso}"></div><div class="fg"><label>Témata (čárkou)</label><input type="text" id="cpT" placeholder="Mládež, vedení, …"></div><button class="bp" style="padding:9px" onclick="saveCalWatch('${iso}')">Uložit</button>`;
+  } else {
+    // Regular user, no watch yet
+    popup.innerHTML=`<button class="cal-popup-close" onclick="document.querySelector('.cal-popup')?.remove();calPopup=null">✕</button><h3>${label}</h3><div style="color:var(--muted);font-size:.82rem;padding:8px 0">Žádná stráž na tento den.</div>`;
   }
+
   const rect=e.currentTarget.getBoundingClientRect();
   popup.style.top=Math.min(rect.bottom+window.scrollY+6,window.innerHeight+window.scrollY-320)+'px';
   popup.style.left=Math.min(rect.left,window.innerWidth-270)+'px';
@@ -1451,52 +1512,85 @@ window.calClick=(y,mo,d,e)=>{
   const close=ev=>{if(!popup.contains(ev.target)&&!ev.target.classList.contains('cal-day')){popup.remove();calPopup=null;document.removeEventListener('click',close);}};
   setTimeout(()=>document.addEventListener('click',close),100);
 };
+
 window.saveCalWatch=async iso=>{
-  // Admin uses dropdown (cpU), others use text input (cpP) or fall back to own name
-  let assignedTo=CU.username;
-  let person=CU.name;
-  if(isAdmin()){
-    const selEl=document.getElementById('cpU');
-    if(selEl){
-      assignedTo=selEl.value;
-      const u=userByUn(assignedTo);
-      person=u?u.name:selEl.options[selEl.selectedIndex]?.text||CU.name;
-    }
-  }
+  let assignedTo=CU.username;let person=CU.name;
+  if(isAdmin()){const selEl=document.getElementById('cpU');if(selEl){assignedTo=selEl.value;const u=userByUn(assignedTo);person=u?u.name:selEl.options[selEl.selectedIndex]?.text||CU.name;}}
   const endVal=document.getElementById('cpE')?.value;
   const topStr=document.getElementById('cpT')?.value.trim()||'';
   const topics=topStr.split(',').map(s=>s.trim()).filter(Boolean);
   const sd=new Date(iso);const ed=endVal?new Date(endVal):sd;
   const dateLabel=(()=>{const day=sd.getDate();const mon=sd.getMonth()+1;const dayE=ed.getDate();const monE=ed.getMonth()+1;return endVal&&endVal!==iso?`${day}. ${mon}. – ${dayE}. ${monE}. ${ed.getFullYear()}`:`${day}. ${mon}. ${sd.getFullYear()}`;})();
-  try{await addDoc(collection(db,'watch'),{person,assignedTo,date:dateLabel,startDate:iso,endDate:endVal||iso,topics,createdBy:CU.username,ts:serverTimestamp()});document.querySelector('.cal-popup')?.remove();calPopup=null;toast('⌚ Stráž přidána');}catch(e){toast('Chyba: '+e.message);}
+  // assignedTo automatically joins as first participant
+  try{await addDoc(collection(db,'watch'),{person,assignedTo,participants:[assignedTo],date:dateLabel,startDate:iso,endDate:endVal||iso,topics,createdBy:CU.username,ts:serverTimestamp()});document.querySelector('.cal-popup')?.remove();calPopup=null;toast('⌚ Stráž přidána');}catch(e){toast('Chyba: '+e.message);}
 };
+
+// Toggle joining a watch (any logged-in user)
+window.toggleJoinWatch=async(id,btn)=>{
+  const w=(window._watch||[]).find(x=>x._id===id);if(!w)return;
+  const parts=w.participants||[];
+  const iJoin=parts.includes(CU.username);
+  try{
+    await updateDoc(doc(db,'watch',id),{participants:iJoin?arrayRemove(CU.username):arrayUnion(CU.username)});
+    if(btn){btn.textContent=iJoin?'+ Přidám se':'✓ Účastním se';btn.classList.toggle('on',!iJoin);}
+    toast(iJoin?'Odhlášen/a ze stráže':'🙏 Přihlášen/a ke stráži!');
+    if(!iJoin)logPrayerDay(); // counts as a prayer day
+  }catch(e){toast('Chyba: '+e.message);}
+};
+
 function makeGCalUrl(w){
   if(!w.startDate)return null;
-  const sd=new Date(w.startDate);
-  const ed=w.endDate?new Date(w.endDate):sd;
-  // GCal needs dates in YYYYMMDD format; end date is exclusive so add 1 day
+  const sd=new Date(w.startDate);const ed=w.endDate?new Date(w.endDate):sd;
   const fmt=d=>{const y=d.getFullYear();const m=String(d.getMonth()+1).padStart(2,'0');const day=String(d.getDate()).padStart(2,'0');return y+m+day;};
   const edExcl=new Date(ed);edExcl.setDate(edExcl.getDate()+1);
   const title=encodeURIComponent('Modlitební stráž – '+(w.person||''));
   const details=encodeURIComponent((w.topics||[]).length?'Témata: '+(w.topics||[]).join(', '):'Modlitební stráž Oxygen');
   return`https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${fmt(sd)}/${fmt(edExcl)}&details=${details}`;
 }
+
+function watchParticipantsHtml(w){
+  const parts=w.participants||[];if(!parts.length)return'';
+  const allU=window._users||{};
+  const avatars=parts.slice(0,6).map(un=>{const u=allU[un];return u?.emoji?`<div class="wc-av ea" title="${esc(u?.name||un)}">${u.emoji}</div>`:`<div class="wc-av" title="${esc(u?.name||un)}">${ini(u?.name||un)}</div>`;}).join('');
+  const extra=parts.length>6?`<div class="wc-av" style="background:var(--surface);color:var(--muted);font-size:.62rem">+${parts.length-6}</div>`:'';
+  return`<div class="wc-participants">
+    <div class="wc-av-stack">${avatars}${extra}</div>
+    <span class="wc-join-cnt">${parts.length} účastník${parts.length===1?'':parts.length<5?'í':'ů'}</span>
+  </div>`;
+}
+
 function renderWatch(){
   const list=[...(window._watch||[])].reverse();const el=document.getElementById('watchList');
-  if(!list.length){el.innerHTML=`<div class="empty"><div class="ei">⌚</div><p>Klikni na den v kalendáři pro přidání stráže</p></div>`;return;}
-  const today=new Date();
+  if(!list.length){el.innerHTML=`<div class="empty"><div class="ei">⌚</div><p>Žádná stráž ještě nebyla přidána.<br>Klikni na den v kalendáři výše.</p></div>`;return;}
+  const today=new Date();today.setHours(0,0,0,0);
   el.innerHTML=list.map(w=>{
-    const isFuture=w.startDate&&new Date(w.startDate)>today;const isPast=w.endDate&&new Date(w.endDate)<today;const isCurr=!isFuture&&!isPast;
+    const sd=w.startDate?new Date(w.startDate):null;
+    const ed=w.endDate?new Date(w.endDate):sd;
+    if(sd)sd.setHours(0,0,0,0);if(ed)ed.setHours(23,59,59,999);
+    const isFuture=sd&&sd>today;const isPast=ed&&ed<today;const isCurr=!isFuture&&!isPast;
     const canDel=isAdmin()||w.createdBy===CU.username||w.assignedTo===CU.username;
     const gcalUrl=makeGCalUrl(w);
+    const parts=w.participants||[];
+    const iJoin=parts.includes(CU.username);
+    const badgeCls=isCurr?'curr':isFuture?'future':'past';
+    const badgeTxt=isCurr?'✦ Aktuální stráž':isFuture?'✦ Plánovaná stráž':'✦ Minulá stráž';
     return`<div class="wc ${isCurr?'curr':isFuture?'future':''}">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start">
-        <div><div style="font-family:'Cinzel',serif;font-size:.77rem;color:${isCurr?'var(--gold)':isFuture?'var(--purple-xl)':'var(--muted)'}">✦ ${isCurr?'Aktuální stráž':isFuture?'Plánovaná stráž':'Minulá stráž'}</div><div style="font-weight:800;font-size:.92rem;color:var(--white);margin-top:2px">${esc(w.person)}</div><div style="color:var(--muted);font-size:.76rem;margin-top:1px">${esc(w.date)}</div></div>
-        <div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap">
-          ${gcalUrl?`<a href="${gcalUrl}" target="_blank" rel="noopener" class="bs b-gcal" style="text-decoration:none">📅 Google Kalendář</a>`:''}
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+        <div style="flex:1;min-width:0">
+          <div class="wc-badge ${badgeCls}">${badgeTxt}</div>
+          <div class="wc-name">${esc(w.person)}</div>
+          <div class="wc-date">${esc(w.date)}</div>
+          ${(w.topics||[]).length?`<div class="wt">${(w.topics||[]).map(t=>`<span class="wtag">${esc(t)}</span>`).join('')}</div>`:''}
+        </div>
+        <div style="display:flex;flex-direction:column;gap:5px;align-items:flex-end;flex-shrink:0">
+          ${gcalUrl?`<a href="${gcalUrl}" target="_blank" rel="noopener" class="bs b-gcal" style="text-decoration:none">📅 GCal</a>`:''}
           ${canDel?`<button class="bs b-del" onclick="delWatch('${w._id}')">🗑</button>`:''}
         </div>
-      </div><div class="wt">${(w.topics||[]).map(t=>`<span class="wtag">${esc(t)}</span>`).join('')}</div>
+      </div>
+      ${watchParticipantsHtml(w)}
+      <div style="margin-top:10px">
+        <button class="bs b-join${iJoin?' on':''}" onclick="toggleJoinWatch('${w._id}',this)">${iJoin?'✓ Účastním se':'+ Přidám se ke stráži'}</button>
+      </div>
     </div>`;
   }).join('');
 }
@@ -1737,7 +1831,7 @@ function renderStats(){
   `;
 
   const mW=watch.filter(w=>{if(!w.startDate){return inM(w.ts);}const sd=new Date(w.startDate);return sd.getFullYear()===m.getFullYear()&&sd.getMonth()===m.getMonth();});
-  document.getElementById('watchHistory').innerHTML=mW.length?mW.map(w=>{const gcalUrl=makeGCalUrl(w);return`<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border);flex-wrap:wrap"><span style="font-weight:700;font-size:.84rem;color:var(--white)">${esc(w.person)}</span><span style="color:var(--muted);font-size:.76rem">${esc(w.date)}</span><div style="display:flex;gap:4px;flex-wrap:wrap;flex:1">${(w.topics||[]).map(t=>`<span class="wtag">${esc(t)}</span>`).join('')}</div>${gcalUrl?`<a href="${gcalUrl}" target="_blank" rel="noopener" class="bs b-gcal" style="text-decoration:none;flex-shrink:0">📅</a>`:''}</div>`;}).join(''):`<div style="color:var(--muted);font-size:.82rem;padding:8px 0">V tomto měsíci žádná stráž.</div>`;
+  document.getElementById('watchHistory').innerHTML=mW.length?mW.map(w=>{const gcalUrl=makeGCalUrl(w);const pCount=(w.participants||[]).length;return`<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);flex-wrap:wrap"><span style="font-weight:700;font-size:.84rem;color:var(--white)">${esc(w.person)}</span><span style="color:var(--muted);font-size:.76rem">${esc(w.date)}</span><div style="display:flex;gap:4px;flex-wrap:wrap;flex:1">${(w.topics||[]).map(t=>`<span class="wtag">${esc(t)}</span>`).join('')}</div>${pCount?`<span style="font-size:.72rem;color:var(--green);font-weight:700">👥 ${pCount}</span>`:''} ${gcalUrl?`<a href="${gcalUrl}" target="_blank" rel="noopener" class="bs b-gcal" style="text-decoration:none;flex-shrink:0">📅</a>`:''}</div>`;}).join(''):`<div style="color:var(--muted);font-size:.82rem;padding:8px 0">V tomto měsíci žádná stráž.</div>`;
   document.getElementById('userStats').innerHTML=au.sort((a,b)=>{
     const pA=reqs.reduce((x,r)=>x+((r.prayedBy||[]).includes(a.username)?1:0),0);
     const pB=reqs.reduce((x,r)=>x+((r.prayedBy||[]).includes(b.username)?1:0),0);
@@ -1746,7 +1840,7 @@ function renderStats(){
     const pC=reqs.reduce((a,r)=>a+((r.prayedBy||[]).includes(u.username)?1:0),0);
     const rC=reqs.filter(r=>r.createdBy===u.username).length;
     const _tod=new Date();_tod.setHours(0,0,0,0);
-    const wC=watch.filter(w=>(w.assignedTo?w.assignedTo===u.username:w.createdBy===u.username)&&w.endDate&&(()=>{const ed=new Date(w.endDate);ed.setHours(23,59,59,999);return ed<_tod;})()).length;
+    const wC=watch.filter(w=>{const parts=w.participants||[];return(parts.length?parts.includes(u.username):(w.assignedTo?w.assignedTo===u.username:w.createdBy===u.username))&&w.endDate&&(()=>{const ed=new Date(w.endDate);ed.setHours(23,59,59,999);return ed<_tod;})();}).length;
     const dC=diary.filter(d=>d.createdBy===u.username).length;
     const userStreak=calcStreakFor(u.username);
     const streakBadge=userStreak>0?`<span style="font-size:.72rem;color:var(--gold);margin-left:4px">🔥${userStreak}</span>`:`<span style="font-size:.72rem;color:var(--muted);margin-left:4px">🔥0</span>`;
@@ -1794,7 +1888,7 @@ window.showProfile=()=>{
       <div class="scard"><div class="snum">${pC}</div><div class="slbl">Modliteb</div></div>
       <div class="scard"><div class="snum">${reqs.filter(r=>r.createdBy===CU.username).length}</div><div class="slbl">Žádostí</div></div>
       <div class="scard"><div class="snum">${reqs.filter(r=>r.createdBy===CU.username&&r.answered).length}</div><div class="slbl">Vyslyšených</div></div>
-      <div class="scard"><div class="snum">${watch.filter(w=>w.assignedTo?w.assignedTo===CU.username:w.createdBy===CU.username).length}</div><div class="slbl">Stráží</div></div>
+      <div class="scard"><div class="snum">${watch.filter(w=>{const parts=w.participants||[];return parts.length?parts.includes(CU.username):(w.assignedTo?w.assignedTo===CU.username:w.createdBy===CU.username);}).length}</div><div class="slbl">Stráží</div></div>
       <div class="scard"><div class="snum">${diary.filter(d=>d.createdBy===CU.username).length}</div><div class="slbl">Zápisů</div></div>
       ${(()=>{const {streak}=calcStreak();return`<div class="scard-streak"><div class="snum"><span class="scard-streak-fire">🔥</span> ${streak}</div><div class="slbl">Streak</div></div>`;})()}
     </div>
@@ -2252,7 +2346,7 @@ window.showUserProfile=(username)=>{
   const pC=reqs.reduce((a,r)=>a+((r.prayedBy||[]).includes(username)?1:0),0);
   const pChk=chk.filter(c=>(c.prayedBy||[]).includes(username)).length;
   const rC=reqs.filter(r=>r.createdBy===username).length;
-  const wC=watch.filter(w=>w.assignedTo?w.assignedTo===username:w.createdBy===username).length;
+  const wC=watch.filter(w=>{const parts=w.participants||[];return parts.length?parts.includes(username):(w.assignedTo?w.assignedTo===username:w.createdBy===username);}).length;
   const dC=diary.filter(d=>d.createdBy===username).length;
   const ansC=reqs.filter(r=>r.createdBy===username&&r.answered).length;
   const streak=calcStreakFor(username);
