@@ -253,10 +253,10 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 @keyframes past-reveal{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
 .wc-past-new{animation:past-reveal .35s ease both}
 @keyframes wc-curr-glow{0%,100%{box-shadow:0 0 0 1px rgba(255,209,102,.06),0 2px 16px rgba(255,209,102,.06)}50%{box-shadow:0 0 0 1px rgba(255,209,102,.15),0 4px 28px rgba(255,209,102,.18)}}
-@keyframes join-pop{0%{transform:scale(1)}40%{transform:scale(1.18)}70%{transform:scale(.94)}100%{transform:scale(1)}}
-@keyframes part-count-in{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+@keyframes join-pop{0%{transform:scale(1)}50%{transform:scale(1.06)}100%{transform:scale(1)}}
+@keyframes part-count-in{0%{opacity:0;transform:translateY(8px) scale(.92)}60%{opacity:1;transform:translateY(-2px) scale(1.04)}100%{opacity:1;transform:translateY(0) scale(1)}}
 .join-popped{animation:join-pop .35s cubic-bezier(.22,.68,0,1.2)}
-.part-count-updated{animation:part-count-in .3s ease}
+.part-count-updated{animation:part-count-in .4s cubic-bezier(.22,.68,0,1.2)}
 .wc.wc-future{border-color:rgba(155,79,222,.3)}
 .wc-header{padding:14px 16px 10px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
 .wc-header-left{flex:1;min-width:0}
@@ -1728,6 +1728,20 @@ function makeGCalUrl(w){
   return`https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${fmt(sd)}/${fmt(edExcl)}&details=${encodeURIComponent(details)}`;
 }
 
+
+// Shared watch count helper — used everywhere to ensure consistency
+// Counts watches where user is leader OR participant, started on or before today
+function watchCountFor(username){
+  const today=new Date();today.setHours(0,0,0,0);
+  return(window._watch||[]).filter(w=>{
+    const isLdr=w.assignedTo===username||((!w.assignedTo)&&w.createdBy===username);
+    const isPart=(w.participants||[]).includes(username);
+    if(!isLdr&&!isPart)return false;
+    if(!w.startDate)return true;
+    const sd=new Date(w.startDate);sd.setHours(0,0,0,0);
+    return sd<=today;
+  }).length;
+}
 function watchAvatarEl(un,isLeader){
   const u=(window._users||{})[un];
   const cls=`wc-av${u?.emoji?' ea':''}${isLeader?' leader-av':''}`;
@@ -2080,16 +2094,7 @@ function renderStats(){
   }).map(u=>{
     const pC=reqs.reduce((a,r)=>a+((r.prayedBy||[]).includes(u.username)?1:0),0);
     const rC=reqs.filter(r=>r.createdBy===u.username).length;
-    const _tod3=new Date();_tod3.setHours(0,0,0,0);
-    const wC=watch.filter(w=>{
-      const isLdr=w.assignedTo===u.username||((!w.assignedTo)&&w.createdBy===u.username);
-      const isPart=(w.participants||[]).includes(u.username);
-      if(!isLdr&&!isPart)return false;
-      // only count watches that have started (past or current), not future-only
-      if(!w.startDate)return true;
-      const sd=new Date(w.startDate);sd.setHours(0,0,0,0);
-      return sd<=_tod3;
-    }).length;
+    const wC=watchCountFor(u.username);
     const dC=diary.filter(d=>d.createdBy===u.username).length;
     const userStreak=calcStreakFor(u.username);
     const streakBadge=userStreak>0?`<span style="font-size:.72rem;color:var(--gold);margin-left:4px">🔥${userStreak}</span>`:`<span style="font-size:.72rem;color:var(--muted);margin-left:4px">🔥0</span>`;
@@ -2137,7 +2142,7 @@ window.showProfile=()=>{
       <div class="scard"><div class="snum">${pC}</div><div class="slbl">Modliteb</div></div>
       <div class="scard"><div class="snum">${reqs.filter(r=>r.createdBy===CU.username).length}</div><div class="slbl">Žádostí</div></div>
       <div class="scard"><div class="snum">${reqs.filter(r=>r.createdBy===CU.username&&r.answered).length}</div><div class="slbl">Vyslyšených</div></div>
-      <div class="scard"><div class="snum">${(()=>{const _t=new Date();_t.setHours(0,0,0,0);return watch.filter(w=>{const inv=w.assignedTo===CU.username||((!w.assignedTo)&&w.createdBy===CU.username)||(w.participants||[]).includes(CU.username);if(!inv)return false;if(!w.startDate)return true;const sd=new Date(w.startDate);sd.setHours(0,0,0,0);return sd<=_t;}).length;})()}</div><div class="slbl">Stráží</div></div>
+      <div class="scard"><div class="snum">${watchCountFor(CU.username)}</div><div class="slbl">Stráží</div></div>
       <div class="scard"><div class="snum">${diary.filter(d=>d.createdBy===CU.username).length}</div><div class="slbl">Zápisů</div></div>
       ${(()=>{const {streak}=calcStreak();return`<div class="scard-streak"><div class="snum"><span class="scard-streak-fire">🔥</span> ${streak}</div><div class="slbl">Streak</div></div>`;})()}
     </div>
@@ -2472,7 +2477,7 @@ function renderMyStats(){
   const prayedReqs=reqs.filter(r=>(r.prayedBy||[]).includes(CU.username)).length;
   const prayedChk=chk.filter(c=>(c.prayedBy||[]).includes(CU.username)).length;
   const myReqs=reqs.filter(r=>r.createdBy===CU.username).length;
-  const myWatches=watch.filter(w=>w.createdBy===CU.username).length;
+  const myWatches=watchCountFor(CU.username);
   const myDiary=diary.filter(d=>d.createdBy===CU.username).length;
   const myAnswered=reqs.filter(r=>r.createdBy===CU.username&&r.answered).length;
 
@@ -2603,14 +2608,7 @@ window.showUserProfile=(username)=>{
   const pC=reqs.reduce((a,r)=>a+((r.prayedBy||[]).includes(username)?1:0),0);
   const pChk=chk.filter(c=>(c.prayedBy||[]).includes(username)).length;
   const rC=reqs.filter(r=>r.createdBy===username).length;
-  const _todW=new Date();_todW.setHours(0,0,0,0);
-  const wC=watch.filter(w=>{
-    const inv=w.assignedTo===username||((!w.assignedTo)&&w.createdBy===username)||(w.participants||[]).includes(username);
-    if(!inv)return false;
-    if(!w.startDate)return true;
-    const sd=new Date(w.startDate);sd.setHours(0,0,0,0);
-    return sd<=_todW;
-  }).length;
+  const wC=watchCountFor(username);
   const dC=diary.filter(d=>d.createdBy===username).length;
   const ansC=reqs.filter(r=>r.createdBy===username&&r.answered).length;
   const streak=calcStreakFor(username);
