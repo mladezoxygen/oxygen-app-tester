@@ -75,8 +75,8 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 .cs-option:hover{background:rgba(123,47,190,.22);color:var(--purple-xl)}
 .cs-option.selected{background:rgba(123,47,190,.18);color:var(--purple-xl);font-weight:700}
 /* Small variant (admin panel role select) */
-.cs-wrap.sm{width:auto}
-.cs-wrap.sm .cs-trigger{padding:5px 10px;font-size:.77rem;border-radius:8px;font-weight:700;background:var(--surface);width:auto;min-width:110px}
+.cs-wrap.sm{width:130px;flex-shrink:0}
+.cs-wrap.sm .cs-trigger{padding:5px 10px;font-size:.77rem;border-radius:8px;font-weight:700;background:var(--surface);width:100%}
 .cs-wrap.sm .cs-option{padding:8px 12px;font-size:.8rem}
 /* Auth form stagger animation */
 #loginForm .fg:nth-child(1){animation:fg-in .4s ease .5s both}
@@ -373,7 +373,7 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 @keyframes ur-approve{0%{opacity:1;transform:translateX(0);max-height:80px}100%{opacity:0;transform:translateX(24px);max-height:0;padding:0;margin:0}}
 .ur-approving{animation:ur-approve .35s ease forwards}
 .ui{flex:1;min-width:0}.un2{font-weight:700;font-size:.87rem}.us{font-size:.72rem;color:var(--muted);margin-top:1px}
-.ua{display:flex;gap:6px;align-items:center;flex-wrap:nowrap}
+.ua{display:flex;gap:6px;align-items:center;flex-wrap:nowrap;flex-shrink:0}
 .bs-placeholder{display:inline-flex;padding:5px 11px;border-radius:7px;font-size:.75rem;visibility:hidden;pointer-events:none;border:1px solid transparent;white-space:nowrap}
 select.rs{padding:5px 9px;font-size:.77rem;background:var(--surface);border:1px solid var(--border);border-radius:7px;color:var(--text);font-family:'Nunito',sans-serif;font-weight:700;outline:none;cursor:pointer;transition:border-color .2s;color-scheme:dark}
 select.rs:hover{border-color:var(--border-l)}
@@ -870,8 +870,8 @@ input:checked+.slider::before{transform:translateX(18px)}
     <!-- ADMIN -->
     <div class="sec" id="sec-admin">
       <div class="ph"><h1>Admin panel</h1><p>Správa uživatelů a obsahu</p></div>
-      <div class="tabs admin-tabs"><button class="tab on" onclick="aTab('users',this)">👤 Uživatelé</button><button class="tab" onclick="aTab('pending',this)">⏳ Čekající<span id="pCnt"></span></button><button class="tab" onclick="aTab('anon',this)">📩 Anonymní</button></div>
-      <div id="aUsers"></div><div id="aPending" style="display:none"></div><div id="aAnon" style="display:none"></div>
+      <div class="tabs admin-tabs"><button class="tab on" onclick="aTab('users',this)">👤 Uživatelé</button><button class="tab" onclick="aTab('pending',this)">⏳ Čekající<span id="pCnt"></span></button></div>
+      <div id="aUsers"></div><div id="aPending" style="display:none"></div>
     </div>
     </div><!-- /.mc-inner -->
   </div><!-- /.mc -->
@@ -1246,7 +1246,7 @@ function startListeners(){
   }));
   unsubs.push(onSnapshot(query(collection(db,'checklist'),orderBy('ts','desc')),snap=>{window._chk=snap.docs.map(d=>({...d.data(),_id:d.id}));renderChk();updateBadges();}));
   unsubs.push(onSnapshot(query(collection(db,'watch'),orderBy('ts','asc')),snap=>{window._watch=snap.docs.map(d=>({...d.data(),_id:d.id}));renderWatch();renderCalendar();renderDash();renderBanners();if(document.getElementById('sec-my-stats').classList.contains('on'))renderMyStats();}));
-  unsubs.push(onSnapshot(query(collection(db,'anon'),orderBy('ts','desc')),snap=>{window._anon=snap.docs.map(d=>({...d.data(),_id:d.id}));renderAnon();updateBadges();const el=document.getElementById('aAnon');if(el&&el.style.display!=='none')renderAdminAnon();}));
+  unsubs.push(onSnapshot(query(collection(db,'anon'),orderBy('ts','desc')),snap=>{window._anon=snap.docs.map(d=>({...d.data(),_id:d.id}));renderAnon();updateBadges();}));
   unsubs.push(onSnapshot(query(collection(db,'diary'),orderBy('ts','desc')),snap=>{window._diary=snap.docs.map(d=>({...d.data(),_id:d.id}));renderDiary();updateBadges();}));
   unsubs.push(onSnapshot(collection(db,'users'),snap=>{
     window._users={};snap.docs.forEach(d=>{window._users[d.id]=d.data();});
@@ -2198,8 +2198,8 @@ window.saveEmoji=async()=>{try{await updateDoc(doc(db,'users',CU.username),{emoj
 window.saveNS=async()=>{notifSettings={newRequest:document.getElementById('ns1')?.checked??true,newComment:document.getElementById('ns2')?.checked??true,newChat:document.getElementById('ns3')?.checked??true,watchReminder:document.getElementById('ns4')?.checked??true};try{await updateDoc(doc(db,'users',CU.username),{notifSettings});CU.notifSettings=notifSettings;toast('Nastavení oznámení uloženo ✓');}catch(e){toast('Chyba: '+e.message);}};
 
 // ── ADMIN ──────────────────────────────────────────────────────────────────
-window.aTab=(tab,btn)=>{document.querySelectorAll('#sec-admin .tab').forEach(b=>b.classList.remove('on'));btn.classList.add('on');['aUsers','aPending','aAnon'].forEach(id=>document.getElementById(id).style.display='none');if(tab==='users'){document.getElementById('aUsers').style.display='block';renderAdminUsers();}if(tab==='pending'){document.getElementById('aPending').style.display='block';renderAdminPending();}if(tab==='anon'){document.getElementById('aAnon').style.display='block';renderAdminAnon();}setTimeout(initCustomSelects,30);};
-function renderAdminSec(){document.getElementById('aUsers').style.display='block';document.getElementById('aPending').style.display='none';document.getElementById('aAnon').style.display='none';renderAdminUsers();setTimeout(initCustomSelects,30);}
+window.aTab=(tab,btn)=>{document.querySelectorAll('#sec-admin .tab').forEach(b=>b.classList.remove('on'));btn.classList.add('on');['aUsers','aPending'].forEach(id=>document.getElementById(id).style.display='none');if(tab==='users'){document.getElementById('aUsers').style.display='block';renderAdminUsers();}if(tab==='pending'){document.getElementById('aPending').style.display='block';renderAdminPending();}setTimeout(initCustomSelects,30);};
+function renderAdminSec(){document.getElementById('aUsers').style.display='block';document.getElementById('aPending').style.display='none';renderAdminUsers();setTimeout(initCustomSelects,30);}
 function renderAdminUsers(){const el=document.getElementById('aUsers');const users=Object.values(window._users||{}).filter(u=>u.role!=='pending').sort((a,b)=>a.name.localeCompare(b.name));if(!users.length){el.innerHTML=`<div class="empty"><p>Žádní uživatelé</p></div>`;return;}el.innerHTML=users.map(u=>`<div class="ur"><div class="uav ${u.emoji?'ea':''} profile-clickable" style="flex-shrink:0" onclick="showUserProfile('${u.username}')" title="Zobrazit profil">${u.emoji||ini(u.name)}</div><div class="ui profile-clickable" onclick="showUserProfile('${u.username}')"><div class="un2">${esc(u.name)}</div><div class="us">@${esc(u.username)}</div></div><div class="ua"><select class="rs" onchange="chRole('${u.username}',this.value)"><option value="admin" ${u.role==='admin'?'selected':''}>Admin</option><option value="modlitebnik" ${u.role==='modlitebnik'?'selected':''}>Modlitebník</option><option value="mladeznik" ${u.role==='mladeznik'?'selected':''}>Mládežník</option></select>${u.username!==CU.username?`<button class="bs b-del" onclick="delUser('${u.username}')">🗑</button>`:`<span class="bs-placeholder"></span>`}</div></div>`).join('');setTimeout(initCustomSelects,30);}
 function renderAdminPending(){const el=document.getElementById('aPending');const pend=Object.values(window._users||{}).filter(u=>u.role==='pending');const pc=document.getElementById('pCnt');if(pc)pc.textContent=pend.length?` (${pend.length})`:'';if(!pend.length){el.innerHTML=`<div class="empty"><div class="ei">✓</div><p>Žádné čekající žádosti</p></div>`;return;}el.innerHTML=pend.map(u=>`<div class="ur"><div class="uav profile-clickable" style="flex-shrink:0" onclick="showUserProfile('${u.username}')" title="Zobrazit profil">${ini(u.name)}</div><div class="ui profile-clickable" onclick="showUserProfile('${u.username}')"><div class="un2">${esc(u.name)}</div><div class="us">@${esc(u.username)}</div></div><div class="ua"><button class="bs b-ok" onclick="approveUser('${u.username}','modlitebnik')">✓ Modlitebník</button><button class="bs b-ghost" onclick="approveUser('${u.username}','mladeznik')">✓ Mládežník</button><button class="bs b-del" onclick="rejectUser('${u.username}')">✗</button></div></div>`).join('');}
 function renderAdminAnon(){const el=document.getElementById('aAnon');const list=window._anon||[];if(!list.length){el.innerHTML=`<div class="empty"><div class="ei">📭</div><p>Žádné anonymní žádosti</p></div>`;return;}el.innerHTML=list.map(r=>`<div class="pc" style="margin-bottom:9px"><div class="rh"><div class="rm2"><span class="tag t-anon">Anonymní</span><span class="tag t-${r.cat}">${r.cat}</span><span class="tag" style="background:rgba(255,255,255,.07);color:var(--muted);font-size:.65rem">${(r.reqType||"jednorázová")==="opakovaná"?"🔄 Opakovaná":(r.reqType||"jednorázová")==="dlouhodobá"?"📅 Dlouhodobá":"🕯 Jednorázová"}</span></div><div class="rd">${fmtTs(r.ts)}</div></div><p class="rt">${esc(r.text)}</p><div class="rf"><span class="pc-cnt">${(r.prayedBy||[]).length}×</span><button class="bs b-del" style="margin-left:auto" onclick="delAnon('${r._id}')">🗑</button></div></div>`).join('');}
