@@ -544,8 +544,36 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 /* Sidebar close/open buttons — skryté na desktopu */
 .ch-sidebar-close{display:none}
 .ch-open-sidebar-btn{display:none}
-.ch-sidebar-overlay{display:none;position:absolute;inset:0;background:rgba(0,0,0,.5);z-index:49}
-.ch-sidebar-overlay.active{display:block}
+.ch-sidebar-overlay{
+  display:none;position:absolute;inset:0;
+  background:rgba(0,0,0,0);z-index:49;
+  transition:background .25s ease;
+}
+.ch-sidebar-overlay.active{display:block;background:rgba(0,0,0,.48)}
+
+/* Members panel jako modal na mobilu */
+.ch-members-mob-modal{
+  display:none;position:fixed;inset:0;z-index:500;
+  align-items:flex-end;justify-content:center;
+  background:rgba(0,0,0,.55);
+  animation:modal-bg-in .22s ease forwards;
+}
+.ch-members-mob-modal.open{display:flex}
+.ch-members-mob-sheet{
+  background:var(--surface);border:1px solid var(--border-l);
+  border-radius:20px 20px 0 0;width:100%;max-height:72vh;
+  display:flex;flex-direction:column;overflow:hidden;
+  animation:mob-sheet-in .28s cubic-bezier(.22,.68,0,1.2);
+}
+@keyframes mob-sheet-in{from{transform:translateY(100%);opacity:.6}to{transform:translateY(0);opacity:1}}
+.ch-members-mob-header{
+  padding:14px 16px 10px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;flex-shrink:0;
+}
+.ch-members-mob-title{font-size:.82rem;font-weight:800;color:var(--white);text-transform:uppercase;letter-spacing:.06em}
+.ch-members-mob-close{background:none;border:none;color:var(--muted);cursor:pointer;font-size:1.1rem;line-height:1;padding:2px}
+.ch-members-mob-close:hover{color:var(--red)}
+.ch-members-mob-body{flex:1;overflow-y:auto;padding:8px 0}
 
 @media(max-width:700px){
   /* ── CHAT MOBILE ── */
@@ -555,19 +583,19 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
     height:auto;border-radius:0;border:none;
     display:flex;flex-direction:row;overflow:hidden;
   }
-  /* Channel sidebar jako výsuvný drawer */
+  /* Channel sidebar jako výsuvný drawer — jemná animace */
   .ch-sidebar{
     position:absolute;top:0;left:0;bottom:0;
     width:82%!important;max-width:280px!important;min-width:0!important;
     background:var(--bg-dark2);border-right:1px solid var(--border-l);
     display:flex;flex-direction:column;overflow:hidden;
-    transform:translateX(-100%);
-    transition:transform .28s cubic-bezier(.22,.68,0,1.2);
+    transform:translateX(-105%);
+    transition:transform .3s ease, box-shadow .3s ease;
     z-index:50;box-shadow:none;
   }
   .ch-sidebar.mob-open{
     transform:translateX(0);
-    box-shadow:4px 0 32px rgba(0,0,0,.55);
+    box-shadow:6px 0 28px rgba(0,0,0,.45);
   }
   .ch-sidebar-header{
     padding:14px 14px 10px;justify-content:space-between;align-items:center;
@@ -616,6 +644,7 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
   .ch-topbar-right{display:flex!important;gap:6px;align-items:center;flex-shrink:0;margin-left:auto}
   .ch-members-btn{padding:4px 8px;font-size:.72rem}
   .ch-edit-btn{padding:3px 7px;font-size:.8rem}
+  /* Members panel skrytý — nahrazen modal sheetem */
   .ch-members-panel{display:none!important}
   /* Messages */
   .chat-msgs{flex:1;padding:8px 6px 4px;min-height:0;overflow-y:auto}
@@ -1158,6 +1187,16 @@ input:checked+.slider::before{transform:translateX(18px)}
     </div>
     <!-- Emoji picker overlay -->
     <div id="emojiPickerOverlay" style="display:none;position:fixed;z-index:600;background:var(--surface);border:1px solid var(--border-l);border-radius:16px;padding:12px;box-shadow:0 16px 48px rgba(0,0,0,.65);width:288px;animation:fu .15s ease"><div style="display:flex;flex-wrap:wrap;gap:3px"></div></div>
+    <!-- Mobile members bottom sheet -->
+    <div class="ch-members-mob-modal" id="chMembersMobModal" onclick="if(event.target===this)closeMobMembersModal()">
+      <div class="ch-members-mob-sheet">
+        <div class="ch-members-mob-header">
+          <span class="ch-members-mob-title">👥 Členové kanálu</span>
+          <button class="ch-members-mob-close" onclick="closeMobMembersModal()">✕</button>
+        </div>
+        <div class="ch-members-mob-body" id="chMembersMobList"></div>
+      </div>
+    </div>
 
 
     <!-- MY STATS -->
@@ -2440,8 +2479,8 @@ window.switchChannel=function switchChannel(channelId){
 }
 
 // ── MEMBERS PANEL ─────────────────────────────────────────────────────────
-function renderMembersPanel(ch){
-  const el=document.getElementById('chMembersList');if(!el)return;
+function renderMembersPanel(ch, targetId){
+  const el=document.getElementById(targetId||'chMembersList');if(!el)return;
   const allU=window._users||{};
   const now50=Date.now();const onlineSet=new Set(Object.entries(window._onlineData||{}).filter(([,d])=>d.t&&(now50-d.t)<50000).map(([k])=>k));
   let members;
@@ -2473,6 +2512,18 @@ function memberRow(u,online){
   </div>`;
 }
 window.toggleMembersPanel=()=>{
+  // Na mobilu použij bottom sheet modal
+  if(window.innerWidth<=700){
+    const modal=document.getElementById('chMembersMobModal');
+    if(!modal)return;
+    const ch=_channels.find(c=>c._id===_activeChannelId);
+    renderMembersPanel(ch,'chMembersMobList');
+    modal.classList.add('open');
+    document.body.style.overflow='hidden';
+    document.getElementById('chMembersBtn')?.classList.add('active');
+    return;
+  }
+  // Desktop: klasický side panel
   const panel=document.getElementById('chMembersPanel');
   const btn=document.getElementById('chMembersBtn');
   if(!panel)return;
@@ -2482,6 +2533,12 @@ window.toggleMembersPanel=()=>{
     const ch=_channels.find(c=>c._id===_activeChannelId);
     renderMembersPanel(ch);
   }
+};
+window.closeMobMembersModal=function(){
+  const modal=document.getElementById('chMembersMobModal');
+  if(modal)modal.classList.remove('open');
+  document.body.style.overflow='';
+  document.getElementById('chMembersBtn')?.classList.remove('active');
 };
 
 // ── EDIT CHANNEL MODAL ────────────────────────────────────────────────────
