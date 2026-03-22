@@ -536,8 +536,8 @@ input:checked+.slider::before{transform:translateX(18px)}
 .scard-streak-fire{display:inline-block;animation:streak-bounce 2.5s ease infinite;line-height:1}
 
 /* COUNTDOWN */
-.countdown-card{background:linear-gradient(135deg,rgba(155,79,222,.15),rgba(155,79,222,.07));border:1px solid rgba(155,79,222,.3);border-radius:14px;padding:14px 18px;margin-bottom:14px;display:flex;align-items:center;gap:12px;animation:fu .4s ease both}
-.countdown-num{font-family:'Cinzel',serif;font-size:1.6rem;color:var(--purple-xl);font-weight:700;min-width:36px;text-align:center}
+.countdown-card{background:var(--card-bg);border:1px solid var(--border-l);border-radius:14px;padding:14px 18px;margin-bottom:14px;display:flex;align-items:center;gap:12px;animation:fu .4s ease both}
+.countdown-num{font-family:'Cinzel',serif;font-size:1.6rem;color:var(--purple-xl);font-weight:700;min-width:36px;text-align:center;background:rgba(0,0,0,.15);border-radius:8px;padding:2px 6px}
 .countdown-lbl{font-size:.78rem;color:var(--muted)}
 .countdown-title{font-size:.88rem;font-weight:700;color:var(--text)}
 
@@ -1628,9 +1628,10 @@ window.calClick=(y,mo,d,e)=>{
   }
 
   popup.innerHTML=inner;
-  // Position popup: first append to measure, then reposition
+  // Append to DOM first so initCustomSelects can find selects
   popup.style.visibility='hidden';
   document.body.appendChild(popup);
+  initCustomSelects(popup);
   const rect=e.currentTarget.getBoundingClientRect();
   const popH=popup.offsetHeight;
   const popW=popup.offsetWidth||300;
