@@ -1640,8 +1640,17 @@ function makeGCalUrl(w){
   const fmt=d=>`${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`;
   const edExcl=new Date(ed);edExcl.setDate(edExcl.getDate()+1);
   const title=encodeURIComponent('Modlitební stráž – '+(w.person||''));
-  const details=encodeURIComponent((w.topics||[]).length?'Témata: '+(w.topics||[]).join(', '):'Modlitební stráž Oxygen');
-  return`https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${fmt(sd)}/${fmt(edExcl)}&details=${details}`;
+  // Build dynamic details with current participants at time of click
+  const ldr=userByUn(w.assignedTo);
+  const ldrName=ldr?ldr.name:(w.person||'');
+  const parts=(w.participants||[]).map(un=>{const u=userByUn(un);return u?u.name:un;});
+  const allNames=[ldrName,...parts];
+  let details='🙏 Modlitební stráž Oxygen';
+  if((w.topics||[]).length)details+='\\nTémata: '+(w.topics||[]).join(', ');
+  details+='\\n\\nVedoucí: '+ldrName;
+  if(parts.length)details+='\\nÚčastníci: '+parts.join(', ');
+  details+='\\n\\n(Seznam účastníků platný ke: '+new Date().toLocaleDateString('cs-CZ')+')';
+  return`https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${fmt(sd)}/${fmt(edExcl)}&details=${encodeURIComponent(details)}`;
 }
 
 function watchAvatarEl(un,isLeader){
@@ -1709,7 +1718,7 @@ function renderWatch(){
         <div class="wc-participants-section">
           <div class="wc-participants-label">👥 ${totalLabel}</div>
           <div class="wc-av-stack">${leaderAv}${partAvatars}${extraAv}</div>
-          ${partCount?`<div style="font-size:.72rem;color:var(--muted);margin-top:4px">${esc(partNames)}</div>`:'<div style="font-size:.72rem;color:var(--muted);margin-top:4px;font-style:italic">Ještě nikdo přidaný – přidej se!</div>'}
+          ${partCount?`<div style="font-size:.72rem;color:var(--muted);margin-top:4px">${esc(partNames)}</div>`:`<div style="font-size:.72rem;color:var(--muted);margin-top:4px;font-style:italic">${isLeader?'Ještě se nikdo nepřidal – sdílej stráž s týmem':'Ještě nikdo přidaný – přidej se!'}</div>`}
         </div>
         <div class="wc-join-row">
           ${isLeader
