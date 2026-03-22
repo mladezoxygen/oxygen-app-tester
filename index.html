@@ -35,8 +35,8 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 #authWrap{display:flex;align-items:flex-start;justify-content:center;min-height:100vh;padding:20px;padding-top:max(20px,env(safe-area-inset-top))}
 .abox{background:var(--card-alpha-hi,rgba(49,18,96,0.92));border:1px solid var(--border-l);border-radius:24px;padding:36px 28px;width:100%;max-width:410px;backdrop-filter:blur(20px);box-shadow:0 32px 80px rgba(0,0,0,0.5);animation:abox-in .6s cubic-bezier(.22,.68,0,1.2) both;margin:auto 0;transition:box-shadow .3s ease}
 .abox:has(#registerForm:not([style*="display:none"])){box-shadow:0 40px 90px rgba(0,0,0,.55)}
-@keyframes overlay-bg-in{from{background:rgba(0,0,0,0);backdrop-filter:blur(0px)}to{background:rgba(0,0,0,.75);backdrop-filter:blur(6px)}}
-@keyframes overlay-bg-out{from{background:rgba(0,0,0,.75);backdrop-filter:blur(6px)}to{background:rgba(0,0,0,0);backdrop-filter:blur(0px)}}
+@keyframes overlay-bg-in{from{opacity:0}to{opacity:1}}
+@keyframes overlay-bg-out{from{opacity:1}to{opacity:0}}
 @keyframes pub-card-in{from{opacity:0;transform:scale(.92) translateY(20px)}to{opacity:1;transform:scale(1) translateY(0)}}
 @keyframes pub-card-out{from{opacity:1;transform:scale(1) translateY(0)}to{opacity:0;transform:scale(.94) translateY(12px)}}
 @keyframes fu{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:translateY(0)}}
@@ -76,8 +76,8 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 .amsg.err{background:rgba(239,71,111,.15);color:var(--red);border:1px solid rgba(239,71,111,.3)}
 .amsg.ok{background:rgba(6,214,160,.15);color:var(--green);border:1px solid rgba(6,214,160,.3)}
 .amsg.inf{background:rgba(123,47,190,.15);color:var(--purple-xl);border:1px solid var(--border)}
-.pendover{position:fixed;inset:0;background:rgba(0,0,0,.72);display:flex;align-items:center;justify-content:center;z-index:999;padding:20px}
-.pendbox{background:var(--surface);border:1px solid var(--border-l);border-radius:20px;padding:38px;max-width:380px;width:100%;text-align:center}
+.pendover{position:fixed;inset:0;background:rgba(0,0,0,.72);display:flex;align-items:center;justify-content:center;z-index:999;padding:20px;animation:fu .4s ease}
+.pendbox{background:var(--surface);border:1px solid var(--border-l);border-radius:20px;padding:38px;max-width:380px;width:100%;text-align:center;animation:abox-in .5s cubic-bezier(.22,.68,0,1.2) .1s both}
 .pendbox h2{font-family:'Cinzel',serif;font-size:1.3rem;color:var(--white);margin-bottom:10px}
 .pendbox p{color:var(--muted);font-size:.87rem;line-height:1.65}
 /* SIDEBAR */
@@ -350,7 +350,9 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 .usc-sn{font-family:'Cinzel',serif;font-size:1.1rem;color:var(--purple-xl);font-weight:700}
 .usc-sl{font-size:.63rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
 /* ADMIN */
-.ur{display:flex;align-items:center;gap:9px;background:var(--card-bg);border:1px solid var(--border);border-radius:11px;padding:11px 14px;margin-bottom:7px}
+.ur{display:flex;align-items:center;gap:9px;background:var(--card-bg);border:1px solid var(--border);border-radius:11px;padding:11px 14px;margin-bottom:7px;transition:all .3s ease;overflow:hidden}
+@keyframes ur-approve{0%{opacity:1;transform:translateX(0);max-height:80px}100%{opacity:0;transform:translateX(24px);max-height:0;padding:0;margin:0}}
+.ur-approving{animation:ur-approve .35s ease forwards}
 .ui{flex:1;min-width:0}.un2{font-weight:700;font-size:.87rem}.us{font-size:.72rem;color:var(--muted);margin-top:1px}
 .ua{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
 .bs-placeholder{display:inline-flex;padding:5px 11px;border-radius:7px;font-size:.75rem;visibility:hidden;pointer-events:none;border:1px solid transparent;white-space:nowrap}
@@ -576,7 +578,7 @@ input:checked+.slider::before{transform:translateX(18px)}
 </div>
 
 <!-- PUBLIC PRAYER OVERLAY -->
-<div id="publicPrayerOverlay" style="display:none;position:fixed;inset:0;z-index:800;align-items:center;justify-content:center;padding:20px">
+<div id="publicPrayerOverlay" style="display:none;position:fixed;inset:0;z-index:800;align-items:center;justify-content:center;padding:20px;will-change:opacity">
   <div id="pubCard" style="background:var(--surface);border:1px solid var(--border-l);border-radius:22px;padding:36px 30px;width:100%;max-width:420px;box-shadow:0 32px 80px rgba(0,0,0,.6);position:relative">
     <button onclick="closePublicPrayer()" style="position:absolute;top:14px;right:16px;background:none;border:none;color:var(--muted);font-size:1.4rem;cursor:pointer;line-height:1">✕</button>
     <div style="text-align:center;margin-bottom:22px">
@@ -879,6 +881,13 @@ const REACT_EMOJIS=['🙏','❤️','🔥','✓','😢','🕊️'];
 // ── HELPERS ───────────────────────────────────────────────────────────────
 const esc=s=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/\n/g,'<br>');
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,5);
+// Czech declension helpers
+const csParticipants=n=>n===0?'zatím žádní účastníci':n===1?'1 účastník':n<5?`${n} účastníci`:`${n} účastníků`;
+const csParticipantsShort=n=>n===1?'1 účastník':n<5?`${n} účastníci`:`${n} účastníků`;
+const csWatchLeader=n=>n===0?'vedoucí, zatím žádní účastníci':n===1?'vedoucí + 1 účastník':n<5?`vedoucí + ${n} účastníci`:`vedoucí + ${n} účastníků`;
+const csDays=n=>n===1?'1 den':n<5?`${n} dny`:`${n} dní`;
+const csStreak=n=>n===1?'den':n<5?'dny':'dní';
+
 const isAdmin=()=>CU?.role==='admin';
 const canMgr=()=>['admin','modlitebnik'].includes(CU?.role);
 const ini=n=>n?n.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2):'?';
@@ -1575,7 +1584,7 @@ window.calClick=(y,mo,d,e)=>{
           ${gcalUrl?`<a href="${gcalUrl}" target="_blank" rel="noopener" class="bs b-gcal" style="text-decoration:none;font-size:.72rem;padding:4px 9px">📅</a>`:''}
           ${canDel?`<button class="bs b-del" style="font-size:.72rem;padding:4px 9px" onclick="delWatch('${w._id}');document.querySelector('.cal-popup')?.remove();calPopup=null">🗑</button>`:''}
         </div>
-        ${partCount?`<div class="wpi-parts">👥 ${partCount} účastník${partCount===1?'':partCount<5?'í':'ů'}: ${parts.slice(0,4).map(un=>{const u=userByUn(un);return u?.name?.split(' ')[0]||un;}).join(', ')}${partCount>4?' …':''}</div>`:'<div class="wpi-parts" style="color:var(--muted)">Zatím žádní účastníci</div>'}
+        ${partCount?`<div class="wpi-parts">👥 ${csParticipantsShort(partCount)}: ${parts.slice(0,4).map(un=>{const u=userByUn(un);return u?.name?.split(' ')[0]||un;}).join(', ')}${partCount>4?' …':''}</div>`:'<div class="wpi-parts" style="color:var(--muted)">Zatím žádní účastníci</div>'}
       </div>`;
     }).join('');
     inner+=`</div>`;
@@ -1669,7 +1678,7 @@ window.toggleJoinWatch=async(id,btn)=>{
     if(popupItem){
       const partsNow=w.participants||[];
       const partNamesNow=partsNow.slice(0,4).map(un=>{const u=userByUn(un);return u?.name?.split(' ')[0]||un;}).join(', ')+(partsNow.length>4?' …':'');
-      const newTxt=partsNow.length?`👥 ${partsNow.length} účastník${partsNow.length===1?'':partsNow.length<5?'í':'ů'}: ${partNamesNow}`:'Zatím žádní účastníci';
+      const newTxt=partsNow.length?`👥 ${csParticipantsShort(partsNow.length)}: ${partNamesNow}`:'Zatím žádní účastníci';
       let pDiv=popupItem.querySelector('.wpi-parts');
       if(pDiv){pDiv.textContent=newTxt;pDiv.classList.remove('part-count-updated');void pDiv.offsetWidth;pDiv.classList.add('part-count-updated');}
     }
@@ -1680,7 +1689,7 @@ window.toggleJoinWatch=async(id,btn)=>{
       const secLabel=watchCard.querySelector('.wc-participants-label');
       if(secLabel){
         const pc=partsNow.length;
-        const lbl=pc===0?'vedoucí, zatím žádní účastníci':pc===1?'vedoucí + 1 účastník':pc<5?`vedoucí + ${pc} účastníci`:`vedoucí + ${pc} účastníků`;
+        const lbl=csWatchLeader(pc);
         secLabel.textContent='👥 '+lbl;
         secLabel.classList.remove('part-count-updated');void secLabel.offsetWidth;secLabel.classList.add('part-count-updated');
       }
@@ -1690,7 +1699,7 @@ window.toggleJoinWatch=async(id,btn)=>{
     if(dashPc&&dashPc.dataset.watchParts===id){
       const partsNow=w.participants||[];
       const pc=partsNow.length;
-      dashPc.textContent=pc?`👥 ${pc} účastník${pc===1?'':pc<5?'í':'ů'}`:'';
+      dashPc.textContent=pc?`👥 ${csParticipantsShort(pc)}`:'';
       if(pc){dashPc.classList.remove('part-count-updated');void dashPc.offsetWidth;dashPc.classList.add('part-count-updated','visible');}
       else dashPc.classList.remove('visible');
     }
@@ -1790,7 +1799,7 @@ window.renderWatch=function renderWatch(){
     const ldrName=ldr?ldr.name:w.person;
     const parts=w.participants||[];
     const partCount=parts.length;
-    const totalLabel=(()=>{if(partCount===0)return'vedoucí, zatím žádní účastníci';if(partCount===1)return'vedoucí + 1 účastník';if(partCount<5)return`vedoucí + ${partCount} účastníci`;return`vedoucí + ${partCount} účastníků`;})();
+    const totalLabel=csWatchLeader(partCount);
     // avatars: leader first (gold border), then participants
     const leaderAv=watchAvatarEl(w.assignedTo,true);
     const partAvatars=parts.slice(0,6).map(un=>watchAvatarEl(un,false)).join('');
@@ -2173,8 +2182,19 @@ function renderAdminSec(){document.getElementById('aUsers').style.display='block
 function renderAdminUsers(){const el=document.getElementById('aUsers');const users=Object.values(window._users||{}).filter(u=>u.role!=='pending').sort((a,b)=>a.name.localeCompare(b.name));if(!users.length){el.innerHTML=`<div class="empty"><p>Žádní uživatelé</p></div>`;return;}el.innerHTML=users.map(u=>`<div class="ur"><div class="uav ${u.emoji?'ea':''} profile-clickable" style="flex-shrink:0" onclick="showUserProfile('${u.username}')" title="Zobrazit profil">${u.emoji||ini(u.name)}</div><div class="ui profile-clickable" onclick="showUserProfile('${u.username}')"><div class="un2">${esc(u.name)}</div><div class="us">@${esc(u.username)}</div></div><div class="ua"><select class="rs" onchange="chRole('${u.username}',this.value)"><option value="admin" ${u.role==='admin'?'selected':''}>Admin</option><option value="modlitebnik" ${u.role==='modlitebnik'?'selected':''}>Modlitebník</option><option value="mladeznik" ${u.role==='mladeznik'?'selected':''}>Mládežník</option></select>${u.username!==CU.username?`<button class="bs b-del" onclick="delUser('${u.username}')">🗑</button>`:`<span class="bs-placeholder"></span>`}</div></div>`).join('');}
 function renderAdminPending(){const el=document.getElementById('aPending');const pend=Object.values(window._users||{}).filter(u=>u.role==='pending');const pc=document.getElementById('pCnt');if(pc)pc.textContent=pend.length?` (${pend.length})`:'';if(!pend.length){el.innerHTML=`<div class="empty"><div class="ei">✓</div><p>Žádné čekající žádosti</p></div>`;return;}el.innerHTML=pend.map(u=>`<div class="ur"><div class="uav profile-clickable" style="flex-shrink:0" onclick="showUserProfile('${u.username}')" title="Zobrazit profil">${ini(u.name)}</div><div class="ui profile-clickable" onclick="showUserProfile('${u.username}')"><div class="un2">${esc(u.name)}</div><div class="us">@${esc(u.username)}</div></div><div class="ua"><button class="bs b-ok" onclick="approveUser('${u.username}','modlitebnik')">✓ Modlitebník</button><button class="bs b-ghost" onclick="approveUser('${u.username}','mladeznik')">✓ Mládežník</button><button class="bs b-del" onclick="rejectUser('${u.username}')">✗</button></div></div>`).join('');}
 function renderAdminAnon(){const el=document.getElementById('aAnon');const list=window._anon||[];if(!list.length){el.innerHTML=`<div class="empty"><div class="ei">📭</div><p>Žádné anonymní žádosti</p></div>`;return;}el.innerHTML=list.map(r=>`<div class="pc" style="margin-bottom:9px"><div class="rh"><div class="rm2"><span class="tag t-anon">Anonymní</span><span class="tag t-${r.cat}">${r.cat}</span><span class="tag" style="background:rgba(255,255,255,.07);color:var(--muted);font-size:.65rem">${(r.reqType||"jednorázová")==="opakovaná"?"🔄 Opakovaná":(r.reqType||"jednorázová")==="dlouhodobá"?"📅 Dlouhodobá":"🕯 Jednorázová"}</span></div><div class="rd">${fmtTs(r.ts)}</div></div><p class="rt">${esc(r.text)}</p><div class="rf"><span class="pc-cnt">${(r.prayedBy||[]).length}×</span><button class="bs b-del" style="margin-left:auto" onclick="delAnon('${r._id}')">🗑</button></div></div>`).join('');}
-window.approveUser=async(un,role)=>{try{await updateDoc(doc(db,'users',un),{role});toast(`✓ Schválen/a jako ${role}`);}catch(e){toast('Chyba: '+e.message);}};
-window.rejectUser=async un=>{confirmDialog('Odmítnout a smazat žádost?',async()=>{try{await deleteDoc(doc(db,'users',un));toast('Odmítnuto');}catch(e){toast('Chyba: '+e.message);}})};
+window.approveUser=async(un,role)=>{
+  // Animate the row out first
+  const rows=document.querySelectorAll('#aPending .ur');
+  const row=[...rows].find(r=>r.innerHTML.includes(`'${un}'`)||r.innerHTML.includes(`"${un}"`));
+  if(row){row.classList.add('ur-approving');await new Promise(r=>setTimeout(r,320));}
+  try{await updateDoc(doc(db,'users',un),{role});toast(`✓ Schválen/a jako ${role}`);}catch(e){toast('Chyba: '+e.message);}
+};
+window.rejectUser=async un=>{confirmDialog('Odmítnout a smazat žádost?',async()=>{
+  const rows=document.querySelectorAll('#aPending .ur');
+  const row=[...rows].find(r=>r.innerHTML.includes(`'${un}'`)||r.innerHTML.includes(`"${un}"`));
+  if(row){row.classList.add('ur-approving');await new Promise(r=>setTimeout(r,320));}
+  try{await deleteDoc(doc(db,'users',un));toast('Odmítnuto');}catch(e){toast('Chyba: '+e.message);}
+});};
 window.chRole=async(un,role)=>{try{await updateDoc(doc(db,'users',un),{role});toast('Role změněna');}catch(e){toast('Chyba: '+e.message);}};
 window.delUser=async un=>{confirmDialog('Smazat uživatele '+un+'?',async()=>{try{await deleteDoc(doc(db,'users',un));toast('Smazáno');}catch(e){toast('Chyba: '+e.message);}})};
 
@@ -2437,8 +2457,8 @@ function renderStreakDash(){
   if(streak===0){el.innerHTML='';return;}
   el.innerHTML=`<div class="streak-card">
     <div class="streak-fire">🔥</div>
-    <div><div style="display:flex;align-items:baseline;gap:6px"><div class="streak-num">${streak}</div><div class="streak-lbl">${streak===1?'den':'dnů'} streak</div></div>
-    <div class="streak-best">Nejlepší: ${best} ${best===1?'den':'dnů'}</div></div>
+    <div><div style="display:flex;align-items:baseline;gap:6px"><div class="streak-num">${streak}</div><div class="streak-lbl">${csStreak(streak)} streak</div></div>
+    <div class="streak-best">Nejlepší: ${best} ${csStreak(best)}</div></div>
     <div style="margin-left:auto;font-size:.75rem;color:var(--muted);text-align:right">Modlíš se<br>každý den 💪</div>
   </div>`;
 }
@@ -2456,7 +2476,7 @@ function renderCountdownDash(){
   }).map(w=>({...w,sd:new Date(w.startDate)})).filter(w=>{w.sd.setHours(0,0,0,0);return w.sd>=today;}).sort((a,b)=>a.sd-b.sd)[0];
   if(!myNext){el.innerHTML='';return;}
   const diff=Math.round((myNext.sd-today)/(1000*60*60*24));
-  const label=diff===0?'Dnes máš stráž! 🙏':diff===1?'Zítra máš stráž':`Za ${diff} dní máš stráž`;
+  const label=diff===0?'Dnes máš stráž! 🙏':diff===1?'Zítra máš stráž':`Za ${csDays(diff)} máš stráž`;
   el.innerHTML=`<div class="countdown-card">
     <div class="countdown-num">${diff===0?'⌚':diff}</div>
     <div><div class="countdown-title">${label}</div>
@@ -2482,8 +2502,8 @@ function renderMyStats(){
   const streak_el=document.getElementById('myStreakCard');
   if(streak_el)streak_el.innerHTML=streak>0?`<div class="streak-card" style="margin-bottom:14px">
     <div class="streak-fire">🔥</div>
-    <div><div style="display:flex;align-items:baseline;gap:6px"><div class="streak-num">${streak}</div><div class="streak-lbl">${streak===1?'den':'dnů'} streak</div></div>
-    <div class="streak-best">Nejlepší: ${best} ${best===1?'den':'dnů'}</div></div></div>`:'';
+    <div><div style="display:flex;align-items:baseline;gap:6px"><div class="streak-num">${streak}</div><div class="streak-lbl">${csStreak(streak)} streak</div></div>
+    <div class="streak-best">Nejlepší: ${best} ${csStreak(best)}</div></div></div>`:'';
 
   // Countdown
   renderCountdownMy();
@@ -2561,7 +2581,7 @@ function renderCountdownMy(){
   }).map(w=>({...w,sd:new Date(w.startDate)})).filter(w=>{w.sd.setHours(0,0,0,0);return w.sd>=today;}).sort((a,b)=>a.sd-b.sd)[0];
   if(!myNext){el.innerHTML='';return;}
   const diff=Math.round((myNext.sd-today)/(1000*60*60*24));
-  const label=diff===0?'Dnes máš stráž! 🙏':diff===1?'Zítra máš stráž':`Za ${diff} dní máš stráž`;
+  const label=diff===0?'Dnes máš stráž! 🙏':diff===1?'Zítra máš stráž':`Za ${csDays(diff)} máš stráž`;
   el.innerHTML=`<div class="countdown-card" style="margin-bottom:14px">
     <div class="countdown-num">${diff===0?'⌚':diff}</div>
     <div><div class="countdown-title">${label}</div>
@@ -2638,8 +2658,8 @@ window.showUserProfile=(username)=>{
     <div style="padding:0 26px 26px">
       ${streak>0?`<div class="streak-card" style="margin-bottom:14px">
         <div class="streak-fire">🔥</div>
-        <div><div style="display:flex;align-items:baseline;gap:6px"><div class="streak-num">${streak}</div><div class="streak-lbl">${streak===1?'den':'dnů'} streak</div></div>
-        <div class="streak-best">Nejlepší: ${bestFor} ${bestFor===1?'den':'dnů'}</div></div>
+        <div><div style="display:flex;align-items:baseline;gap:6px"><div class="streak-num">${streak}</div><div class="streak-lbl">${csStreak(streak)} streak</div></div>
+        <div class="streak-best">Nejlepší: ${bestFor} ${csStreak(bestFor)}</div></div>
       </div>`:''}
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
         <div class="scard"><div class="snum" style="font-size:1.3rem">${pC+pChk}</div><div class="slbl">Modliteb</div></div>
