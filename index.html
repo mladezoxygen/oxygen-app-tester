@@ -249,7 +249,12 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 .wpi-parts{font-size:.69rem;color:var(--muted);margin-top:4px}
 /* WATCH LIST CARDS */
 .wc{background:var(--card-bg);border:1px solid var(--border);border-radius:14px;padding:0;margin-bottom:12px;animation:fu .3s ease;overflow:hidden}
-.wc.wc-curr{border-color:rgba(255,209,102,.3);box-shadow:0 0 0 1px rgba(255,209,102,.06)}
+.wc.wc-curr{border-color:rgba(255,209,102,.35);animation:fu .3s ease,wc-curr-glow 3.5s ease 1s infinite}
+@keyframes wc-curr-glow{0%,100%{box-shadow:0 0 0 1px rgba(255,209,102,.06),0 2px 16px rgba(255,209,102,.06)}50%{box-shadow:0 0 0 1px rgba(255,209,102,.15),0 4px 28px rgba(255,209,102,.18)}}
+@keyframes join-pop{0%{transform:scale(1)}40%{transform:scale(1.18)}70%{transform:scale(.94)}100%{transform:scale(1)}}
+@keyframes part-count-in{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+.join-popped{animation:join-pop .35s cubic-bezier(.22,.68,0,1.2)}
+.part-count-updated{animation:part-count-in .3s ease}
 .wc.wc-future{border-color:rgba(155,79,222,.3)}
 .wc-header{padding:14px 16px 10px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
 .wc-header-left{flex:1;min-width:0}
@@ -665,7 +670,7 @@ input:checked+.slider::before{transform:translateX(18px)}
         <div class="scard"><div class="snum" id="s3">–</div><div class="slbl">Zápisů</div></div>
       </div>
       <div class="card card-top" style="margin-bottom:12px">
-        <div id="dashWatchLabel" style="font-family:'Cinzel',serif;color:var(--gold);margin-bottom:6px;font-size:.88rem">⌚ Aktuální modlitební stráž</div>
+        <div id="dashWatchLabel" style="font-family:'Cinzel',serif;color:var(--gold);margin-bottom:6px;font-size:.88rem">⌚ Modlitební stráž</div>
         <div id="dashWatch"></div>
       </div>
       <div class="card">
@@ -858,7 +863,7 @@ import {
 const db=getFirestore(initializeApp({apiKey:"AIzaSyAb8qbihYDA4K5s7-xKU19NlLay8M-s6bQ",authDomain:"mladez-oxygen.firebaseapp.com",projectId:"mladez-oxygen",storageBucket:"mladez-oxygen.firebasestorage.app",messagingSenderId:"335471080691",appId:"1:335471080691:web:828062db57721727e43386"}));
 
 // ── STATE ──────────────────────────────────────────────────────────────────
-let CU=null,RF='all',RT='all',CF='all',WF='all',unsubs=[],charts={};
+let CU=null,RF='all',RT='all',CF='all',WF='all',unsubs=[],charts={};let _showAllPast=false;
 let statsMonth=new Date();statsMonth.setDate(1);
 let calMonth=new Date();calMonth.setDate(1);
 let notifSettings={newRequest:true,newComment:true,newChat:true,watchReminder:true};
@@ -1257,7 +1262,7 @@ function renderDash(){
   const nextWatch=watch.filter(w=>{if(!w.startDate)return false;const sd=new Date(w.startDate);sd.setHours(0,0,0,0);return sd>today;}).sort((a,b)=>new Date(a.startDate)-new Date(b.startDate))[0];
   const cur=curWatch||nextWatch;
   const lblEl=document.getElementById('dashWatchLabel');
-  if(lblEl)lblEl.textContent=curWatch?'⌚ Aktuální modlitební stráž':'📅 Nadcházející modlitební stráž';
+  if(lblEl){lblEl.textContent=curWatch?'⌚ Aktuální modlitební stráž':'📅 Nadcházející modlitební stráž';lblEl.style.color=curWatch?'var(--gold)':'var(--purple-xl)';}
   document.getElementById('dashWatch').innerHTML=cur
     ?`<div>
         <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;flex-wrap:wrap;margin-bottom:8px">
@@ -1275,7 +1280,7 @@ function renderDash(){
         <div onclick="navigate('watch')" style="cursor:pointer;font-size:.75rem;color:var(--purple-xl);font-weight:700;display:flex;align-items:center;gap:4px">⌚ Zobrazit stráž →</div>
       </div>`
     :(()=>{
-      if(lblEl)lblEl.textContent='⌚ Modlitební stráž';
+      if(lblEl){lblEl.textContent='⌚ Modlitební stráž';lblEl.style.color='var(--muted)';}
       return '<span style="color:var(--muted);font-size:.85rem">Žádná stráž nebyla přiřazena</span>';
     })();
   renderStreakDash();renderCountdownDash();
@@ -1554,7 +1559,9 @@ window.calClick=(y,mo,d,e)=>{
         <div class="wpi-actions">
           ${isLeader
             ?`<span style="font-size:.73rem;color:var(--gold);font-weight:700">👑 Jsi vedoucí</span>`
-            :`<button class="bs b-join${iJoin?' on':''}" style="font-size:.73rem;padding:4px 10px" onclick="toggleJoinWatch('${w._id}',this)">${iJoin?'✓ Účastním se':'+ Přidám se'}</button>`
+            :(!isCurr&&!isFuture)
+              ?`<span style="font-size:.73rem;color:var(--muted)">${iJoin?'✓ Zúčastnil/a ses':'Stráž již proběhla'}</span>`
+              :`<button class="bs b-join${iJoin?' on':''}" style="font-size:.73rem;padding:4px 10px" onclick="toggleJoinWatch('${w._id}',this)">${iJoin?'✓ Účastním se':'+ Přidám se'}</button>`
           }
           ${gcalUrl?`<a href="${gcalUrl}" target="_blank" rel="noopener" class="bs b-gcal" style="text-decoration:none;font-size:.72rem;padding:4px 9px">📅</a>`:''}
           ${canDel?`<button class="bs b-del" style="font-size:.72rem;padding:4px 9px" onclick="delWatch('${w._id}');document.querySelector('.cal-popup')?.remove();calPopup=null">🗑</button>`:''}
@@ -1631,6 +1638,8 @@ window.saveCalWatch=async iso=>{
 window.toggleJoinWatch=async(id,btn)=>{
   const w=(window._watch||[]).find(x=>x._id===id);if(!w)return;
   if(w.assignedTo===CU.username){toast('Ty jsi vedoucí této stráže – automaticky jsi součástí.');return;}
+  // Block joining past watches
+  if(w.endDate){const ed=new Date(w.endDate);ed.setHours(23,59,59,999);if(ed<new Date()){toast('Tato stráž již proběhla.');return;}}
   const parts=w.participants||[];
   const iJoin=parts.includes(CU.username);
   try{
@@ -1639,14 +1648,36 @@ window.toggleJoinWatch=async(id,btn)=>{
     // Update local state immediately so popup re-render is accurate
     w.participants=iJoin?parts.filter(u=>u!==CU.username):[...parts,CU.username];
     // Update button in popup if present
-    if(btn){btn.textContent=iJoin?'+ Přidám se':'✓ Účastním se';btn.classList.toggle('on',!iJoin);}
-    // Refresh participant count label in popup if visible
+    // Animate and update button
+    if(btn){
+      btn.textContent=iJoin?'+ Přidám se':'✓ Účastním se';
+      btn.classList.toggle('on',!iJoin);
+      btn.classList.remove('join-popped');
+      void btn.offsetWidth; // reflow
+      btn.classList.add('join-popped');
+      setTimeout(()=>btn.classList.remove('join-popped'),400);
+    }
+    // Refresh participant label in popup
     const popupItem=btn?.closest('.watch-popup-item');
     if(popupItem){
       const partsNow=w.participants||[];
       const partNamesNow=partsNow.slice(0,4).map(un=>{const u=userByUn(un);return u?.name?.split(' ')[0]||un;}).join(', ')+(partsNow.length>4?' …':'');
+      const newTxt=partsNow.length?`👥 ${partsNow.length} účastník${partsNow.length===1?'':partsNow.length<5?'í':'ů'}: ${partNamesNow}`:'Zatím žádní účastníci';
       let pDiv=popupItem.querySelector('.wpi-parts');
-      if(pDiv)pDiv.textContent=partsNow.length?`👥 ${partsNow.length} účastník${partsNow.length===1?'':partsNow.length<5?'í':'ů'}: ${partNamesNow}`:'Zatím žádní účastníci';
+      if(pDiv){pDiv.textContent=newTxt;pDiv.classList.remove('part-count-updated');void pDiv.offsetWidth;pDiv.classList.add('part-count-updated');}
+    }
+    // Refresh participant section in watch list card
+    const watchCard=document.querySelector(`.wc-join-row button[onclick*="${id}"]`)?.closest('.wc');
+    if(watchCard){
+      const partsNow=w.participants||[];
+      const secLabel=watchCard.querySelector('.wc-participants-label');
+      const secNames=watchCard.querySelector('.wc-participants-section > div:last-child');
+      if(secLabel){
+        const pc=partsNow.length;
+        const lbl=pc===0?'vedoucí, zatím žádní účastníci':pc===1?'vedoucí + 1 účastník':pc<5?`vedoucí + ${pc} účastníci`:`vedoucí + ${pc} účastníků`;
+        secLabel.textContent='👥 '+lbl;
+        secLabel.classList.remove('part-count-updated');void secLabel.offsetWidth;secLabel.classList.add('part-count-updated');
+      }
     }
   }catch(e){toast('Chyba: '+e.message);}
 };
@@ -1692,11 +1723,22 @@ function renderWatch(){
   if(WF==='curr')list=allW.filter(w=>watchTiming(w).isCurr);
   else if(WF==='future')list=allW.filter(w=>watchTiming(w).isFuture);
   else if(WF==='mine')list=allW.filter(w=>iAmInvolved(w));
+  // For 'all' tab: limit past watches to avoid infinite scroll — show all curr/future + last N past
+  const PAST_LIMIT=10;
+  if(WF==='all'){
+    const currFut=list.filter(w=>!watchTiming(w).isPast);
+    const past=list.filter(w=>watchTiming(w).isPast);
+    const showAll=_showAllPast||false;
+    list=[...currFut,...(showAll?past:past.slice(-PAST_LIMIT))];
+    window._pastWatchTotal=past.length;
+    window._pastWatchShown=showAll?past.length:Math.min(past.length,PAST_LIMIT);
+  }
   const el=document.getElementById('watchList');
   if(!list.length){
     const msgs={curr:'Žádná aktuální stráž.',future:'Žádná plánovaná stráž.',mine:'Zatím nejsi u žádné stráže.<br>Přidej se v kalendáři výše.',all:'Žádné stráže ještě nebyly přidány.<br>Admin nebo modlitebník může přidat stráž kliknutím na den v kalendáři.'};
     el.innerHTML=`<div class="empty"><div class="ei">⌚</div><p>${msgs[WF]||msgs.all}</p></div>`;return;
   }
+  const pastMore=(WF==='all'&&!window._showAllPast&&(window._pastWatchTotal||0)>PAST_LIMIT);
   el.innerHTML=list.map(w=>{
     const {isCurr,isFuture,isPast}=watchTiming(w);
     const isLeader=w.assignedTo===CU.username;
@@ -1741,12 +1783,14 @@ function renderWatch(){
         <div class="wc-join-row">
           ${isLeader
             ?`<span class="wc-join-note">👑 Jsi vedoucí – tato stráž patří tobě</span>`
-            :`<button class="bs b-join${iJoin?' on':''}" onclick="toggleJoinWatch('${w._id}',this)">${iJoin?'✓ Účastním se':'+ Přidat se ke stráži'}</button><span class="wc-join-note">${iJoin?'Klikni pro odhlášení':'Připoj se k modlitbě'}</span>`
+            :isPast
+              ?`<span class="wc-join-note" style="color:var(--muted)">${iJoin?'✓ Zúčastnil/a ses':'Tato stráž již proběhla'}</span>`
+              :`<button class="bs b-join${iJoin?' on':''}" onclick="toggleJoinWatch('${w._id}',this)">${iJoin?'✓ Účastním se':'+ Přidat se ke stráži'}</button><span class="wc-join-note">${iJoin?'Klikni pro odhlášení':'Připoj se k modlitbě'}</span>`
           }
         </div>
       </div>
     </div>`;
-  }).join('');
+  }).join('')+(pastMore?`<div style="text-align:center;padding:14px 0"><button class="bs b-ghost" onclick="window._showAllPast=true;renderWatch()" style="font-size:.82rem">📜 Zobrazit všechny minulé stráže (${window._pastWatchTotal})</button></div>`:'');
 }
 
 window.delWatch=async id=>{
