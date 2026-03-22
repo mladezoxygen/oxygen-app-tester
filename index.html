@@ -235,8 +235,8 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 .cal-chip.mine{background:rgba(6,214,160,.2);color:var(--green)}
 .cal-chip.more{background:rgba(255,255,255,.07);color:var(--muted)}
 /* WATCH POPUP */
-.cal-popup{position:fixed;background:var(--surface);border:1px solid var(--border-l);border-radius:14px;padding:18px;width:300px;box-shadow:0 16px 48px rgba(0,0,0,.65);z-index:300;animation:fu .15s ease;max-height:85vh;overflow-y:auto;display:flex;flex-direction:column}
-.watch-popup-list{max-height:320px;overflow-y:auto;flex-shrink:1}
+.cal-popup{position:fixed;background:var(--surface);border:1px solid var(--border-l);border-radius:14px;padding:18px;width:300px;box-shadow:0 16px 48px rgba(0,0,0,.65);z-index:300;animation:fu .15s ease;max-height:calc(100vh - 24px);overflow-y:auto;display:flex;flex-direction:column}
+.watch-popup-list{max-height:280px;overflow-y:auto;flex-shrink:1;margin-right:-4px;padding-right:4px}
 .cal-popup h3{font-family:'Cinzel',serif;font-size:.92rem;color:var(--white);margin-bottom:12px;padding-right:20px}
 .cal-popup-close{position:absolute;top:14px;right:14px;background:none;border:none;color:var(--muted);cursor:pointer;font-size:1.1rem;line-height:1}
 .watch-popup-list{display:flex;flex-direction:column;gap:8px;margin-bottom:10px}
@@ -1577,15 +1577,32 @@ window.calClick=(y,mo,d,e)=>{
   }
 
   popup.innerHTML=inner;
-  const rect=e.currentTarget.getBoundingClientRect();
-  const spaceBelow=window.innerHeight-(rect.bottom);
-  const spaceAbove=rect.top;
-  let top;
-  if(spaceBelow>320||spaceBelow>spaceAbove){top=rect.bottom+window.scrollY+6;}
-  else{top=rect.top+window.scrollY-Math.min(480,spaceAbove)-6;}
-  popup.style.top=Math.max(window.scrollY+8,top)+'px';
-  popup.style.left=Math.min(Math.max(8,rect.left),window.innerWidth-312)+'px';
+  // Position popup: first append to measure, then reposition
+  popup.style.visibility='hidden';
   document.body.appendChild(popup);
+  const rect=e.currentTarget.getBoundingClientRect();
+  const popH=popup.offsetHeight;
+  const popW=popup.offsetWidth||300;
+  const margin=8;
+  // Vertical: prefer below cell, flip above if not enough room, clamp to viewport
+  let top;
+  const spaceBelow=window.innerHeight-rect.bottom-margin;
+  const spaceAbove=rect.top-margin;
+  if(spaceBelow>=popH||spaceBelow>=spaceAbove){
+    top=rect.bottom+margin;
+    if(top+popH>window.innerHeight-margin)top=window.innerHeight-popH-margin;
+  } else {
+    top=rect.top-popH-margin;
+    if(top<margin)top=margin;
+  }
+  // Horizontal: align to left of cell, clamp to viewport
+  let left=rect.left;
+  if(left+popW>window.innerWidth-margin)left=window.innerWidth-popW-margin;
+  if(left<margin)left=margin;
+  popup.style.position='fixed';
+  popup.style.top=top+'px';
+  popup.style.left=left+'px';
+  popup.style.visibility='';
   const close=ev=>{if(!popup.contains(ev.target)&&!ev.target.closest('.cal-day')){popup.remove();calPopup=null;document.removeEventListener('click',close);}};
   setTimeout(()=>document.addEventListener('click',close),120);
 };
@@ -1666,7 +1683,7 @@ function renderWatch(){
     const ldrName=ldr?ldr.name:w.person;
     const parts=w.participants||[];
     const partCount=parts.length;
-    const totalLabel=`vedoucí + ${partCount} účastník${partCount===1?'':partCount<5?'í':'ů'}`;
+    const totalLabel=(()=>{if(partCount===0)return'vedoucí, zatím žádní účastníci';if(partCount===1)return'vedoucí + 1 účastník';if(partCount<5)return`vedoucí + ${partCount} účastníci`;return`vedoucí + ${partCount} účastníků`;})();
     // avatars: leader first (gold border), then participants
     const leaderAv=watchAvatarEl(w.assignedTo,true);
     const partAvatars=parts.slice(0,6).map(un=>watchAvatarEl(un,false)).join('');
@@ -1682,9 +1699,9 @@ function renderWatch(){
           <div class="wc-leader">${esc(ldrName)}</div>
           <div class="wc-leader-sub">${esc(w.date)}</div>
         </div>
-        <div class="wc-header-right">
-          ${gcalUrl?`<a href="${gcalUrl}" target="_blank" rel="noopener" class="bs b-gcal" style="text-decoration:none">📅</a>`:''}
+        <div class="wc-header-right" style="flex-direction:row;gap:4px;align-items:center">
           ${canDel?`<button class="bs b-del" onclick="delWatch('${w._id}')">🗑</button>`:''}
+          ${gcalUrl?`<a href="${gcalUrl}" target="_blank" rel="noopener" class="bs b-gcal" style="text-decoration:none" title="Přidat do Google Kalendáře">📅</a>`:''}
         </div>
       </div>
       <div class="wc-body">
