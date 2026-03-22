@@ -1216,7 +1216,13 @@ function startListeners(){
   unsubs.push(onSnapshot(query(collection(db,'watch'),orderBy('ts','asc')),snap=>{window._watch=snap.docs.map(d=>({...d.data(),_id:d.id}));renderWatch();renderCalendar();renderDash();renderBanners();if(document.getElementById('sec-my-stats').classList.contains('on'))renderMyStats();}));
   unsubs.push(onSnapshot(query(collection(db,'anon'),orderBy('ts','desc')),snap=>{window._anon=snap.docs.map(d=>({...d.data(),_id:d.id}));renderAnon();updateBadges();const el=document.getElementById('aAnon');if(el&&el.style.display!=='none')renderAdminAnon();}));
   unsubs.push(onSnapshot(query(collection(db,'diary'),orderBy('ts','desc')),snap=>{window._diary=snap.docs.map(d=>({...d.data(),_id:d.id}));renderDiary();updateBadges();}));
-  unsubs.push(onSnapshot(collection(db,'users'),snap=>{window._users={};snap.docs.forEach(d=>{window._users[d.id]=d.data();});updateBadges();}));
+  unsubs.push(onSnapshot(collection(db,'users'),snap=>{
+    window._users={};snap.docs.forEach(d=>{window._users[d.id]=d.data();});
+    updateBadges();
+    // Re-render admin sections if visible
+    const aPend=document.getElementById('aPending');if(aPend&&aPend.style.display!=='none')renderAdminPending();
+    const aUsers=document.getElementById('aUsers');if(aUsers&&aUsers.style.display!=='none')renderAdminUsers();
+  }));
   unsubs.push(onSnapshot(query(collection(db,'chat'),orderBy('ts','asc'),limit(300)),snap=>{
     const prev=window._chat||[];window._chat=snap.docs.map(d=>({...d.data(),_id:d.id}));
     const chatOn=document.getElementById('sec-chat').classList.contains('on');
@@ -1276,7 +1282,7 @@ function renderDash(){
           </div>
           <div style="display:flex;gap:4px;align-items:center;flex-shrink:0">
             ${makeGCalUrl(cur)?`<a href="${makeGCalUrl(cur)}" target="_blank" rel="noopener" class="bs b-gcal" style="text-decoration:none" title="Přidat do Google Kalendáře">📅</a>`:''}
-            ${cur.assignedTo===CU.username?`<span style="font-size:.78rem;color:var(--gold);font-weight:700">👑 Vedoucí</span>`:`<button class="bs b-join${(cur.participants||[]).includes(CU.username)?' on':''}" onclick="toggleJoinWatch('${cur._id}',this)">${(cur.participants||[]).includes(CU.username)?'✓ Účastním se':'+ Přidám se'}</button>`}
+            ${cur.assignedTo===CU.username?`<span style="font-size:.78rem;color:var(--gold);font-weight:700">👑 Vedoucí</span>`:`<button id="dashJoinBtn" data-wid="${cur._id}" class="bs b-join${(cur.participants||[]).includes(CU.username)?' on':''}" onclick="toggleJoinWatch('${cur._id}',this)">${(cur.participants||[]).includes(CU.username)?'✓ Účastním se':'+ Přidám se'}</button>`}
           </div>
         </div>
         <div onclick="navigate('watch')" style="cursor:pointer;font-size:.75rem;color:var(--purple-xl);font-weight:700;display:flex;align-items:center;gap:4px">⌚ Zobrazit stráž →</div>
@@ -1576,7 +1582,8 @@ window.calClick=(y,mo,d,e)=>{
     inner+=`<div style="color:var(--muted);font-size:.82rem;padding:4px 0 10px">Žádná stráž na tento den.</div>`;
   }
 
-  if(canMgr()){
+  {
+    // Všichni přihlášení mohou přidat stráž; admin přiřazuje komukoliv, ostatní jen sobě
     const allUsers=Object.values(window._users||{}).filter(u=>u.role!=='pending').sort((a,b)=>a.name.localeCompare(b.name,'cs'));
     const userOptions=allUsers.map(u=>`<option value="${u.username}" ${u.username===CU.username?'selected':''}>${esc(u.name)}</option>`).join('');
     const whoField=isAdmin()
@@ -1680,13 +1687,23 @@ window.toggleJoinWatch=async(id,btn)=>{
         secLabel.classList.remove('part-count-updated');void secLabel.offsetWidth;secLabel.classList.add('part-count-updated');
       }
     }
-    // Refresh dashboard participant count if this watch is shown there
+    // Refresh dashboard participant count + button if this watch is shown there
     const dashPc=document.querySelector('#dashWatch [data-watch-parts]');
     if(dashPc&&dashPc.dataset.watchParts===id){
       const partsNow=w.participants||[];
       const pc=partsNow.length;
       dashPc.textContent=pc?`👥 ${pc} účastník${pc===1?'':pc<5?'í':'ů'}`:'';
       dashPc.classList.remove('part-count-updated');void dashPc.offsetWidth;dashPc.classList.add('part-count-updated');
+    }
+    // Also animate dashboard join button if it's for this watch
+    const dashBtn=document.getElementById('dashJoinBtn');
+    if(dashBtn&&dashBtn.dataset.wid===id){
+      const partsNow=w.participants||[];
+      const iNow=partsNow.includes(CU.username);
+      dashBtn.textContent=iNow?'✓ Účastním se':'+ Přidám se';
+      dashBtn.classList.toggle('on',iNow);
+      dashBtn.classList.remove('join-popped');void dashBtn.offsetWidth;dashBtn.classList.add('join-popped');
+      setTimeout(()=>dashBtn.classList.remove('join-popped'),400);
     }
   }catch(e){toast('Chyba: '+e.message);}
 };
@@ -1801,7 +1818,15 @@ window.renderWatch=function renderWatch(){
       </div>
     </div>`;
   window._animatePast=false;
-  }).join('')+(pastMore?`<div style="text-align:center;padding:14px 0"><button class="bs b-ghost" onclick="window._showAllPast=true;window._animatePast=true;renderWatch()" style="font-size:.82rem">📜 Zobrazit všechny minulé stráže (${window._pastWatchTotal})</button></div>`:'');
+  }).join('');
+  // Append "load more" button as DOM element so it's never stale
+  if(WF==='all'&&window._showAllPast!==true&&(window._pastWatchTotal||0)>10){
+    const btn=document.createElement('div');
+    btn.style.cssText='text-align:center;padding:14px 0';
+    btn.innerHTML=`<button class="bs b-ghost" style="font-size:.82rem">📜 Zobrazit všechny minulé stráže (${window._pastWatchTotal})</button>`;
+    btn.querySelector('button').onclick=()=>{window._showAllPast=true;window._animatePast=true;renderWatch();};
+    el.appendChild(btn);
+  }
 }
 
 window.delWatch=async id=>{
