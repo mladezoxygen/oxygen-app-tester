@@ -64,18 +64,19 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 /* CUSTOM SELECT DROPDOWN */
 .cs-wrap{position:relative;width:100%}
 /* Full size (in .fg groups) */
-.cs-trigger{width:100%;padding:11px 38px 11px 15px;background:rgba(255,255,255,.06);border:1px solid var(--border);border-radius:11px;color:var(--text);font-family:'Nunito',sans-serif;font-size:.93rem;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:8px;transition:border-color .2s,box-shadow .2s,background .2s;user-select:none;text-align:left;line-height:1.4}
+.cs-trigger{width:100%;padding:11px 14px;background:rgba(255,255,255,.06);border:1px solid var(--border);border-radius:11px;color:var(--text);font-family:'Nunito',sans-serif;font-size:.93rem;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:8px;transition:border-color .2s,box-shadow .2s,background .2s;user-select:none;text-align:left;line-height:1.4}
 .cs-trigger:hover{background:rgba(255,255,255,.09);border-color:rgba(155,79,222,.35)}
 .cs-trigger.open{border-color:var(--purple-l);box-shadow:0 0 0 3px rgba(123,47,190,.18);background:rgba(255,255,255,.09)}
+.cs-label{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .cs-arrow{width:14px;height:14px;flex-shrink:0;transition:transform .22s ease;color:var(--purple-xl);opacity:.8}
 .cs-trigger.open .cs-arrow{transform:rotate(180deg)}
-.cs-dropdown{position:fixed;background:var(--bg2);border:1px solid var(--border-l);border-radius:12px;box-shadow:0 16px 48px rgba(0,0,0,.65);z-index:1200;overflow:hidden;min-width:160px;animation:fu .15s ease}
+.cs-dropdown{position:fixed;background:var(--bg2);border:1px solid var(--border-l);border-radius:12px;box-shadow:0 16px 48px rgba(0,0,0,.65);z-index:1200;overflow-y:auto;overflow-x:hidden;max-height:240px;min-width:160px;animation:fu .15s ease}
 .cs-option{padding:10px 15px;font-family:'Nunito',sans-serif;font-size:.88rem;color:var(--text);cursor:pointer;transition:background .1s;white-space:nowrap}
 .cs-option:hover{background:rgba(123,47,190,.22);color:var(--purple-xl)}
 .cs-option.selected{background:rgba(123,47,190,.18);color:var(--purple-xl);font-weight:700}
 /* Small variant (admin panel role select) */
 .cs-wrap.sm{width:auto}
-.cs-wrap.sm .cs-trigger{padding:5px 28px 5px 10px;font-size:.77rem;border-radius:8px;font-weight:700;background:var(--surface);width:auto;min-width:110px}
+.cs-wrap.sm .cs-trigger{padding:5px 10px;font-size:.77rem;border-radius:8px;font-weight:700;background:var(--surface);width:auto;min-width:110px}
 .cs-wrap.sm .cs-option{padding:8px 12px;font-size:.8rem}
 /* Auth form stagger animation */
 #loginForm .fg:nth-child(1){animation:fg-in .4s ease .5s both}
