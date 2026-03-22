@@ -2410,7 +2410,11 @@ function renderCountdownDash(){
   const watch=window._watch||[];
   const today=new Date();today.setHours(0,0,0,0);
   // Find next watch for current user
-  const myNext=watch.filter(w=>w.createdBy===CU?.username&&w.startDate).map(w=>({...w,sd:new Date(w.startDate)})).filter(w=>{w.sd.setHours(0,0,0,0);return w.sd>=today;}).sort((a,b)=>a.sd-b.sd)[0];
+  const myNext=watch.filter(w=>{
+    const isLdr=w.assignedTo===CU?.username||((!w.assignedTo)&&w.createdBy===CU?.username);
+    const isPart=(w.participants||[]).includes(CU?.username);
+    return(isLdr||isPart)&&w.startDate;
+  }).map(w=>({...w,sd:new Date(w.startDate)})).filter(w=>{w.sd.setHours(0,0,0,0);return w.sd>=today;}).sort((a,b)=>a.sd-b.sd)[0];
   if(!myNext){el.innerHTML='';return;}
   const diff=Math.round((myNext.sd-today)/(1000*60*60*24));
   const label=diff===0?'Dnes máš stráž! 🙏':diff===1?'Zítra máš stráž':`Za ${diff} dní máš stráž`;
@@ -2511,7 +2515,11 @@ function renderCountdownMy(){
   if(!el)return;
   const watch=window._watch||[];
   const today=new Date();today.setHours(0,0,0,0);
-  const myNext=watch.filter(w=>w.createdBy===CU?.username&&w.startDate).map(w=>({...w,sd:new Date(w.startDate)})).filter(w=>{w.sd.setHours(0,0,0,0);return w.sd>=today;}).sort((a,b)=>a.sd-b.sd)[0];
+  const myNext=watch.filter(w=>{
+    const isLdr=w.assignedTo===CU?.username||((!w.assignedTo)&&w.createdBy===CU?.username);
+    const isPart=(w.participants||[]).includes(CU?.username);
+    return(isLdr||isPart)&&w.startDate;
+  }).map(w=>({...w,sd:new Date(w.startDate)})).filter(w=>{w.sd.setHours(0,0,0,0);return w.sd>=today;}).sort((a,b)=>a.sd-b.sd)[0];
   if(!myNext){el.innerHTML='';return;}
   const diff=Math.round((myNext.sd-today)/(1000*60*60*24));
   const label=diff===0?'Dnes máš stráž! 🙏':diff===1?'Zítra máš stráž':`Za ${diff} dní máš stráž`;
