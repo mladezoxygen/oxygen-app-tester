@@ -1176,7 +1176,7 @@ window.toggleSB=()=>{
   if(overlay)overlay.style.display=sb.classList.contains('open')?'block':'none';
 };
 
-function navigate(id){
+window.navigate=function navigate(id){
   document.querySelectorAll('.sec').forEach(s=>s.classList.remove('on'));
   document.querySelectorAll('.ni').forEach(n=>n.classList.remove('on'));
   document.getElementById('sec-'+id).classList.add('on');
