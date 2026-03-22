@@ -1231,7 +1231,7 @@ function enterApp(){
   if(CU.role==='pending'){document.getElementById('pendScreen').style.display='flex';return;}
   document.getElementById('mainApp').style.display='block';
   document.getElementById('notifBtn').style.display='flex';
-  initUI();startListeners();initEmojiBar();startOnline();loadPrayerLog().then(()=>{renderStreakDash();renderCountdownDash();});initChannels();
+  initUI();startListeners();initEmojiBar();startOnline();loadPrayerLog().then(()=>{renderStreakDash();renderCountdownDash();});setTimeout(initChannels,100);
   setTimeout(requestPush,2000);
 }
 
@@ -2267,7 +2267,7 @@ window.shareToChat=async(reqId)=>{
 // ── RENDER CHAT ───────────────────────────────────────────────────────────
 let _lastReadTs=0;
 function renderChat(){
-  const el=document.getElementById('chatMsgs');const msgs=window._chat||[];
+  const el=document.getElementById('chatMsgs');if(!el)return;const msgs=window._chat||[];
   if(!msgs.length){el.innerHTML='<div class="empty"><div class="ei">💬</div><p>Zatím žádné zprávy. Buď první!</p></div>';return;}
   const atBottom=el.scrollHeight-el.clientHeight-el.scrollTop<140;
   const allU=window._users||{};
