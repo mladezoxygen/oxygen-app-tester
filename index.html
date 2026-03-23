@@ -536,25 +536,74 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 .ch-members-group-label{padding:8px 14px 2px;font-size:.64rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em;white-space:nowrap}
 @media(max-width:900px){.ch-sidebar{width:190px}}
 @media(max-width:700px){
-  .chat-layout-outer{height:calc(100dvh - 80px)}
-  /* Sidebar jako úzký ikonkový panel */
-  .ch-sidebar{width:48px;flex-shrink:0;min-width:48px}
-  .ch-sidebar-title,.ch-item-name,.ch-category-name,.ch-item-del,.ch-topbar-desc{display:none!important}
-  .ch-sidebar-header{padding:8px 4px;justify-content:center;flex-direction:column;gap:6px}
-  .ch-sidebar-add{margin:0;width:30px;height:30px}
-  .ch-sidebar-body{padding:4px 2px}
-  .ch-item{padding:7px 4px;justify-content:center;margin:2px 3px;border-radius:10px}
-  .ch-item-hash{font-size:1rem;opacity:.6;flex-shrink:0}
-  .ch-item.active .ch-item-hash{opacity:1}
-  .ch-category{padding:8px 4px 2px;justify-content:center}
-  .ch-category-add,.ch-category-arrow{display:none}
-  /* Topbar na mobilu */
-  .ch-topbar{padding:8px 12px}
-  .ch-topbar-name{font-size:.88rem}
-  .ch-topbar-right{display:none}
+  .chat-layout-outer{height:calc(100dvh - 80px);min-height:0;position:relative}
+
+  /* ── Channel sidebar as slide-in overlay ── */
+  .ch-sidebar{
+    position:absolute;top:0;left:0;bottom:0;z-index:50;
+    width:240px!important;min-width:240px!important;max-width:240px!important;
+    transform:translateX(-100%);
+    transition:transform .25s cubic-bezier(.22,.68,0,1.2);
+    box-shadow:4px 0 24px rgba(0,0,0,.5);
+  }
+  .ch-sidebar.mob-open{transform:translateX(0)}
+  .ch-sidebar-title{display:block!important}
+  .ch-item-name{display:block!important}
+  .ch-category-name{display:flex!important}
+  .ch-item-del{display:none}
+  .ch-sidebar-header{padding:14px 16px 10px;flex-direction:row;justify-content:space-between}
+  .ch-sidebar-body{padding:8px 0}
+  .ch-item{padding:5px 10px 5px 14px;margin:1px 6px;border-radius:7px;justify-content:flex-start}
+  .ch-item-hash{font-size:.88rem;opacity:.55}
+  .ch-item.active .ch-item-hash{opacity:.9}
+  .ch-category{padding:14px 12px 4px;justify-content:space-between}
+  .ch-category-add{display:none}
+  .ch-category-arrow{display:block!important}
+
+  /* Overlay backdrop for sidebar */
+  .ch-sidebar-backdrop{
+    display:none;position:absolute;inset:0;z-index:49;
+    background:rgba(0,0,0,.5);
+  }
+  .ch-sidebar-backdrop.visible{display:block}
+
+  /* ── Main area fills full width ── */
+  .ch-main{width:100%;flex:1;position:relative}
+
+  /* ── Topbar – show channel toggle + members btn ── */
+  .ch-topbar{padding:8px 12px;gap:6px}
+  .ch-topbar-name{font-size:.88rem;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .ch-topbar-right{display:flex!important;gap:5px;align-items:center;flex-shrink:0}
+  .ch-topbar-desc{display:none!important}
+
+  /* Channel toggle button (hamburger) inside chat topbar */
+  .ch-channels-toggle{
+    display:flex!important;
+    background:none;border:1px solid var(--border);border-radius:8px;
+    color:var(--muted);cursor:pointer;font-size:.88rem;
+    padding:4px 8px;align-items:center;gap:4px;
+    font-family:'Nunito',sans-serif;font-weight:700;line-height:1;
+    transition:all .15s;white-space:nowrap;flex-shrink:0;
+  }
+  .ch-channels-toggle:hover{background:rgba(123,47,190,.15);border-color:var(--border-l);color:var(--purple-xl)}
+  .ch-channels-toggle.active{background:rgba(123,47,190,.2);border-color:var(--purple-l);color:var(--purple-xl)}
+
+  /* Members button stays visible */
+  .ch-members-btn{display:flex!important;padding:4px 8px;font-size:.72rem}
+
+  /* ── Members panel as slide-in overlay from right ── */
+  .ch-members-panel{
+    display:flex!important;
+    position:absolute;top:0;right:0;bottom:0;z-index:50;
+    width:200px!important;border-left-width:1px!important;
+    transform:translateX(100%);
+    transition:transform .25s cubic-bezier(.22,.68,0,1.2);
+    box-shadow:-4px 0 24px rgba(0,0,0,.5);
+  }
+  .ch-members-panel.open{transform:translateX(0)!important;width:200px!important}
+
   /* Input na mobilu */
   .ch-input-area{padding:8px 10px}
-  .chat-layout-outer{height:calc(100dvh - 80px);min-height:0}
 }
 /* STATS */
 .chart-wrap{background:var(--card-bg);border:1px solid var(--border);border-radius:14px;padding:19px;margin-bottom:14px}
@@ -682,86 +731,19 @@ input:checked+.slider::before{transform:translateX(18px)}
   .modal{padding:18px}
   /* Buttons */
   .bs{padding:5px 9px;font-size:.72rem}
-  /* ── CHAT MOBILE ── */
+  /* ── CHAT MOBILE – viz dedicated block below ── */
   #sec-chat{padding:0!important;margin:0!important}
-  /* Celá obrazovka minus topbar */
-  .chat-layout-outer{
-    position:fixed;top:56px;left:0;right:0;bottom:0;
-    height:auto;border-radius:0;border:none;
-    display:flex;flex-direction:row;
-  }
-  /* Sidebar — tenký proužek vlevo */
-  .ch-sidebar{
-    width:54px!important;min-width:54px!important;max-width:54px!important;
-    background:var(--bg-dark2);border-right:1px solid var(--border);
-    display:flex;flex-direction:column;overflow:hidden;
-  }
-  .ch-sidebar-title,.ch-item-name,.ch-category-name,.ch-item-del,
-  .ch-topbar-desc,#sidebarAdminBtns{display:none!important}
-  .ch-sidebar-header{
-    padding:10px 0 6px;justify-content:center;align-items:center;
-    flex-direction:column;gap:6px;border-bottom:1px solid var(--border);
-  }
-  .ch-sidebar-body{flex:1;overflow-y:auto;padding:6px 0;scrollbar-width:none}
-  .ch-sidebar-body::-webkit-scrollbar{display:none}
-  .ch-category{padding:4px 0;justify-content:center}
-  .ch-category-add,.ch-category-arrow{display:none!important}
-  .ch-items{display:flex;flex-direction:column;align-items:center;gap:2px}
-  .ch-item{
-    width:38px;height:38px;border-radius:12px;
-    display:flex;align-items:center;justify-content:center;
-    padding:0;margin:0;gap:0;
-  }
-  .ch-item-hash{font-size:1.1rem;opacity:.5;line-height:1;margin:0}
-  .ch-item:hover{background:rgba(123,47,190,.18)}
-  .ch-item:hover .ch-item-hash{opacity:.9}
-  .ch-item.active{background:var(--purple);border-radius:12px}
-  .ch-item.active .ch-item-hash{opacity:1;color:#fff}
-  /* Main area */
-  .ch-main{
-    flex:1;min-width:0;display:flex;flex-direction:column;
-    background:var(--bg);overflow:hidden;
-  }
-  /* Topbar */
-  .ch-topbar{
-    padding:10px 12px;gap:8px;
-    background:var(--bg-dark2);
-    border-bottom:1px solid var(--border);flex-shrink:0;
-  }
-  .ch-hash{font-size:1rem}
-  .ch-topbar-name{font-size:.9rem;font-weight:800}
-  .ch-members-btn{padding:4px 8px;font-size:.72rem}
-  .ch-edit-btn{padding:3px 7px;font-size:.8rem}
-  .ch-members-panel{display:none!important}
-  /* Messages */
   .chat-msgs{flex:1;padding:8px 4px 4px;min-height:0}
   .chat-bubble-wrap{max-width:78%}
   .chat-msg-group{padding:1px 4px}
   .chat-actions-wrap{opacity:1!important}
   .chat-act-btn{font-size:.78rem;padding:3px 5px}
-  /* Typing */
   .chat-typing{padding:3px 10px;font-size:.72rem}
-  /* Input */
-  .ch-input-area{
-    padding:8px 10px calc(8px + env(safe-area-inset-bottom));
-    background:var(--bg-dark2);border-top:1px solid var(--border);
-    flex-shrink:0;
-  }
+  .ch-input-area{padding:8px 10px calc(8px + env(safe-area-inset-bottom));background:var(--bg-dark2);border-top:1px solid var(--border);flex-shrink:0}
   .ch-input-row{gap:6px;align-items:flex-end}
-  .chat-input{
-    font-size:.9rem;padding:9px 13px;
-    min-height:40px;max-height:100px;
-    border-radius:20px;background:var(--surface);
-    line-height:1.4;
-  }
-  .chat-send{
-    width:40px;height:40px;border-radius:50%;flex-shrink:0;
-  }
-  .ch-emoji-btn{
-    width:36px;height:40px;font-size:1.1rem;flex-shrink:0;
-    border-radius:10px;border:none;background:none;
-  }
-  /* Other */
+  .chat-input{font-size:.9rem;padding:9px 13px;min-height:40px;max-height:100px;border-radius:20px;background:var(--surface);line-height:1.4}
+  .chat-send{width:40px;height:40px;border-radius:50%;flex-shrink:0}
+  .ch-emoji-btn{width:36px;height:40px;font-size:1.1rem;flex-shrink:0;border-radius:10px;border:none;background:none}
   .week-stat-grid{grid-template-columns:1fr 1fr!important}
   .b-gcal{font-size:.68rem;padding:4px 8px}
 }
@@ -1093,6 +1075,8 @@ input:checked+.slider::before{transform:translateX(18px)}
     <!-- CHAT -->
     <div class="sec" id="sec-chat">
       <div class="chat-layout-outer">
+        <!-- Backdrop for mobile sidebar/members -->
+        <div class="ch-sidebar-backdrop" id="chSidebarBackdrop" onclick="closeChatOverlays()"></div>
         <!-- Channel sidebar -->
         <div class="ch-sidebar" id="channelSidebar">
           <div class="ch-sidebar-header">
@@ -1109,6 +1093,10 @@ input:checked+.slider::before{transform:translateX(18px)}
         <!-- Main chat area -->
         <div class="ch-main">
           <div class="ch-topbar">
+            <button class="ch-channels-toggle" id="chChannelsToggle" onclick="toggleMobChannels()" title="Textové kanály">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+              <span id="chChannelsLabel">Kanály</span>
+            </button>
             <span class="ch-hash">#</span>
             <span class="ch-topbar-name" id="channelHeaderName">obecný</span>
             <span class="ch-topbar-desc" id="channelHeaderDesc"></span>
@@ -3586,6 +3574,69 @@ function initCustomSelects(root=document){
   });
 }
 window.initCustomSelects=initCustomSelects;
+
+// ── MOBILE CHAT OVERLAYS ──────────────────────────────────────────────────
+function isMobile(){return window.innerWidth<=700;}
+function closeChatOverlays(){
+  const sidebar=document.getElementById('channelSidebar');
+  const members=document.getElementById('chMembersPanel');
+  const backdrop=document.getElementById('chSidebarBackdrop');
+  const channelsBtn=document.getElementById('chChannelsToggle');
+  const membersBtn=document.getElementById('chMembersBtn');
+  if(sidebar)sidebar.classList.remove('mob-open');
+  if(members)members.classList.remove('open');
+  if(backdrop)backdrop.classList.remove('visible');
+  if(channelsBtn)channelsBtn.classList.remove('active');
+  if(membersBtn)membersBtn.classList.remove('active');
+}
+window.toggleMobChannels=function(){
+  if(!isMobile())return;
+  const sidebar=document.getElementById('channelSidebar');
+  const members=document.getElementById('chMembersPanel');
+  const backdrop=document.getElementById('chSidebarBackdrop');
+  const btn=document.getElementById('chChannelsToggle');
+  const membersBtn=document.getElementById('chMembersBtn');
+  const isOpen=sidebar.classList.contains('mob-open');
+  if(isOpen){
+    sidebar.classList.remove('mob-open');
+    backdrop.classList.remove('visible');
+    btn.classList.remove('active');
+  } else {
+    // Close members first
+    if(members)members.classList.remove('open');
+    if(membersBtn)membersBtn.classList.remove('active');
+    sidebar.classList.add('mob-open');
+    backdrop.classList.add('visible');
+    btn.classList.add('active');
+  }
+};
+// Patch toggleMembersPanel to handle mobile overlay
+const _origToggleMembers=window.toggleMembersPanel;
+window.toggleMembersPanel=function(){
+  if(isMobile()){
+    const panel=document.getElementById('chMembersPanel');
+    const sidebar=document.getElementById('channelSidebar');
+    const backdrop=document.getElementById('chSidebarBackdrop');
+    const btn=document.getElementById('chMembersBtn');
+    const channelsBtn=document.getElementById('chChannelsToggle');
+    const isOpen=panel&&panel.classList.contains('open');
+    if(isOpen){
+      if(panel)panel.classList.remove('open');
+      if(backdrop)backdrop.classList.remove('visible');
+      if(btn)btn.classList.remove('active');
+    } else {
+      // Close sidebar first
+      if(sidebar)sidebar.classList.remove('mob-open');
+      if(channelsBtn)channelsBtn.classList.remove('active');
+      if(panel)panel.classList.add('open');
+      if(backdrop)backdrop.classList.add('visible');
+      if(btn)btn.classList.add('active');
+    }
+  } else {
+    if(_origToggleMembers)_origToggleMembers();
+  }
+};
+window.closeChatOverlays=closeChatOverlays;
 
 restoreSession();
 </script>
