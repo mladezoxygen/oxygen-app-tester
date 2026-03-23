@@ -824,6 +824,17 @@ input:checked+.slider::before{transform:translateX(18px)}
 
 @media(max-width:700px){.pstat-grid{grid-template-columns:1fr 1fr}}
 
+
+/* ── CUSTOM CHECKBOX (channel member picker) ── */
+.ch-member-check-wrap{display:flex;align-items:center;gap:10px;padding:7px 8px;cursor:pointer;border-radius:8px;transition:background .12s;user-select:none}
+.ch-member-check-wrap:hover{background:rgba(123,47,190,.12)}
+.ch-member-check-wrap input[type=checkbox]{display:none}
+.ch-cb{width:18px;height:18px;border-radius:5px;border:2px solid var(--border-l);background:rgba(255,255,255,.04);flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:background .18s,border-color .18s,transform .15s;position:relative}
+.ch-member-check-wrap input:checked~.ch-cb{background:var(--purple);border-color:var(--purple-l);transform:scale(1.08)}
+.ch-member-check-wrap input:checked~.ch-cb::after{content:'';display:block;width:5px;height:9px;border:2px solid #fff;border-top:none;border-left:none;transform:rotate(45deg) translate(-1px,-1px);animation:cb-check .15s ease forwards}
+@keyframes cb-check{from{opacity:0;transform:rotate(45deg) translate(-1px,-1px) scale(.5)}to{opacity:1;transform:rotate(45deg) translate(-1px,-1px) scale(1)}}
+.ch-member-check-wrap:hover .ch-cb{border-color:var(--purple-l)}
+.ch-member-role{font-size:.65rem;font-weight:700;padding:1px 6px;border-radius:20px;flex-shrink:0}
 </style>
 </head>
 <body>
@@ -2476,13 +2487,15 @@ window.showEditChannelModal=()=>{
     <div class="fg" style="margin-bottom:14px"><label>Popis</label>
       <input type="text" id="editChDesc" value="${esc(ch.description||'')}" placeholder="Krátký popis kanálu" maxlength="100"></div>
     <div class="lbl" style="margin-bottom:6px">Členové <span style="font-weight:400;text-transform:none;color:var(--muted)">(prázdné = všichni)</span></div>
-    <div style="max-height:200px;overflow-y:auto;border:1px solid var(--border);border-radius:10px;padding:6px;margin-bottom:16px;background:rgba(0,0,0,.1)">
-      ${allUsers.map(u=>`<label style="display:flex;align-items:center;gap:8px;padding:6px;cursor:pointer;border-radius:6px;transition:background .1s" onmouseover="this.style.background='rgba(123,47,190,.1)'" onmouseout="this.style.background=''">
-        <input type="checkbox" class="editChMember" value="${u.username}" ${(ch.members||[]).includes(u.username)?'checked':''} style="accent-color:var(--purple);width:14px;height:14px">
-        <div style="width:24px;height:24px;border-radius:50%;background:linear-gradient(135deg,var(--purple),var(--purple-d));display:flex;align-items:center;justify-content:center;font-size:.58rem;font-weight:800;color:#fff;flex-shrink:0">${u.emoji||ini(u.name)}</div>
-        <span style="font-size:.85rem;flex:1">${esc(u.name)}</span>
-        <span style="font-size:.7rem;color:var(--muted)">@${esc(u.username)}</span>
-      </label>`).join('')}
+    <div style="max-height:220px;overflow-y:auto;border:1px solid var(--border);border-radius:10px;padding:4px;margin-bottom:16px;background:rgba(0,0,0,.1)">
+      ${(()=>{const rm2={admin:'Admin',modlitebnik:'Modlitebník',mladeznik:'Mládežník'};const rc2={admin:'ra',modlitebnik:'rm',mladeznik:'rml'};return allUsers.map(u=>{const checked=(ch.members||[]).includes(u.username)?'checked':'';const roleLabel=rm2[u.role]||'';const roleCls=rc2[u.role]||'rml';const avBg=u.emoji?'background:var(--surface)':'background:linear-gradient(135deg,var(--purple),var(--purple-d))';return`<label class="ch-member-check-wrap">
+        <input type="checkbox" class="editChMember" value="${u.username}" ${checked}>
+        <div class="ch-cb"></div>
+        <div style="width:26px;height:26px;border-radius:50%;${avBg};display:flex;align-items:center;justify-content:center;font-size:${u.emoji?'.95rem':'.58rem'};font-weight:800;color:#fff;flex-shrink:0">${u.emoji||ini(u.name)}</div>
+        <span style="font-size:.85rem;flex:1;font-weight:600">${esc(u.name)}</span>
+        ${roleLabel?`<span class="ch-member-role ${roleCls}">${roleLabel}</span>`:''}
+        <span style="font-size:.68rem;color:var(--muted)">@${esc(u.username)}</span>
+      </label>`;}).join('');})()} 
     </div>
     <div style="display:flex;gap:8px">
       <button class="bp" onclick="saveChannelEdit('${ch._id}')" style="flex:1">Uložit změny</button>
