@@ -2515,8 +2515,26 @@ window.saveChannelEdit=async(id)=>{
   if(members.length&&!members.includes(CU.username))members.push(CU.username);
   try{
     await updateDoc(doc(db,'channels',id),{name,description:desc,members});
+    // Okamžitě aktualizuj lokální cache bez čekání na onSnapshot
+    const idx=_channels.findIndex(c=>c._id===id);
+    if(idx!==-1){
+      _channels[idx]={..._channels[idx],name,description:desc,members};
+    }
+    renderChannelList();
+    // Aktualizuj topbar pokud jde o aktivní kanál
+    if(_activeChannelId===id){
+      const nameEl=document.getElementById('channelHeaderName');
+      const descEl=document.getElementById('channelHeaderDesc');
+      if(nameEl)nameEl.textContent=name;
+      if(descEl)descEl.textContent=desc?'· '+desc:'';
+      const cntEl=document.getElementById('chMembersCount');
+      if(cntEl)cntEl.textContent=members.length||'';
+      // Aktualizuj panel členů pokud je otevřený
+      const panel=document.getElementById('chMembersPanel');
+      if(panel&&panel.classList.contains('open'))renderMembersPanel(_channels[idx]);
+    }
     closeModal('editChannelModal');
-    toast('Kanál upraven');
+    toast('\u2705 Kanál upraven');
   }catch(e){if(msgEl){msgEl.className='amsg err';msgEl.textContent='Chyba: '+e.message;msgEl.style.display='block';}}
 };
 
