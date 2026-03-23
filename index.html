@@ -2369,7 +2369,7 @@ function renderChannelList(){
     if(!cats[cat])cats[cat]=[];
     cats[cat].push(ch);
   });
-  const canAdd=isAdmin()||canMgr();
+  const canAdd=isAdmin();
   let html='';
   Object.entries(cats).forEach(([cat,chs])=>{
     const collapsed=_collapsedCats.has(cat);
@@ -2380,7 +2380,7 @@ function renderChannelList(){
     if(!collapsed){
       html+=chs.map(ch=>{
         const active=ch._id===_activeChannelId;
-        const canDel=!ch.isGeneral&&(isAdmin()||canMgr());
+        const canDel=!ch.isGeneral&&isAdmin();
         return`<div class="ch-item${active?' active':''}" onclick="switchChannel('${ch._id}')">
           <span class="ch-item-hash">#</span>
           <span class="ch-item-name">${esc(ch.name)}</span>
@@ -2589,6 +2589,7 @@ window.deleteCat=async(cat)=>{
 };
 
 window.showAddChannelModal=(defaultCat)=>{
+  if(!isAdmin()){toast('Jen admin může vytvářet kanály.');return;}
   document.getElementById('addChannelModal')?.remove();
   const allUsers=Object.values(window._users||{}).filter(u=>u.role!=='pending'&&u.username!==CU.username).sort((a,b)=>a.name.localeCompare(b.name,'cs'));
   const existingCats=[...new Set(_channels.map(c=>c.category||DEFAULT_CAT))].filter(Boolean);
@@ -3117,40 +3118,38 @@ function startOnline(){
     const list=document.getElementById('onlineList');
     if(!section||!list)return;
 
-    if(online.length===0){section.style.display='none';return;}
+    if(online.length===0){section.style.display='none';list.innerHTML='';return;}
     section.style.display='block';
-    // Animate leaving users before re-render
-    const existingNames=new Set(online.map(u=>u.username));
+
+    const allU=window._users||{};
+    const prevNames=new Set([...list.querySelectorAll('[data-uname]')].map(el=>el.getAttribute('data-uname')));
+    const newNames=new Set(online.map(u=>u.username));
+
+    // Remove users who left — animate out then delete
     [...list.querySelectorAll('[data-uname]')].forEach(el=>{
-      if(!existingNames.has(el.getAttribute('data-uname'))&&!el.classList.contains('leaving')){
+      const uname=el.getAttribute('data-uname');
+      if(!newNames.has(uname)){
         el.classList.add('leaving');
+        setTimeout(()=>{if(el.parentNode)el.remove();},280);
       }
     });
 
-    const allU=window._users||{};
-    // Track which users are currently rendered
-    const prevNames=new Set([...list.querySelectorAll('[data-uname]')].map(el=>el.getAttribute('data-uname')));
-    const newNames=new Set(online.map(u=>u.username));
-    // Users who just joined (not in prev)
-    const joining=online.filter(u=>!prevNames.has(u.username));
-    // Users who left (in prev but not in new) - already handled above with .leaving class
+    // Add new users (joining) in sorted order by name
+    online.sort((a,b)=>(a.name||'').localeCompare(b.name||'','cs'));
     online.forEach(u=>{
       const isMe=u.username===CU.username;
       const userDoc=allU[u.username]||{};
       const role=userDoc.role||'';
       const roleLabel=role==='admin'?'Admin':role==='modlitebnik'?'Modlitebník':role==='mladeznik'?'Mládežník':'';
       const roleCls=role==='admin'?'ra':role==='modlitebnik'?'rm':'rml';
-      const isJoining=!prevNames.has(u.username);
-      // Check if element already exists
-      const existing=list.querySelector('[data-uname="'+u.username+'"]');
-      if(existing&&!existing.classList.contains('leaving')){
-        // Already rendered, just update streak (no animation)
+      // If already rendered (and not leaving), just update streak
+      const existing=list.querySelector('[data-uname="'+u.username+'"]:not(.leaving)');
+      if(existing){
         const streakEl=existing.querySelector('.online-streak');
         if(streakEl){const s=calcStreakFor(u.username);streakEl.textContent='🔥'+(s>0?s:0);}
         return;
       }
-      // Remove stale leaving element if same user rejoins
-      if(existing)existing.remove();
+      const isJoining=prevNames.has(u.username)===false;
       const av=u.emoji
         ?'<div class="online-av-sm ea">'+u.emoji+'</div>'
         :'<div class="online-av-sm">'+ini(u.name)+'</div>';
@@ -3167,14 +3166,11 @@ function startOnline(){
         +(roleLabel?'<span class="urole '+roleCls+'" style="font-size:.62rem;padding:1px 5px;flex-shrink:0">'+roleLabel+'</span>':'')
         +'<span class="online-streak" style="font-size:.68rem;color:'+(s>0?'var(--gold)':'var(--muted)')+';flex-shrink:0">🔥'+(s>0?s:0)+'</span>'
         +'</div></div>';
-      list.appendChild(el);
-    });
-    // Remove elements for users who left (after animation)
-    [...list.querySelectorAll('[data-uname]')].forEach(el=>{
-      if(!newNames.has(el.getAttribute('data-uname'))&&!el.classList.contains('leaving')){
-        el.classList.add('leaving');
-        setTimeout(()=>el.remove(),300);
-      }
+      // Insert in alphabetical order
+      const siblings=[...list.querySelectorAll('[data-uname]:not(.leaving)')];
+      const insertBefore=siblings.find(sib=>(sib.querySelector('span')?.textContent||'').localeCompare(u.name||'','cs')>0);
+      if(insertBefore)list.insertBefore(el,insertBefore);
+      else list.appendChild(el);
     });
   });
 }
@@ -3513,7 +3509,7 @@ window.showUserProfile=(username)=>{
         <div class="scard"><div class="snum" style="font-size:1.3rem">${ansC}</div><div class="slbl">Vyslyšených</div></div>
         <div class="scard"><div class="snum" style="font-size:1.3rem">${wC}</div><div class="slbl">Stráží</div></div>
         <div class="scard"><div class="snum" style="font-size:1.3rem">${dC}</div><div class="slbl">Zápisů</div></div>
-        <div class="scard-streak"><div class="snum" style="font-size:1.3rem"><span class="scard-streak-fire">🔥</span> ${streak}</div><div class="slbl">Streak${bestFor>0?` · nejlepší ${bestFor}`:''}</div></div>
+        <div class="scard-streak"><div class="snum" style="font-size:1.3rem"><span class="scard-streak-fire">🔥</span> ${streak}</div><div class="slbl">Streak</div></div>
       </div>
     </div>
   </div>`;
