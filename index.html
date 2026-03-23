@@ -1535,6 +1535,8 @@ function initUI(){
   const rc={admin:'ra',modlitebnik:'rm',mladeznik:'rml'};
   const rb=document.getElementById('uroleEl');rb.textContent=rm[CU.role]||CU.role;rb.className='urole '+rc[CU.role];
   if(isAdmin())document.querySelectorAll('.admin-only').forEach(el=>el.style.display='flex');
+  // Modlitebnik může přidávat kanály — zobraz jen tlačítko + (ne ⚙ správu kategorií)
+  if(CU?.role==='modlitebnik'){const btn=document.getElementById('addChannelBtn');if(btn)btn.style.display='flex';}
   if(CU.role==='mladeznik')['chkAddCard','diaryAddCard'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
   document.querySelectorAll('.ni').forEach(ni=>ni.addEventListener('click',()=>navigate(ni.dataset.sec)));
 }
@@ -2354,8 +2356,8 @@ async function initChannels(){
 function getVisibleChannels(){
   return _channels.filter(ch=>{
     if(ch.isGeneral)return true;
-    if(isAdmin()||canMgr())return true;
-    return(ch.members||[]).includes(CU.username);
+    if(isAdmin())return true; // admin vidí vše
+    return(ch.members||[]).includes(CU.username); // modlitebnik i mládežník jen své
   });
 }
 
@@ -2369,7 +2371,7 @@ function renderChannelList(){
     if(!cats[cat])cats[cat]=[];
     cats[cat].push(ch);
   });
-  const canAdd=isAdmin();
+  const canAdd=isAdmin()||CU?.role==='modlitebnik';
   let html='';
   Object.entries(cats).forEach(([cat,chs])=>{
     const collapsed=_collapsedCats.has(cat);
@@ -2380,7 +2382,7 @@ function renderChannelList(){
     if(!collapsed){
       html+=chs.map(ch=>{
         const active=ch._id===_activeChannelId;
-        const canDel=!ch.isGeneral&&isAdmin();
+        const canDel=!ch.isGeneral&&(isAdmin()||(CU?.role==='modlitebnik'&&ch.createdBy===CU.username));
         return`<div class="ch-item${active?' active':''}" onclick="switchChannel('${ch._id}')">
           <span class="ch-item-hash">#</span>
           <span class="ch-item-name">${esc(ch.name)}</span>
@@ -2415,7 +2417,7 @@ window.switchChannel=function switchChannel(channelId){
   }
   // Edit button — only for non-general channels, admin only
   const editBtn=document.getElementById('chEditBtn');
-  if(editBtn)editBtn.style.display=((isAdmin()||(canMgr()&&ch?.createdBy===CU.username))&&ch&&!ch.isGeneral)?'block':'none';
+  if(editBtn)editBtn.style.display=((isAdmin()||(CU?.role==='modlitebnik'&&ch?.createdBy===CU.username))&&ch&&!ch.isGeneral)?'block':'none';
   // Close members panel when switching
   const panel=document.getElementById('chMembersPanel');
   if(panel){panel.classList.remove('open');document.getElementById('chMembersBtn')?.classList.remove('active');}
@@ -2453,7 +2455,11 @@ function renderMembersPanel(ch){
   if(!ch||ch.isGeneral){
     members=Object.values(allU).filter(u=>u.role!=='pending').sort((a,b)=>a.name.localeCompare(b.name,'cs'));
   } else {
-    members=(ch.members||[]).map(un=>allU[un]).filter(Boolean).sort((a,b)=>a.name.localeCompare(b.name,'cs'));
+    // Admini jsou vždy členy všech kanálů (i když nejsou v members[])
+    const adminUsernames=new Set(Object.values(allU).filter(u=>u.role==='admin').map(u=>u.username));
+    const channelMembers=new Set(ch.members||[]);
+    adminUsernames.forEach(un=>channelMembers.add(un));
+    members=[...channelMembers].map(un=>allU[un]).filter(Boolean).sort((a,b)=>a.name.localeCompare(b.name,'cs'));
   }
   // Sort: online first
   members.sort((a,b)=>{const ao=onlineSet.has(a.username),bo=onlineSet.has(b.username);return bo-ao||a.name.localeCompare(b.name,'cs');});
@@ -2532,9 +2538,10 @@ window.saveChannelEdit=async(id)=>{
   const msgEl=document.getElementById('editChMsg');
   if(!name){if(msgEl){msgEl.className='amsg err';msgEl.textContent='Zadej název';msgEl.style.display='block';}return;}
   const members=[...document.querySelectorAll('.editChMember:checked')].map(cb=>cb.value);
-  // Vždy přidej všechny adminy (mají automatický přístup, nesmí být odebráni)
+  // Vždy přidej všechny adminy
   Object.values(window._users||{}).filter(u=>u.role==='admin').forEach(u=>{if(!members.includes(u.username))members.push(u.username);});
-  if(members.length&&!members.includes(CU.username))members.push(CU.username);
+  // Tvůrce kanálu vždy přidej
+  if(!members.includes(CU.username))members.push(CU.username);
   try{
     await updateDoc(doc(db,'channels',id),{name,description:desc,members});
     // Okamžitě aktualizuj lokální cache bez čekání na onSnapshot
@@ -2589,7 +2596,7 @@ window.deleteCat=async(cat)=>{
 };
 
 window.showAddChannelModal=(defaultCat)=>{
-  if(!isAdmin()){toast('Jen admin může vytvářet kanály.');return;}
+  if(!isAdmin()&&CU?.role!=='modlitebnik'){toast('Nemáš oprávnění vytvářet kanály.');return;}
   document.getElementById('addChannelModal')?.remove();
   const allUsers=Object.values(window._users||{}).filter(u=>u.role!=='pending'&&u.username!==CU.username).sort((a,b)=>a.name.localeCompare(b.name,'cs'));
   const existingCats=[...new Set(_channels.map(c=>c.category||DEFAULT_CAT))].filter(Boolean);
@@ -2614,6 +2621,7 @@ window.showAddChannelModal=(defaultCat)=>{
     </div>
     <div style="margin-bottom:14px">
       <div class="lbl" style="margin-bottom:6px">Přístup <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted)">(prázdné = celý tým)</span></div>
+      <div style="font-size:.74rem;color:var(--muted);margin-bottom:8px;display:flex;align-items:center;gap:5px"><span style="color:var(--gold)">ℹ</span> Admini mají přístup ke všem kanálům automaticky. Ty budeš přidán/a jako tvůrce.</div>
       <div style="max-height:170px;overflow-y:auto;border:1px solid var(--border);border-radius:10px;padding:4px;background:rgba(0,0,0,.1)">
         ${allUsers.map(u=>`<label style="display:flex;align-items:center;gap:8px;padding:6px 8px;cursor:pointer;border-radius:7px;transition:background .1s" onmouseover="this.style.background='rgba(123,47,190,.1)'" onmouseout="this.style.background=''">
           <input type="checkbox" class="newChMember" value="${u.username}" style="accent-color:var(--purple);width:15px;height:15px;flex-shrink:0">
@@ -2640,7 +2648,10 @@ window.createChannel=async()=>{
   if(!name){if(msgEl){msgEl.className='amsg err';msgEl.textContent='Zadej název kanálu';msgEl.style.display='block';}return;}
   if(_channels.find(c=>c.name===name)){if(msgEl){msgEl.className='amsg err';msgEl.textContent='Kanál s tímto názvem již existuje';msgEl.style.display='block';}return;}
   const members=[...document.querySelectorAll('.newChMember:checked')].map(cb=>cb.value);
-  if(members.length)members.push(CU.username);
+  // Vždy přidej tvůrce kanálu
+  if(!members.includes(CU.username))members.push(CU.username);
+  // Vždy přidej všechny adminy
+  Object.values(window._users||{}).filter(u=>u.role==='admin').forEach(u=>{if(!members.includes(u.username))members.push(u.username);});
   try{
     const r=await addDoc(collection(db,'channels'),{name,description:desc,category,isGeneral:false,members,createdBy:CU.username,createdAt:serverTimestamp()});
     closeModal('addChannelModal');
