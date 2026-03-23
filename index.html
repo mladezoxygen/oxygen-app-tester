@@ -2495,7 +2495,7 @@ function memberRow(u,online){
         <div class="ch-member-name" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex-shrink:1;min-width:0">${esc(u.name)}</div>
         ${roleLabel?`<span class="urole ${roleCls}" style="font-size:.6rem;padding:1px 5px;flex-shrink:0">${roleLabel}</span>`:''}
       </div>
-      <div class="ch-member-status">${online?'🟢 Online':'⚫ Offline'}</div>
+      <div class="ch-member-status">${online?'Online':'Offline'}</div>
     </div>
   </div>`;
 }
