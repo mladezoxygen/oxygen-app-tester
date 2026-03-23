@@ -1106,7 +1106,7 @@ input:checked+.slider::before{transform:translateX(18px)}
         <div class="ch-main">
           <div class="ch-topbar">
             <button class="ch-channels-toggle" id="chChannelsToggle" onclick="toggleMobChannels()" title="Textové kanály">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><line x1="9" y1="10" x2="9.01" y2="10" stroke-width="3"/><line x1="12" y1="10" x2="12.01" y2="10" stroke-width="3"/><line x1="15" y1="10" x2="15.01" y2="10" stroke-width="3"/></svg>
               <span id="chChannelsLabel">Kanály</span>
             </button>
             <span class="ch-hash">#</span>
@@ -1946,7 +1946,7 @@ window.calClick=(y,mo,d,e)=>{
 
   {
     // Všichni přihlášení mohou přidat stráž; admin přiřazuje komukoliv, ostatní jen sobě
-    const allUsers=Object.values(window._users||{}).filter(u=>u.role!=='pending').sort((a,b)=>a.name.localeCompare(b.name,'cs'));
+    const allUsers=Object.values(window._users||{}).filter(u=>u.role!=='pending'&&u.role!=='admin'&&u.role!=='modlitebnik').sort((a,b)=>a.name.localeCompare(b.name,'cs'));
     const userOptions=allUsers.map(u=>`<option value="${u.username}" ${u.username===CU.username?'selected':''}>${esc(u.name)}</option>`).join('');
     const whoField=`<div class="fg" style="margin-bottom:8px"><label>Vedoucí stráže</label><select id="cpU">${userOptions}</select></div>`;
     inner+=`<div style="border-top:1px solid var(--border);margin-top:${watches.length?'10':'0'}px;padding-top:12px">
@@ -2486,7 +2486,8 @@ window.showEditChannelModal=()=>{
       <input type="text" id="editChName" value="${esc(ch.name)}" maxlength="40"></div>
     <div class="fg" style="margin-bottom:14px"><label>Popis</label>
       <input type="text" id="editChDesc" value="${esc(ch.description||'')}" placeholder="Krátký popis kanálu" maxlength="100"></div>
-    <div class="lbl" style="margin-bottom:6px">Členové <span style="font-weight:400;text-transform:none;color:var(--muted)">(prázdné = všichni)</span></div>
+    <div class="lbl" style="margin-bottom:4px">Členové <span style="font-weight:400;text-transform:none;color:var(--muted)">(prázdné = všichni)</span></div>
+    <div style="font-size:.74rem;color:var(--muted);margin-bottom:8px;display:flex;align-items:center;gap:5px"><span style="color:var(--gold)">ℹ</span> Admini a modlitebníci mají přístup ke všem kanálům automaticky.</div>
     <div style="max-height:220px;overflow-y:auto;border:1px solid var(--border);border-radius:10px;padding:4px;margin-bottom:16px;background:rgba(0,0,0,.1)">
       ${(()=>{const rm2={admin:'Admin',modlitebnik:'Modlitebník',mladeznik:'Mládežník'};const rc2={admin:'ra',modlitebnik:'rm',mladeznik:'rml'};return allUsers.map(u=>{const checked=(ch.members||[]).includes(u.username)?'checked':'';const roleLabel=rm2[u.role]||'';const roleCls=rc2[u.role]||'rml';const avBg=u.emoji?'background:var(--surface)':'background:linear-gradient(135deg,var(--purple),var(--purple-d))';return`<label class="ch-member-check-wrap">
         <input type="checkbox" class="editChMember" value="${u.username}" ${checked}>
@@ -2528,10 +2529,11 @@ window.saveChannelEdit=async(id)=>{
       if(nameEl)nameEl.textContent=name;
       if(descEl)descEl.textContent=desc?'· '+desc:'';
       const cntEl=document.getElementById('chMembersCount');
-      if(cntEl)cntEl.textContent=members.length||'';
-      // Aktualizuj panel členů pokud je otevřený
-      const panel=document.getElementById('chMembersPanel');
-      if(panel&&panel.classList.contains('open'))renderMembersPanel(_channels[idx]);
+      // Pro kanál s prázdnými členy (= všichni) zobraz počet všech uživatelů
+      const allCount=Object.values(window._users||{}).filter(u=>u.role!=='pending').length;
+      if(cntEl)cntEl.textContent=members.length?members.length:allCount;
+      // Okamžitě překresli panel členů (nejen pokud je otevřený)
+      renderMembersPanel(idx!==-1?_channels[idx]:null);
     }
     closeModal('editChannelModal');
     toast('\u2705 Kanál upraven');
