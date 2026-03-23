@@ -2404,7 +2404,7 @@ window.switchChannel=function switchChannel(channelId){
   }
   // Edit button — only for non-general channels, admin only
   const editBtn=document.getElementById('chEditBtn');
-  if(editBtn)editBtn.style.display=(isAdmin()&&ch&&!ch.isGeneral)?'block':'none';
+  if(editBtn)editBtn.style.display=((isAdmin()||(canMgr()&&ch?.createdBy===CU.username))&&ch&&!ch.isGeneral)?'block':'none';
   // Close members panel when switching
   const panel=document.getElementById('chMembersPanel');
   if(panel){panel.classList.remove('open');document.getElementById('chMembersBtn')?.classList.remove('active');}
@@ -2521,6 +2521,8 @@ window.saveChannelEdit=async(id)=>{
   const msgEl=document.getElementById('editChMsg');
   if(!name){if(msgEl){msgEl.className='amsg err';msgEl.textContent='Zadej název';msgEl.style.display='block';}return;}
   const members=[...document.querySelectorAll('.editChMember:checked')].map(cb=>cb.value);
+  // Vždy přidej všechny adminy (mají automatický přístup, nesmí být odebráni)
+  Object.values(window._users||{}).filter(u=>u.role==='admin').forEach(u=>{if(!members.includes(u.username))members.push(u.username);});
   if(members.length&&!members.includes(CU.username))members.push(CU.username);
   try{
     await updateDoc(doc(db,'channels',id),{name,description:desc,members});
@@ -3146,10 +3148,11 @@ function startOnline(){
       el.setAttribute('title','Zobrazit profil');
       const s=calcStreakFor(u.username);
       el.innerHTML=av
-        +'<div style="min-width:0"><div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap">'
-        +'<span style="font-size:.78rem">'+esc(u.name)+(isMe?' <span style="color:var(--muted);font-size:.68rem">(ty)</span>':'')+'</span>'
-        +(roleLabel?'<span class="urole '+roleCls+'" style="font-size:.62rem;padding:1px 5px">'+roleLabel+'</span>':'')
-        +'<span class="online-streak" style="font-size:.68rem;color:'+(s>0?'var(--gold)':'var(--muted)')+'">🔥'+(s>0?s:0)+'</span>'
+        +'<div style="min-width:0;overflow:hidden">'
+        +'<div style="display:flex;align-items:center;gap:4px;white-space:nowrap;overflow:hidden">'
+        +'<span style="font-size:.78rem;overflow:hidden;text-overflow:ellipsis;max-width:90px">'+esc(u.name)+(isMe?' <span style="color:var(--muted);font-size:.68rem">(ty)</span>':'')+'</span>'
+        +(roleLabel?'<span class="urole '+roleCls+'" style="font-size:.62rem;padding:1px 5px;flex-shrink:0">'+roleLabel+'</span>':'')
+        +'<span class="online-streak" style="font-size:.68rem;color:'+(s>0?'var(--gold)':'var(--muted)')+';flex-shrink:0">🔥'+(s>0?s:0)+'</span>'
         +'</div></div>';
       list.appendChild(el);
     });
@@ -3502,7 +3505,7 @@ window.showUserProfile=(username)=>{
         <div class="scard"><div class="snum" style="font-size:1.3rem">${ansC}</div><div class="slbl">Vyslyšených</div></div>
         <div class="scard"><div class="snum" style="font-size:1.3rem">${wC}</div><div class="slbl">Stráží</div></div>
         <div class="scard"><div class="snum" style="font-size:1.3rem">${dC}</div><div class="slbl">Zápisů</div></div>
-        <div class="scard-streak"><div class="snum" style="font-size:1.3rem"><span class="scard-streak-fire">🔥</span> ${streak}</div><div class="slbl">Streak</div></div>
+        <div class="scard"><div class="snum" style="font-size:1.3rem">${streak}</div><div class="slbl">Streak</div></div>
       </div>
     </div>
   </div>`;
