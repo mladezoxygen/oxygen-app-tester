@@ -281,7 +281,7 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 .wc.wc-future{border-color:rgba(155,79,222,.3)}
 .wc-header{padding:14px 16px 10px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
 .wc-header-left{flex:1;min-width:0}
-.wc-status{font-size:.68rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.wc-status{font-size:.68rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;row-gap:4px}
 .wc-status.curr{color:var(--gold)}.wc-status.future{color:var(--purple-xl)}.wc-status.past{color:var(--muted)}
 .wc-status-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
 .wc-status.curr .wc-status-dot{background:var(--gold);box-shadow:0 0 6px var(--gold);animation:pulse-gold 2s infinite}
@@ -306,6 +306,10 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 .b-join.on{background:rgba(6,214,160,.2);border-color:var(--green)}
 .b-join:disabled{opacity:.4;cursor:not-allowed}
 .wc-join-note{font-size:.73rem;color:var(--muted);font-style:italic}
+/* Watch card status badges */
+.wc-badge{display:inline-flex;align-items:center;font-size:.67rem;font-weight:800;padding:2px 7px;border-radius:20px;letter-spacing:.02em;margin-left:6px;vertical-align:middle;white-space:nowrap}
+.wc-badge-leader{background:rgba(255,209,102,.18);color:var(--gold);border:1px solid rgba(255,209,102,.3)}
+.wc-badge-join{background:rgba(6,214,160,.12);color:var(--green);border:1px solid rgba(6,214,160,.25)}
 /* DIARY */
 .de{background:var(--card-bg);border:1px solid var(--border);border-radius:12px;padding:17px;margin-bottom:10px;animation:fu .3s ease}
 .da{font-weight:800;color:var(--purple-xl);font-size:.85rem}.dd{color:var(--muted);font-size:.7rem}
@@ -714,10 +718,17 @@ input:checked+.slider::before{transform:translateX(18px)}
   .tabs{overflow-x:auto;flex-wrap:nowrap;-webkit-overflow-scrolling:touch;width:100%}
   .tabs::-webkit-scrollbar{display:none}
   /* Calendar */
-  .cal-day{min-height:30px}
-  .cal-day-num{font-size:.68rem}
-  .cal-day-person{font-size:.56rem}
+  .cal-wrap{padding:12px 10px}
+  .cal-grid{gap:2px}
+  .cal-day{min-height:34px;padding:3px 2px;border-radius:6px}
+  .cal-day-num{font-size:.66rem;line-height:1}
+  .cal-day.cal-today .cal-day-num{width:16px;height:16px;font-size:.6rem}
+  .cal-day-name{font-size:.6rem;padding:2px 0}
+  .cal-chip{font-size:.52rem;padding:1px 3px;border-radius:2px}
+  .cal-chips{gap:1px}
   .cal-popup{left:8px!important;right:8px!important;width:auto!important}
+  .cal-title{font-size:.82rem}
+  .cal-nav{padding:3px 8px;font-size:.74rem}
   /* Forms */
   .irow{flex-direction:column}
   .irow .fg{min-width:0;width:100%}
@@ -2167,7 +2178,7 @@ window.renderWatch=function renderWatch(){
       <div class="wc-header">
         <div class="wc-header-left">
           <div class="wc-status ${statusCls}">
-            <div class="wc-status-dot"></div>${statusIcon} ${statusTxt}${isLeader?' · <span style="color:var(--gold)">👑 Ty vedeš tuto stráž</span>':iJoin?' · <span style="color:var(--green)">✓ Účastníš se</span>':''}
+            <div class="wc-status-dot"></div>${statusIcon} ${statusTxt}${isLeader?'<span class="wc-badge wc-badge-leader">👑 Ty vedeš</span>':iJoin?'<span class="wc-badge wc-badge-join">✓ Účastníš se</span>':''}
           </div>
           <div class="wc-leader">${esc(ldrName)}</div>
           <div class="wc-leader-sub">${esc(w.date)}</div>
@@ -2373,7 +2384,7 @@ function renderChannelList(){
         return`<div class="ch-item${active?' active':''}" onclick="switchChannel('${ch._id}')">
           <span class="ch-item-hash">#</span>
           <span class="ch-item-name">${esc(ch.name)}</span>
-          ${canDel?`<button class="ch-item-del" onclick="event.stopPropagation();delChannel('${ch._id}')" title="Smazat">🗑</button>`:''}
+          ${canDel?`<button class="ch-item-del" onclick="event.stopPropagation();delChannel('${ch._id}')" title="Smazat kanál"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg></button>`:''}
         </div>`;
       }).join('');
     }
@@ -3132,12 +3143,14 @@ function startOnline(){
       const isJoining=!prevNames.has(u.username);
       // Check if element already exists
       const existing=list.querySelector('[data-uname="'+u.username+'"]');
-      if(existing){
+      if(existing&&!existing.classList.contains('leaving')){
         // Already rendered, just update streak (no animation)
         const streakEl=existing.querySelector('.online-streak');
         if(streakEl){const s=calcStreakFor(u.username);streakEl.textContent='🔥'+(s>0?s:0);}
         return;
       }
+      // Remove stale leaving element if same user rejoins
+      if(existing)existing.remove();
       const av=u.emoji
         ?'<div class="online-av-sm ea">'+u.emoji+'</div>'
         :'<div class="online-av-sm">'+ini(u.name)+'</div>';
@@ -3494,18 +3507,13 @@ window.showUserProfile=(username)=>{
       <span class="urole ${rc[u.role]||'rml'}" style="margin-top:6px;display:inline-block">${rm[u.role]||u.role}</span>
     </div>
     <div style="padding:0 26px 26px">
-      ${streak>0?`<div class="streak-card" style="margin-bottom:14px">
-        <div class="streak-fire">🔥</div>
-        <div><div style="display:flex;align-items:baseline;gap:6px"><div class="streak-num">${streak}</div><div class="streak-lbl">${csStreak(streak)} streak</div></div>
-        <div class="streak-best">Nejlepší: ${bestFor} ${csStreak(bestFor)}</div></div>
-      </div>`:''}
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
         <div class="scard"><div class="snum" style="font-size:1.3rem">${pC+pChk}</div><div class="slbl">Modliteb</div></div>
         <div class="scard"><div class="snum" style="font-size:1.3rem">${rC}</div><div class="slbl">Žádostí</div></div>
         <div class="scard"><div class="snum" style="font-size:1.3rem">${ansC}</div><div class="slbl">Vyslyšených</div></div>
         <div class="scard"><div class="snum" style="font-size:1.3rem">${wC}</div><div class="slbl">Stráží</div></div>
         <div class="scard"><div class="snum" style="font-size:1.3rem">${dC}</div><div class="slbl">Zápisů</div></div>
-        <div class="scard"><div class="snum" style="font-size:1.3rem">${streak}</div><div class="slbl">Streak</div></div>
+        <div class="scard-streak"><div class="snum" style="font-size:1.3rem"><span class="scard-streak-fire">🔥</span> ${streak}</div><div class="slbl">Streak${bestFor>0?` · nejlepší ${bestFor}`:''}</div></div>
       </div>
     </div>
   </div>`;
