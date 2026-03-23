@@ -834,6 +834,11 @@ input:checked+.slider::before{transform:translateX(18px)}
 .ch-member-check-wrap input:checked~.ch-cb::after{content:'';display:block;width:5px;height:9px;border:2px solid #fff;border-top:none;border-left:none;transform:rotate(45deg) translate(-1px,-1px);animation:cb-check .15s ease forwards}
 @keyframes cb-check{from{opacity:0;transform:rotate(45deg) translate(-1px,-1px) scale(.5)}to{opacity:1;transform:rotate(45deg) translate(-1px,-1px) scale(1)}}
 .ch-member-check-wrap:hover .ch-cb{border-color:var(--purple-l)}
+.ch-member-check-wrap.locked{cursor:default;opacity:.75}
+.ch-member-check-wrap.locked:hover{background:transparent}
+.ch-member-check-wrap.locked:hover .ch-cb{border-color:var(--border-l)}
+.ch-cb-locked{background:rgba(123,47,190,.25)!important;border-color:var(--purple-l)!important;opacity:.7}
+.ch-cb-locked::after{content:'';display:block;width:5px;height:9px;border:2px solid rgba(255,255,255,.6);border-top:none;border-left:none;transform:rotate(45deg) translate(-1px,-1px)}
 .ch-member-role{font-size:.65rem;font-weight:700;padding:1px 6px;border-radius:20px;flex-shrink:0}
 </style>
 </head>
@@ -1946,7 +1951,7 @@ window.calClick=(y,mo,d,e)=>{
 
   {
     // Všichni přihlášení mohou přidat stráž; admin přiřazuje komukoliv, ostatní jen sobě
-    const allUsers=Object.values(window._users||{}).filter(u=>u.role!=='pending'&&u.role!=='admin'&&u.role!=='modlitebnik').sort((a,b)=>a.name.localeCompare(b.name,'cs'));
+    const allUsers=Object.values(window._users||{}).filter(u=>u.role!=='pending').sort((a,b)=>a.name.localeCompare(b.name,'cs'));
     const userOptions=allUsers.map(u=>`<option value="${u.username}" ${u.username===CU.username?'selected':''}>${esc(u.name)}</option>`).join('');
     const whoField=`<div class="fg" style="margin-bottom:8px"><label>Vedoucí stráže</label><select id="cpU">${userOptions}</select></div>`;
     inner+=`<div style="border-top:1px solid var(--border);margin-top:${watches.length?'10':'0'}px;padding-top:12px">
@@ -2487,11 +2492,14 @@ window.showEditChannelModal=()=>{
     <div class="fg" style="margin-bottom:14px"><label>Popis</label>
       <input type="text" id="editChDesc" value="${esc(ch.description||'')}" placeholder="Krátký popis kanálu" maxlength="100"></div>
     <div class="lbl" style="margin-bottom:4px">Členové <span style="font-weight:400;text-transform:none;color:var(--muted)">(prázdné = všichni)</span></div>
-    <div style="font-size:.74rem;color:var(--muted);margin-bottom:8px;display:flex;align-items:center;gap:5px"><span style="color:var(--gold)">ℹ</span> Admini a modlitebníci mají přístup ke všem kanálům automaticky.</div>
+    <div style="font-size:.74rem;color:var(--muted);margin-bottom:8px;display:flex;align-items:center;gap:5px"><span style="color:var(--gold)">ℹ</span> Admini mají přístup ke všem kanálům automaticky.</div>
     <div style="max-height:220px;overflow-y:auto;border:1px solid var(--border);border-radius:10px;padding:4px;margin-bottom:16px;background:rgba(0,0,0,.1)">
-      ${(()=>{const rm2={admin:'Admin',modlitebnik:'Modlitebník',mladeznik:'Mládežník'};const rc2={admin:'ra',modlitebnik:'rm',mladeznik:'rml'};return allUsers.map(u=>{const checked=(ch.members||[]).includes(u.username)?'checked':'';const roleLabel=rm2[u.role]||'';const roleCls=rc2[u.role]||'rml';const avBg=u.emoji?'background:var(--surface)':'background:linear-gradient(135deg,var(--purple),var(--purple-d))';return`<label class="ch-member-check-wrap">
-        <input type="checkbox" class="editChMember" value="${u.username}" ${checked}>
-        <div class="ch-cb"></div>
+      ${(()=>{const rm2={admin:'Admin',modlitebnik:'Modlitebník',mladeznik:'Mládežník'};const rc2={admin:'ra',modlitebnik:'rm',mladeznik:'rml'};return allUsers.map(u=>{const checked=(ch.members||[]).includes(u.username)?'checked':'';const roleLabel=rm2[u.role]||'';const roleCls=rc2[u.role]||'rml';const avBg=u.emoji?'background:var(--surface)':'background:linear-gradient(135deg,var(--purple),var(--purple-d))';const isAdminUser=u.role==='admin';
+const lockedChecked=isAdminUser?'checked disabled':'';
+const inputClass=isAdminUser?'':'editChMember';
+return`<label class="ch-member-check-wrap${isAdminUser?' locked':''}">
+        <input type="checkbox" ${inputClass?`class="${inputClass}"`:''}  value="${u.username}" ${isAdminUser?lockedChecked:checked}>
+        <div class="ch-cb${isAdminUser?' ch-cb-locked':''}"></div>
         <div style="width:26px;height:26px;border-radius:50%;${avBg};display:flex;align-items:center;justify-content:center;font-size:${u.emoji?'.95rem':'.58rem'};font-weight:800;color:#fff;flex-shrink:0">${u.emoji||ini(u.name)}</div>
         <span style="font-size:.85rem;flex:1;font-weight:600">${esc(u.name)}</span>
         ${roleLabel?`<span class="ch-member-role ${roleCls}">${roleLabel}</span>`:''}
