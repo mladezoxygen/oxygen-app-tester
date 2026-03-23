@@ -2412,7 +2412,16 @@ window.switchChannel=function switchChannel(channelId){
   const cntEl=document.getElementById('chMembersCount');
   const membersBtn=document.getElementById('chMembersBtn');
   if(cntEl){
-    const cnt=ch?.isGeneral?Object.values(window._users||{}).filter(u=>u.role!=='pending').length:(ch?.members?.length||0);
+    const allU=window._users||{};
+    const adminCount=Object.values(allU).filter(u=>u.role==='admin').length;
+    let cnt;
+    if(!ch||ch.isGeneral){
+      cnt=Object.values(allU).filter(u=>u.role!=='pending').length;
+    } else {
+      const memberSet=new Set(ch.members||[]);
+      Object.values(allU).filter(u=>u.role==='admin').forEach(u=>memberSet.add(u.username));
+      cnt=memberSet.size;
+    }
     cntEl.textContent=cnt||'';
   }
   // Edit button — only for non-general channels, admin only
@@ -2475,11 +2484,18 @@ function renderMembersPanel(ch){
   el.innerHTML=html;
 }
 function memberRow(u,online){
+  const rm={admin:'Admin',modlitebnik:'Modlitebník',mladeznik:'Mládežník'};
+  const rc={admin:'ra',modlitebnik:'rm',mladeznik:'rml'};
+  const roleLabel=rm[u.role]||'';
+  const roleCls=rc[u.role]||'rml';
   return`<div class="ch-member-row" onclick="showUserProfile('${u.username}')">
     <div class="ch-member-av${u.emoji?' ea':''}${online?' ch-member-online':''}">${u.emoji||ini(u.name)}</div>
-    <div style="flex:1;min-width:0">
-      <div class="ch-member-name">${esc(u.name)}</div>
-      <div class="ch-member-status">${online?'Online':'Offline'}</div>
+    <div style="flex:1;min-width:0;overflow:hidden">
+      <div style="display:flex;align-items:center;gap:4px;flex-wrap:nowrap;overflow:hidden">
+        <div class="ch-member-name" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex-shrink:1;min-width:0">${esc(u.name)}</div>
+        ${roleLabel?`<span class="urole ${roleCls}" style="font-size:.6rem;padding:1px 5px;flex-shrink:0">${roleLabel}</span>`:''}
+      </div>
+      <div class="ch-member-status">${online?'🟢 Online':'⚫ Offline'}</div>
     </div>
   </div>`;
 }
@@ -2640,6 +2656,7 @@ window.showAddChannelModal=(defaultCat)=>{
 };
 
 window.createChannel=async()=>{
+  if(!isAdmin()&&CU?.role!=='modlitebnik'){toast('Nemáš oprávnění vytvářet kanály.');return;}
   const category=document.getElementById('newChCat')?.value.trim()||DEFAULT_CAT;
   const rawName=document.getElementById('newChName')?.value.trim();
   const name=rawName.toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-čšžýáíéůúěřďťňó]/g,'');
