@@ -7,72 +7,17 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Oxygen">
+<meta name="apple-mobile-web-app-title" content="OXYGEN – modlitební tým">
 
-<!-- ══ PWA MANIFEST INLINE ══════════════════════════════════════════════════
-     Manifest je vložen přímo do HTML přes data: URI — žádný externí soubor.
-     Prohlížeč ho načte z <link rel="manifest"> stejně jako externí soubor.
+<!-- ══ PWA MANIFEST ══════════════════════════════════════════════════════════
+     Manifest je vložen jako data: URI přímo v <link> tagu.
+     Blob URL nefunguje správně pro instalaci PWA na PC (Chrome odmítá).
+     data: URI funguje na mobilu i na PC.
   ═══════════════════════════════════════════════════════════════════════════ -->
-<script>
-(function(){
-  // Sestav manifest JSON
-  const manifest = {
-    name: "Oxygen – Modlitební Tým",
-    short_name: "Oxygen",
-    description: "Mládežnická modlitební zeď týmu Oxygen",
-    start_url: "./",
-    scope: "./",
-    display: "standalone",
-    orientation: "portrait-primary",
-    background_color: "#1A0833",
-    theme_color: "#7B2FBE",
-    lang: "cs",
-    icons: [
-      {
-        // Inline SVG ikona jako base64 PNG-like data URL (SVG jako fallback)
-        src: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='42' fill='%237B2FBE'/%3E%3Crect x='84' y='24' width='24' height='144' rx='12' fill='white'/%3E%3Crect x='36' y='60' width='120' height='24' rx='12' fill='white'/%3E%3C/svg%3E",
-        sizes: "192x192",
-        type: "image/svg+xml",
-        purpose: "any maskable"
-      },
-      {
-        src: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='112' fill='%237B2FBE'/%3E%3Crect x='224' y='64' width='64' height='384' rx='32' fill='white'/%3E%3Crect x='96' y='160' width='320' height='64' rx='32' fill='white'/%3E%3C/svg%3E",
-        sizes: "512x512",
-        type: "image/svg+xml",
-        purpose: "any maskable"
-      }
-    ],
-    categories: ["lifestyle", "social"],
-    shortcuts: [
-      {
-        name: "Žádosti o modlitbu",
-        short_name: "Žádosti",
-        description: "Zobrazit žádosti o modlitbu",
-        url: "./#requests",
-        icons: [{ src: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%99%8F%3C/text%3E%3C/svg%3E", sizes: "96x96" }]
-      },
-      {
-        name: "Chat",
-        short_name: "Chat",
-        description: "Otevřít chat týmu",
-        url: "./#chat",
-        icons: [{ src: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%92%AC%3C/text%3E%3C/svg%3E", sizes: "96x96" }]
-      }
-    ]
-  };
-
-  // Vlož manifest jako data: URI do <link> tagu
-  const blob = new Blob([JSON.stringify(manifest)], {type: 'application/json'});
-  const manifestURL = URL.createObjectURL(blob);
-  const link = document.createElement('link');
-  link.rel = 'manifest';
-  link.href = manifestURL;
-  document.head.appendChild(link);
-})();
-</script>
+<link rel="manifest" href="data:application/json;charset=utf-8,%7B%22name%22%3A%22OXYGEN%20%E2%80%93%20moditeln%C3%AD%20t%C3%BDm%22%2C%22short_name%22%3A%22OXYGEN%20%E2%80%93%20modlitebn%C3%AD%20t%C3%BDm%22%2C%22description%22%3A%22M%C3%B6lade%C5%BEnick%C3%A1%20modlitebn%C3%AD%20ze%C4%8F%20t%C3%BDmu%20Oxygen%22%2C%22start_url%22%3A%22.%2F%22%2C%22scope%22%3A%22.%2F%22%2C%22display%22%3A%22standalone%22%2C%22orientation%22%3A%22portrait-primary%22%2C%22background_color%22%3A%22%231A0833%22%2C%22theme_color%22%3A%22%237B2FBE%22%2C%22lang%22%3A%22cs%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%2520viewBox%3D'0%25200%2520192%2520192'%253E%253Crect%2520width%3D'192'%2520height%3D'192'%2520rx%3D'42'%2520fill%3D'%25237B2FBE'%2F%253E%253Crect%2520x%3D'84'%2520y%3D'24'%2520width%3D'24'%2520height%3D'144'%2520rx%3D'12'%2520fill%3D'white'%2F%253E%253Crect%2520x%3D'36'%2520y%3D'60'%2520width%3D'120'%2520height%3D'24'%2520rx%3D'12'%2520fill%3D'white'%2F%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22192x192%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%2C%22purpose%22%3A%22any%20maskable%22%7D%2C%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%2520viewBox%3D'0%25200%2520512%2520512'%253E%253Crect%2520width%3D'512'%2520height%3D'512'%2520rx%3D'112'%2520fill%3D'%25237B2FBE'%2F%253E%253Crect%2520x%3D'224'%2520y%3D'64'%2520width%3D'64'%2520height%3D'384'%2520rx%3D'32'%2520fill%3D'white'%2F%253E%253Crect%2520x%3D'96'%2520y%3D'160'%2520width%3D'320'%2520height%3D'64'%2520rx%3D'32'%2520fill%3D'white'%2F%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22512x512%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%2C%22purpose%22%3A%22any%20maskable%22%7D%5D%2C%22categories%22%3A%5B%22lifestyle%22%2C%22social%22%5D%2C%22shortcuts%22%3A%5B%7B%22name%22%3A%22%C5%BD%C3%A1dosti%20o%20modlitbu%22%2C%22short_name%22%3A%22%C5%BD%C3%A1dosti%22%2C%22url%22%3A%22.%2F%23requests%22%7D%2C%7B%22name%22%3A%22Chat%22%2C%22short_name%22%3A%22Chat%22%2C%22url%22%3A%22.%2F%23chat%22%7D%5D%7D">
 
 <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%237B2FBE'/><rect x='14' y='4' width='4' height='24' rx='2' fill='white'/><rect x='6' y='10' width='20' height='4' rx='2' fill='white'/></svg>">
-<title>Oxygen – Modlitební Tým</title>
+<title>OXYGEN – modlitební tým</title>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Nunito:wght@300;400;600;700;800&display=swap" rel="stylesheet">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%237B2FBE'/><rect x='14' y='4' width='4' height='24' rx='2' fill='white'/><rect x='6' y='10' width='20' height='4' rx='2' fill='white'/></svg>">
 
@@ -87,16 +32,21 @@
   OneSignalDeferred.push(async function(OneSignal) {
     await OneSignal.init({
       appId: "47ed9794-3c55-4708-836d-233538079b71",
-      // Povolí automatický prompt — my ho ale voláme ručně přes tlačítko
+      // Vypnuté výchozí tlačítko OneSignalu
       notifyButton: { enable: false },
-      // ServiceWorker inline přes Blob (viz níže v <script> na konci stránky)
-      // OneSignal potřebuje serviceWorkerParam pro scope
+      // ServiceWorker scope
       serviceWorkerParam: { scope: "/" },
-      // Nezobrazuj výzvu automaticky, čekáme na klik uživatele
+      // DŮLEŽITÉ: zakáže jakýkoliv automatický anglický prompt od OneSignalu
+      autoResubscribe: true,
+      welcomeNotification: { disable: true },
+      // Prázdné prompts = žádné automatické výzvy (vč. anglického "subscribe")
       promptOptions: {
         slidedown: {
-          prompts: [] // prázdné = žádný automatický prompt
-        }
+          enabled: false,
+          prompts: []
+        },
+        fullscreen: { enabled: false },
+        push: { enabled: false }
       },
       // Umožní notifikace na Safari 16.4+ (iOS PWA)
       safari_web_id: "web.onesignal.auto.47ed9794-3c55-4708-836d-233538079b71",
