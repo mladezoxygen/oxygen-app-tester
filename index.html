@@ -355,11 +355,15 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 .ch-header-desc{font-size:.78rem;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ch-header-right{display:flex;gap:8px;align-items:center;flex-shrink:0;margin-left:auto}
 /* Pinned */
-.chat-pinned{background:rgba(255,209,102,.06);border-bottom:1px solid rgba(255,209,102,.15);padding:8px 16px;display:flex;align-items:center;gap:8px;flex-shrink:0}
-.chat-pinned-icon{font-size:.85rem;color:var(--gold);flex-shrink:0}
+@keyframes pin-slide-in{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pin-pop{0%{transform:scale(1) rotate(0)}35%{transform:scale(1.4) rotate(-15deg)}65%{transform:scale(.9) rotate(8deg)}100%{transform:scale(1) rotate(0)}}
+.chat-pinned{background:rgba(255,209,102,.06);border-bottom:1px solid rgba(255,209,102,.2);padding:8px 16px;display:flex;align-items:center;gap:8px;flex-shrink:0;animation:pin-slide-in .32s cubic-bezier(.22,.68,0,1.2) both}
+.chat-pinned-icon{font-size:.9rem;color:var(--gold);flex-shrink:0;display:inline-block;transform-origin:center center}
+.chat-pinned-icon.animating{animation:pin-pop .5s cubic-bezier(.22,.68,0,1.2)}
 .chat-pinned-content{flex:1;min-width:0;cursor:pointer}
 .chat-pinned-label{font-size:.65rem;color:var(--gold);font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:1px}
 .chat-pinned-msg{font-size:.8rem;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.chat-pinned-content:hover .chat-pinned-msg{text-decoration:underline}
 .chat-pinned-unpin{background:rgba(239,71,111,.1);border:1px solid rgba(239,71,111,.25);border-radius:6px;color:var(--red);cursor:pointer;font-size:.72rem;padding:3px 8px;font-family:'Nunito',sans-serif;white-space:nowrap;transition:all .15s;flex-shrink:0}
 .chat-pinned-unpin:hover{background:rgba(239,71,111,.2)}
 /* Messages */
@@ -508,14 +512,6 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 .ch-topbar-desc{font-size:.74rem;color:var(--muted);margin-left:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ch-topbar-right{margin-left:auto;display:flex;gap:6px;align-items:center;flex-shrink:0}
 /* Pinned */
-.chat-pinned{background:rgba(255,209,102,.06);border-bottom:1px solid rgba(255,209,102,.15);padding:8px 16px;display:flex;align-items:center;gap:8px;flex-shrink:0}
-.chat-pinned-icon{font-size:.85rem;color:var(--gold);flex-shrink:0}
-.chat-pinned-content{flex:1;min-width:0;cursor:pointer}
-.chat-pinned-label{font-size:.64rem;color:var(--gold);font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:1px}
-.chat-pinned-msg{font-size:.8rem;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.chat-pinned-content:hover .chat-pinned-msg{text-decoration:underline}
-.chat-pinned-unpin{background:rgba(239,71,111,.08);border:1px solid rgba(239,71,111,.2);border-radius:6px;color:var(--red);cursor:pointer;font-size:.72rem;padding:3px 9px;font-family:'Nunito',sans-serif;white-space:nowrap;transition:all .15s;flex-shrink:0}
-.chat-pinned-unpin:hover{background:rgba(239,71,111,.2)}
 /* Input area */
 .ch-input-area{border-top:1px solid var(--border);padding:10px 14px;flex-shrink:0}
 .ch-input-row{display:flex;gap:8px;align-items:flex-end}
@@ -1589,17 +1585,7 @@ function startListeners(){
     const aPend=document.getElementById('aPending');if(aPend&&aPend.style.display!=='none')renderAdminPending();
     const aUsers=document.getElementById('aUsers');if(aUsers&&aUsers.style.display!=='none')renderAdminUsers();
   }));
-  // Pinned message listener (graceful fallback on permission error)
-  try{
-    const pUnsub=onSnapshot(doc(db,'chatMeta','pinned'),snap=>{
-      _pinnedMsg=snap.exists()?{...snap.data()}:null;
-      renderPinned();
-    },err=>{
-      // Permission denied — pinned messages unavailable, continue silently
-      _pinnedMsg=null;renderPinned();
-    });
-    unsubs.push(pUnsub);
-  }catch(e){}
+  // Pinned message listener is handled per-channel in switchChannel via channelPinned collection
   // Start typing listener
   startTypingListener();
   unsubs.push(onSnapshot(query(collection(db,'chat'),orderBy('ts','asc'),limit(300)),snap=>{
@@ -2196,6 +2182,7 @@ window.renderWatch=function renderWatch(){
           <div class="wc-participants-label">👥 ${totalLabel}</div>
           <div class="wc-av-stack">${leaderAv}${partAvatars}${extraAv}</div>
           ${partCount?`<div style="font-size:.72rem;color:var(--muted);margin-top:4px">${esc(partNames)}</div>`:`<div style="font-size:.72rem;color:var(--muted);margin-top:4px;font-style:italic">${isLeader?'Ještě se nikdo nepřidal – sdílej stráž s týmem':'Ještě nikdo přidaný – přidej se!'}</div>`}
+          ${(canMgr()&&partCount)?`<button class="bs b-ghost" style="font-size:.7rem;margin-top:6px;padding:3px 9px" onclick="showRemoveParticipantsModal('${w._id}')">⚙ Spravovat účastníky</button>`:''}
         </div>
         <div class="wc-join-row">
           ${isLeader
@@ -2223,6 +2210,52 @@ window.delWatch=async id=>{
   const w=(window._watch||[]).find(x=>x._id===id);if(!w)return;
   if(!isAdmin()&&w.createdBy!==CU.username&&w.assignedTo!==CU.username){toast('Jen vedoucí nebo admin může smazat stráž.');return;}
   confirmDialog('Smazat tuto modlitební stráž?',async()=>{try{await deleteDoc(doc(db,'watch',id));toast('Stráž smazána.');}catch(e){toast('Chyba: '+e.message);}});
+};
+
+window.showRemoveParticipantsModal=function(watchId){
+  const w=(window._watch||[]).find(x=>x._id===watchId);if(!w)return;
+  const parts=w.participants||[];
+  if(!parts.length){toast('Stráž nemá žádné účastníky.');return;}
+  document.getElementById('removePartsModal')?.remove();
+  const allU=window._users||{};
+  const m=document.createElement('div');m.className='modal-bg';m.id='removePartsModal';
+  m.innerHTML=`<div class="modal" onclick="event.stopPropagation()" style="max-width:360px">
+    <button class="modal-close" onclick="closeModal('removePartsModal')">✕</button>
+    <h2>⚙ Účastníci stráže</h2>
+    <p style="color:var(--muted);font-size:.83rem;margin-bottom:14px">Vedoucí stráže nelze odebrat. Sebe lze odebrat tlačítkem v kartě stráže.</p>
+    <div id="rmPartsList">
+    ${parts.map(un=>{
+      const u=allU[un];
+      const name=u?u.name:un;
+      const isMe=un===CU.username;
+      const isLeader=un===w.assignedTo;
+      const canRemove=!isLeader;
+      return`<div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:var(--card-bg);border:1px solid var(--border);border-radius:10px;margin-bottom:7px">
+        <div style="width:30px;height:30px;border-radius:50%;background:${u?.emoji?'var(--surface)':'linear-gradient(135deg,var(--purple),var(--purple-d))'};display:flex;align-items:center;justify-content:center;font-size:${u?.emoji?'.95rem':'.7rem'};font-weight:800;color:#fff;flex-shrink:0">${u?.emoji||ini(name)}</div>
+        <div style="flex:1;font-size:.87rem;font-weight:600">${esc(name)}${isMe?' <span style="color:var(--muted);font-size:.73rem">(ty)</span>':''}</div>
+        ${isLeader?'<span style="font-size:.72rem;color:var(--gold);font-weight:700">👑 Vedoucí</span>':''}
+        ${canRemove?`<button class="bs b-del" style="font-size:.72rem;padding:3px 9px" onclick="removeWatchParticipant('${watchId}','${un}',this)">Odebrat</button>`:''}
+      </div>`;
+    }).join('')}
+    </div>
+  </div>`;
+  m.addEventListener('click',e=>{if(e.target===m)closeModal('removePartsModal');});
+  document.body.appendChild(m);
+};
+
+window.removeWatchParticipant=async function(watchId,username,btn){
+  const w=(window._watch||[]).find(x=>x._id===watchId);if(!w)return;
+  if(!canMgr()){toast('Nemáš oprávnění.');return;}
+  if(username===w.assignedTo){toast('Vedoucí stráže nelze odebrat.');return;}
+  try{
+    await updateDoc(doc(db,'watch',watchId),{participants:arrayRemove(username)});
+    const allU=window._users||{};const u=allU[username];
+    toast(`${u?u.name:username} byl/a odebrán/a ze stráže.`);
+    // Remove row from modal
+    btn?.closest('div[style]')?.remove();
+    // Update local state
+    if(w.participants)w.participants=w.participants.filter(un=>un!==username);
+  }catch(e){toast('Chyba: '+e.message);}
 };
 
 
@@ -2349,6 +2382,14 @@ async function initChannels(){
     if(!_activeChannelId){
       const general=_channels.find(c=>c.isGeneral);
       if(general)switchChannel(general._id);
+    } else {
+      // Real-time: if active channel was deleted, switch to general immediately
+      const stillExists=_channels.find(c=>c._id===_activeChannelId);
+      if(!stillExists){
+        const general=_channels.find(c=>c.isGeneral);
+        if(general){switchChannel(general._id);}
+        toast('Kanál byl smazán');
+      }
     }
   });
 }
@@ -2757,16 +2798,22 @@ function startTypingListener(){
 let _pinnedMsg=null;
 function renderPinned(){
   const el=document.getElementById('chatPinned');if(!el)return;
+  const wasEmpty=!el.innerHTML.trim();
   if(!_pinnedMsg){el.innerHTML='';return;}
   const m=_pinnedMsg;
   el.innerHTML=`<div class="chat-pinned">
-    <span class="chat-pinned-icon">📌</span>
+    <span class="chat-pinned-icon" id="pinIcon">📌</span>
     <div class="chat-pinned-content" onclick="scrollToMsg('${m._id||m.msgId||''}')">
       <div class="chat-pinned-label">Připnutá zpráva · ${esc(m.authorName||m.author||'')}</div>
       <div class="chat-pinned-msg">${esc((m.text||'').slice(0,120))}${(m.text||'').length>120?'…':''}</div>
     </div>
     ${isAdmin()?`<button class="chat-pinned-unpin" onclick="unpinMsg()">Odepnout</button>`:''}
   </div>`;
+  // Animate pin icon only when a new pin appears (not on initial load)
+  if(wasEmpty){
+    const icon=document.getElementById('pinIcon');
+    if(icon){icon.classList.add('animating');setTimeout(()=>icon.classList.remove('animating'),550);}
+  }
 }
 window.pinMsg=async id=>{
   const m=(window._chat||[]).find(x=>x._id===id);if(!m||!_activeChannelId)return;
@@ -3329,7 +3376,16 @@ function renderStreakDash(){
   const {streak,best}=calcStreak();
   const el=document.getElementById('dashStreakRow');
   if(!el)return;
-  if(streak===0){el.innerHTML='';return;}
+  if(streak===0){
+    // Show a subtle "no streak yet" card so the element is always visible
+    el.innerHTML=`<div class="streak-card" style="opacity:.6">
+      <div class="streak-fire" style="filter:grayscale(1)">⭕</div>
+      <div><div style="display:flex;align-items:baseline;gap:6px"><div class="streak-num" style="color:var(--muted)">0</div><div class="streak-lbl" style="opacity:.5">žádný streak</div></div>
+      <div class="streak-best">Nejlepší: ${best} ${csStreak(best)}</div></div>
+      <div style="margin-left:auto;font-size:.74rem;color:var(--muted);text-align:right">Modli se dnes<br>a začni streak 🙏</div>
+    </div>`;
+    return;
+  }
   el.innerHTML=`<div class="streak-card">
     <div class="streak-fire">🔥</div>
     <div><div style="display:flex;align-items:baseline;gap:6px"><div class="streak-num">${streak}</div><div class="streak-lbl">${csStreak(streak)} streak</div></div>
@@ -3375,10 +3431,11 @@ function renderMyStats(){
   const myAnswered=reqs.filter(r=>r.createdBy===CU.username&&r.answered).length;
 
   const streak_el=document.getElementById('myStreakCard');
-  if(streak_el)streak_el.innerHTML=streak>0?`<div class="streak-card" style="margin-bottom:14px">
-    <div class="streak-fire">🔥</div>
-    <div><div style="display:flex;align-items:baseline;gap:6px"><div class="streak-num">${streak}</div><div class="streak-lbl">${csStreak(streak)} streak</div></div>
-    <div class="streak-best">Nejlepší: ${best} ${csStreak(best)}</div></div></div>`:'';
+  if(streak_el)streak_el.innerHTML=`<div class="streak-card" style="margin-bottom:14px">
+    <div class="streak-fire">${streak>0?'🔥':'⭕'}</div>
+    <div><div style="display:flex;align-items:baseline;gap:6px"><div class="streak-num" style="${streak===0?'color:var(--muted)':''}'">${streak}</div><div class="streak-lbl" style="${streak===0?'opacity:.5':''}">${streak>0?csStreak(streak)+' streak':'žádný streak'}</div></div>
+    <div class="streak-best">Nejlepší: ${best} ${csStreak(best)}</div></div>
+    ${streak>0?`<div style="margin-left:auto;font-size:.75rem;color:var(--muted);text-align:right">Modlíš se<br>každý den 💪</div>`:''}</div>`;
 
   // Countdown
   renderCountdownMy();
