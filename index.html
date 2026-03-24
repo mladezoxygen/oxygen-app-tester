@@ -3372,25 +3372,15 @@ function calcStreakFor(username){
 }
 
 function renderStreakDash(){
-  if(!_prayerLoaded)return; // wait for data before showing anything
+  if(!_prayerLoaded)return;
   const {streak,best}=calcStreak();
   const el=document.getElementById('dashStreakRow');
   if(!el)return;
-  if(streak===0){
-    // Show a subtle "no streak yet" card so the element is always visible
-    el.innerHTML=`<div class="streak-card" style="opacity:.6">
-      <div class="streak-fire" style="filter:grayscale(1)">⭕</div>
-      <div><div style="display:flex;align-items:baseline;gap:6px"><div class="streak-num" style="color:var(--muted)">0</div><div class="streak-lbl" style="opacity:.5">žádný streak</div></div>
-      <div class="streak-best">Nejlepší: ${best} ${csStreak(best)}</div></div>
-      <div style="margin-left:auto;font-size:.74rem;color:var(--muted);text-align:right">Modli se dnes<br>a začni streak 🙏</div>
-    </div>`;
-    return;
-  }
   el.innerHTML=`<div class="streak-card">
     <div class="streak-fire">🔥</div>
     <div><div style="display:flex;align-items:baseline;gap:6px"><div class="streak-num">${streak}</div><div class="streak-lbl">${csStreak(streak)} streak</div></div>
     <div class="streak-best">Nejlepší: ${best} ${csStreak(best)}</div></div>
-    <div style="margin-left:auto;font-size:.75rem;color:var(--muted);text-align:right">Modlíš se<br>každý den 💪</div>
+    <div style="margin-left:auto;font-size:.75rem;color:var(--muted);text-align:right">${streak>0?'Modlíš se<br>každý den 💪':'Modli se dnes<br>a začni streak 🙏'}</div>
   </div>`;
 }
 
@@ -3432,10 +3422,11 @@ function renderMyStats(){
 
   const streak_el=document.getElementById('myStreakCard');
   if(streak_el)streak_el.innerHTML=`<div class="streak-card" style="margin-bottom:14px">
-    <div class="streak-fire">${streak>0?'🔥':'⭕'}</div>
-    <div><div style="display:flex;align-items:baseline;gap:6px"><div class="streak-num" style="${streak===0?'color:var(--muted)':''}'">${streak}</div><div class="streak-lbl" style="${streak===0?'opacity:.5':''}">${streak>0?csStreak(streak)+' streak':'žádný streak'}</div></div>
+    <div class="streak-fire">🔥</div>
+    <div><div style="display:flex;align-items:baseline;gap:6px"><div class="streak-num">${streak}</div><div class="streak-lbl">${csStreak(streak)} streak</div></div>
     <div class="streak-best">Nejlepší: ${best} ${csStreak(best)}</div></div>
-    ${streak>0?`<div style="margin-left:auto;font-size:.75rem;color:var(--muted);text-align:right">Modlíš se<br>každý den 💪</div>`:''}</div>`;
+    <div style="margin-left:auto;font-size:.75rem;color:var(--muted);text-align:right">${streak>0?'Modlíš se<br>každý den 💪':'Modli se dnes<br>a začni streak 🙏'}</div>
+  </div>`;
 
   // Countdown
   renderCountdownMy();
