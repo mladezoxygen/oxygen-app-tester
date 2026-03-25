@@ -1,0 +1,28 @@
+{
+  "name": "Oxygen – Modlitební Tým",
+  "short_name": "Oxygen",
+  "description": "Modlitební aplikace pro tým Oxygen",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#1A0833",
+  "theme_color": "#1A0833",
+  "lang": "cs",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect width='192' height='192' rx='42' fill='%237B2FBE'/><rect x='84' y='24' width='24' height='144' rx='12' fill='white'/><rect x='36' y='60' width='120' height='24' rx='12' fill='white'/></svg>",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='112' fill='%237B2FBE'/><rect x='224' y='64' width='64' height='384' rx='32' fill='white'/><rect x='96' y='160' width='320' height='64' rx='32' fill='white'/></svg>",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [],
+  "categories": ["lifestyle", "social"],
+  "prefer_related_applications": false
+}

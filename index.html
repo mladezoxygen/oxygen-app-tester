@@ -7,62 +7,12 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="OXYGEN – modlitební tým">
-
-<!-- ══ PWA MANIFEST ══════════════════════════════════════════════════════════
-     Manifest je vložen jako data: URI přímo v <link> tagu.
-     Blob URL nefunguje správně pro instalaci PWA na PC (Chrome odmítá).
-     data: URI funguje na mobilu i na PC.
-  ═══════════════════════════════════════════════════════════════════════════ -->
-<link rel="manifest" href="data:application/json;charset=utf-8,%7B%22name%22%3A%22OXYGEN%20%E2%80%93%20moditeln%C3%AD%20t%C3%BDm%22%2C%22short_name%22%3A%22OXYGEN%20%E2%80%93%20modlitebn%C3%AD%20t%C3%BDm%22%2C%22description%22%3A%22M%C3%B6lade%C5%BEnick%C3%A1%20modlitebn%C3%AD%20ze%C4%8F%20t%C3%BDmu%20Oxygen%22%2C%22start_url%22%3A%22.%2F%22%2C%22scope%22%3A%22.%2F%22%2C%22display%22%3A%22standalone%22%2C%22orientation%22%3A%22portrait-primary%22%2C%22background_color%22%3A%22%231A0833%22%2C%22theme_color%22%3A%22%237B2FBE%22%2C%22lang%22%3A%22cs%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%2520viewBox%3D'0%25200%2520192%2520192'%253E%253Crect%2520width%3D'192'%2520height%3D'192'%2520rx%3D'42'%2520fill%3D'%25237B2FBE'%2F%253E%253Crect%2520x%3D'84'%2520y%3D'24'%2520width%3D'24'%2520height%3D'144'%2520rx%3D'12'%2520fill%3D'white'%2F%253E%253Crect%2520x%3D'36'%2520y%3D'60'%2520width%3D'120'%2520height%3D'24'%2520rx%3D'12'%2520fill%3D'white'%2F%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22192x192%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%2C%22purpose%22%3A%22any%20maskable%22%7D%2C%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%2520viewBox%3D'0%25200%2520512%2520512'%253E%253Crect%2520width%3D'512'%2520height%3D'512'%2520rx%3D'112'%2520fill%3D'%25237B2FBE'%2F%253E%253Crect%2520x%3D'224'%2520y%3D'64'%2520width%3D'64'%2520height%3D'384'%2520rx%3D'32'%2520fill%3D'white'%2F%253E%253Crect%2520x%3D'96'%2520y%3D'160'%2520width%3D'320'%2520height%3D'64'%2520rx%3D'32'%2520fill%3D'white'%2F%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22512x512%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%2C%22purpose%22%3A%22any%20maskable%22%7D%5D%2C%22categories%22%3A%5B%22lifestyle%22%2C%22social%22%5D%2C%22shortcuts%22%3A%5B%7B%22name%22%3A%22%C5%BD%C3%A1dosti%20o%20modlitbu%22%2C%22short_name%22%3A%22%C5%BD%C3%A1dosti%22%2C%22url%22%3A%22.%2F%23requests%22%7D%2C%7B%22name%22%3A%22Chat%22%2C%22short_name%22%3A%22Chat%22%2C%22url%22%3A%22.%2F%23chat%22%7D%5D%7D">
-
+<meta name="apple-mobile-web-app-title" content="Oxygen">
 <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%237B2FBE'/><rect x='14' y='4' width='4' height='24' rx='2' fill='white'/><rect x='6' y='10' width='20' height='4' rx='2' fill='white'/></svg>">
-<title>OXYGEN – modlitební tým</title>
+<title>Oxygen – Modlitební Tým</title>
+<link rel="manifest" href="manifest.json">
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Nunito:wght@300;400;600;700;800&display=swap" rel="stylesheet">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%237B2FBE'/><rect x='14' y='4' width='4' height='24' rx='2' fill='white'/><rect x='6' y='10' width='20' height='4' rx='2' fill='white'/></svg>">
-
-<!-- ══ ONESIGNAL SDK ═════════════════════════════════════════════════════════
-     OneSignal zajišťuje push notifikace i když je browser zavřený.
-     App ID: 47ed9794-3c55-4708-836d-233538079b71
-     SDK se načte z OneSignal CDN — vyžaduje HTTPS (GitHub Pages ✓)
-  ═══════════════════════════════════════════════════════════════════════════ -->
-<script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
-<script>
-  window.OneSignalDeferred = window.OneSignalDeferred || [];
-  OneSignalDeferred.push(async function(OneSignal) {
-    await OneSignal.init({
-      appId: "47ed9794-3c55-4708-836d-233538079b71",
-      // Vypnuté výchozí tlačítko OneSignalu
-      notifyButton: { enable: false },
-      // ServiceWorker scope
-      serviceWorkerParam: { scope: "/" },
-      // DŮLEŽITÉ: zakáže jakýkoliv automatický anglický prompt od OneSignalu
-      autoResubscribe: true,
-      welcomeNotification: { disable: true },
-      // Prázdné prompts = žádné automatické výzvy (vč. anglického "subscribe")
-      promptOptions: {
-        slidedown: {
-          enabled: false,
-          prompts: []
-        },
-        fullscreen: { enabled: false },
-        push: { enabled: false }
-      },
-      // Umožní notifikace na Safari 16.4+ (iOS PWA)
-      safari_web_id: "web.onesignal.auto.47ed9794-3c55-4708-836d-233538079b71",
-      allowLocalhostAsSecureOrigin: false,
-    });
-
-    // Ulož referenci globálně pro použití v enableOSPush()
-    window._OneSignal = OneSignal;
-
-    // Pokud je uživatel už přihlášen k odběru, zobraz stav v UI
-    const isSubscribed = await OneSignal.User.PushSubscription.optedIn;
-    window._osSubscribed = isSubscribed;
-    updatePushStatusUI();
-  });
-</script>
-
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
 :root{
@@ -1317,287 +1267,49 @@ let tT;
 function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');clearTimeout(tT);tT=setTimeout(()=>t.classList.remove('show'),2800)}
 function showMsg(type,msg){const el=document.getElementById('amsg');if(!msg){el.style.display='none';return;}el.className='amsg '+type;el.textContent=msg;el.style.display='block'}
 
-// ══ SERVICE WORKER INLINE PŘES BLOB ════════════════════════════════════════
-// SW se registruje z Blob URL — žádný externí soubor OneSignalSDKWorker.js.
-// POZOR: OneSignal v16 potřebuje vlastní SW soubor na root doméně pro
-// background push. Trik: na GitHub Pages lze přidat OneSignalSDKWorker.js
-// do repozitáře. Blob SW zajišťuje offline cache a install prompt.
-// ═══════════════════════════════════════════════════════════════════════════
-(function registerServiceWorker() {
-  if (!('serviceWorker' in navigator)) return;
-
-  // Obsah Service Workera jako string — bude konvertován na Blob
-  const swCode = `
-    // ── Oxygen Service Worker (inline Blob) ──
-    const CACHE = 'oxygen-v1';
-    const OFFLINE_URL = self.location.href; // fallback na sebe
-
-    // Instalace: předkešuj klíčové zdroje
-    self.addEventListener('install', event => {
-      self.skipWaiting();
-      event.waitUntil(
-        caches.open(CACHE).then(cache =>
-          cache.addAll([
-            // Fonty a Chart.js se kešují při prvním načtení
-          ])
-        )
-      );
-    });
-
-    // Aktivace: vymaž staré cache
-    self.addEventListener('activate', event => {
-      event.waitUntil(
-        caches.keys().then(keys =>
-          Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
-        ).then(() => self.clients.claim())
-      );
-    });
-
-    // Fetch: network-first strategie (app je real-time, nechceme staré data)
-    self.addEventListener('fetch', event => {
-      // Přeskoč non-GET requesty a Firebase
-      if (event.request.method !== 'GET') return;
-      if (event.request.url.includes('firestore') || event.request.url.includes('firebase')) return;
-
-      event.respondWith(
-        fetch(event.request)
-          .then(response => {
-            // Kešuj úspěšné odpovědi (fonty, CSS, JS)
-            if (response.ok && (
-              event.request.url.includes('fonts.googleapis') ||
-              event.request.url.includes('fonts.gstatic') ||
-              event.request.url.includes('jsdelivr') ||
-              event.request.url.includes('cdn.onesignal')
-            )) {
-              const clone = response.clone();
-              caches.open(CACHE).then(c => c.put(event.request, clone));
-            }
-            return response;
-          })
-          .catch(() => caches.match(event.request).then(r => r || Response.error()))
-      );
-    });
-
-    // Push notifikace přijaté přes OneSignal (OneSignal SW to zpracuje sám,
-    // ale jako fallback zobrazíme notifikaci i tady)
-    self.addEventListener('push', event => {
-      if (!event.data) return;
-      let data;
-      try { data = event.data.json(); } catch(e) { return; }
-      const title = data.title || 'Oxygen';
-      const body  = data.body  || data.alert || '';
-      event.waitUntil(
-        self.registration.showNotification(title, {
-          body,
-          icon: data.icon || 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"%3E%3Crect width="32" height="32" rx="7" fill="%237B2FBE"/%3E%3Crect x="14" y="4" width="4" height="24" rx="2" fill="white"/%3E%3Crect x="6" y="10" width="20" height="4" rx="2" fill="white"/%3E%3C/svg%3E',
-          badge: 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"%3E%3Crect width="32" height="32" rx="7" fill="%237B2FBE"/%3E%3Crect x="14" y="4" width="4" height="24" rx="2" fill="white"/%3E%3Crect x="6" y="10" width="20" height="4" rx="2" fill="white"/%3E%3C/svg%3E',
-          tag: 'oxygen-push',
-          renotify: true,
-          vibrate: [200, 100, 200],
-        })
-      );
-    });
-
-    // Klik na notifikaci otevře app
-    self.addEventListener('notificationclick', event => {
-      event.notification.close();
-      event.waitUntil(
-        clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
-          for (const c of list) {
-            if (c.url.includes('oxygen') && 'focus' in c) return c.focus();
-          }
-          return clients.openWindow(self.registration.scope);
-        })
-      );
-    });
-  `;
-
-  // Vytvoř Blob URL a zaregistruj SW
-  const blob = new Blob([swCode], { type: 'application/javascript' });
-  const swURL = URL.createObjectURL(blob);
-
-  navigator.serviceWorker.register(swURL, { scope: '/' })
-    .then(reg => {
-      console.log('[Oxygen SW] Registrován:', reg.scope);
-      window._swReg = reg;
-    })
-    .catch(err => {
-      // Blob SW scope je omezený na origin — fallback bez SW
-      console.warn('[Oxygen SW] Blob registrace selhala (normální na některých prohlížečích):', err.message);
-    });
-})();
-
-// ══ PWA: ADD TO HOME SCREEN ════════════════════════════════════════════════
-// beforeinstallprompt zachytíme globálně (ne jen po přihlášení),
-// abychom nepropásli event který se spouští brzy po načtení.
-// ═══════════════════════════════════════════════════════════════════════════
-let _deferredPrompt = null;
-window.addEventListener('beforeinstallprompt', e => {
-  // Zabraň automatickému zobrazení — ovládáme sami
-  e.preventDefault();
-  _deferredPrompt = e;
-  console.log('[Oxygen PWA] Install prompt zachycen');
-  // Zobraz banner až když je uživatel přihlášen (kontrola v showPwaBanner)
-  if (window.CU) showPwaBanner();
-});
-
-window.addEventListener('appinstalled', () => {
-  _deferredPrompt = null;
-  localStorage.setItem('oxygen_pwa_installed', '1');
-  toast('✅ Oxygen přidáno na plochu!');
-});
-
-function showPwaBanner() {
-  if (!CU) return;
-  if (localStorage.getItem('oxygen_pwa_dismissed')) return;
-  if (localStorage.getItem('oxygen_pwa_installed')) return;
-  // Na iOS zobraz manuální instrukce (iOS nepodporuje beforeinstallprompt)
-  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-  const isInStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
-  if (isInStandalone) return; // Už je nainstalováno
-
-  const b = document.getElementById('banners');
-  if (!b || b.querySelector('#pwaBanner')) return;
-  const div = document.createElement('div');
-  div.className = 'pwa-banner';
-  div.id = 'pwaBanner';
-
-  if (isIOS) {
-    // iOS: manuální instrukce (Safari → Sdílet → Přidat na plochu)
-    div.innerHTML = `<span style="font-size:1.2rem">📱</span>
-      <span class="pwa-banner-txt">Přidej Oxygen na plochu: Safari → <strong>Sdílet</strong> → <strong>Přidat na plochu</strong></span>
-      <button class="bs b-ghost" style="margin-left:4px;flex-shrink:0" onclick="dismissPwa()">✕</button>`;
-  } else if (_deferredPrompt) {
-    // Android/Desktop: automatický install prompt
-    div.innerHTML = `<span style="font-size:1.2rem">📱</span>
-      <span class="pwa-banner-txt">Přidej Oxygen na plochu pro rychlý přístup a offline funkce</span>
-      <button class="bs b-ok" onclick="installPwa()" style="flex-shrink:0">Přidat</button>
-      <button class="bs b-ghost" style="margin-left:4px;flex-shrink:0" onclick="dismissPwa()">Ne</button>`;
-  } else {
-    return; // Není co zobrazit
-  }
+// ── PUSH NOTIFICATIONS ─────────────────────────────────────────────────────
+async function requestPush(){
+  if(!('Notification' in window))return;
+  if(Notification.permission==='granted')return;
+  if(Notification.permission==='denied')return;
+  // Only show banner once per session - use localStorage to remember dismissal
+  if(localStorage.getItem('oxygen_push_dismissed'))return;
+  const b=document.getElementById('banners');
+  if(b.querySelector('#pushBanner'))return;
+  const div=document.createElement('div');div.className='push-banner';div.id='pushBanner';
+  div.innerHTML=`<span class="push-banner-txt">🔔 Chceš dostávat oznámení o nových žádostech?</span><button class="bs b-ok" onclick="enablePush()">Zapnout</button><button class="bs b-ghost" style="margin-left:4px" onclick="dismissPush()">Ne, díky</button>`;
   b.appendChild(div);
 }
 
-window.installPwa = async () => {
-  if (!_deferredPrompt) { toast('Appka je už nainstalována nebo instalace není podporována.'); return; }
-  _deferredPrompt.prompt();
-  const { outcome } = await _deferredPrompt.userChoice;
-  _deferredPrompt = null;
-  document.getElementById('pwaBanner')?.remove();
-  if (outcome === 'accepted') {
-    localStorage.setItem('oxygen_pwa_installed', '1');
-    toast('✅ Oxygen přidáno na plochu!');
-  } else {
-    localStorage.setItem('oxygen_pwa_dismissed', '1');
-  }
-};
-window.dismissPwa = () => {
-  document.getElementById('pwaBanner')?.remove();
-  localStorage.setItem('oxygen_pwa_dismissed', '1');
+window.dismissPush=()=>{
+  document.getElementById('pushBanner')?.remove();
+  localStorage.setItem('oxygen_push_dismissed','1');
 };
 
-// ══ ONESIGNAL PUSH NOTIFIKACE ══════════════════════════════════════════════
-// Funkce pro zapnutí/vypnutí OneSignal push odběru.
-// Voláno z tlačítka v profilu uživatele.
-// ═══════════════════════════════════════════════════════════════════════════
-
-// Zobraz aktuální stav push tlačítka v profilu
-function updatePushStatusUI() {
-  const btn = document.getElementById('osPushBtn');
-  if (!btn) return;
-  const subscribed = window._osSubscribed;
-  btn.textContent = subscribed ? '🔕 Vypnout push oznámení' : '🔔 Zapnout push oznámení';
-  btn.className = subscribed ? 'bp' : 'bp';
-  btn.style.background = subscribed
-    ? 'rgba(239,71,111,.2)'
-    : 'linear-gradient(135deg,var(--purple),var(--purple-d))';
-}
-
-// Přihlásit / odhlásit OneSignal push
-window.enableOSPush = async () => {
-  const OS = window._OneSignal;
-  if (!OS) { toast('Push notifikace se inicializují, zkus za chvíli.'); return; }
-
-  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-  const isInStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
-
-  // iOS: push funguje jen v PWA (standalone) módu na iOS 16.4+
-  if (isIOS && !isInStandalone) {
-    toast('📱 Na iPhone: nejprve přidej Oxygen na plochu, pak zapni oznámení.');
-    showPwaBanner();
+window.enablePush=async()=>{
+  // iOS Safari doesn't support the Notifications API in the standard way
+  const isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent)&&!window.MSStream;
+  if(isIOS){
+    document.getElementById('pushBanner')?.remove();
+    localStorage.setItem('oxygen_push_dismissed','1');
+    toast('ℹ️ Na iPhone přidej appku na plochu pro oznámení');
     return;
   }
-
-  try {
-    const isSubscribed = await OS.User.PushSubscription.optedIn;
-    if (isSubscribed) {
-      // Odhlásit od odběru
-      await OS.User.PushSubscription.optOut();
-      window._osSubscribed = false;
-      toast('🔕 Push oznámení vypnuta.');
-    } else {
-      // Přihlásit k odběru — zobrazí výzvu prohlížeče
-      await OS.Notifications.requestPermission();
-      const granted = await OS.Notifications.permission;
-      if (granted) {
-        await OS.User.PushSubscription.optIn();
-        window._osSubscribed = true;
-        // Přidej tag s username pro cílené notifikace z OneSignal dashboardu
-        if (CU?.username) {
-          OS.User.addTag('username', CU.username);
-          OS.User.addTag('role', CU.role || 'unknown');
-        }
-        toast('🔔 Push oznámení zapnuta! Dostaneš zprávy i když je browser zavřený.');
-      } else {
-        toast('⚠️ Oznámení byla zamítnuta. Povol je v nastavení prohlížeče.');
-      }
-    }
-    updatePushStatusUI();
-  } catch (e) {
-    console.warn('[Oxygen Push]', e);
-    toast('Chyba při nastavení oznámení: ' + e.message);
+  try{
+    const perm=await Notification.requestPermission();
+    document.getElementById('pushBanner')?.remove();
+    localStorage.setItem('oxygen_push_dismissed','1');
+    if(perm==='granted'){toast('🔔 Oznámení zapnutá!');}
+    else{toast('Oznámení byla zamítnuta v nastavení prohlížeče');}
+  }catch(e){
+    document.getElementById('pushBanner')?.remove();
+    localStorage.setItem('oxygen_push_dismissed','1');
   }
 };
 
-// Stará requestPush funkce — nyní přesměruje na OneSignal
-async function requestPush() {
-  // Zobraz banner pro push jen pokud uživatel ještě nerozhodl
-  const OS = window._OneSignal;
-  if (!OS) return;
-  try {
-    const isSubscribed = await OS.User.PushSubscription.optedIn;
-    if (isSubscribed) return; // Už přihlášen
-  } catch(e) { return; }
-  if (localStorage.getItem('oxygen_push_dismissed')) return;
-
-  const b = document.getElementById('banners');
-  if (!b || b.querySelector('#pushBanner')) return;
-  const div = document.createElement('div');
-  div.className = 'push-banner';
-  div.id = 'pushBanner';
-  div.innerHTML = `<span class="push-banner-txt">🔔 Chceš dostávat oznámení i když je browser zavřený?</span>
-    <button class="bs b-ok" onclick="enableOSPush();document.getElementById('pushBanner')?.remove()">Zapnout</button>
-    <button class="bs b-ghost" style="margin-left:4px" onclick="dismissPush()">Ne, díky</button>`;
-  b.appendChild(div);
-}
-
-window.dismissPush = () => {
-  document.getElementById('pushBanner')?.remove();
-  localStorage.setItem('oxygen_push_dismissed', '1');
-};
-
-// Interní in-app notifikace (Firebase real-time, ne push)
-function pushNotif(title, body) {
-  // OneSignal posílá push server-side; tato funkce je pro fallback
-  // browser notifikace zatímco je stránka otevřená
-  if (typeof Notification !== 'undefined' && Notification.permission === 'granted' && document.hidden) {
-    try {
-      new Notification('Oxygen – ' + title, {
-        body,
-        icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="7" fill="%237B2FBE"/><rect x="14" y="4" width="4" height="24" rx="2" fill="white"/><rect x="6" y="10" width="20" height="4" rx="2" fill="white"/></svg>'
-      });
-    } catch(e) {}
+function pushNotif(title,body){
+  if(Notification.permission==='granted'&&document.hidden){
+    try{new Notification('Oxygen – '+title,{body,icon:'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="7" fill="%237B2FBE"/><rect x="14" y="4" width="4" height="24" rx="2" fill="white"/><rect x="6" y="10" width="20" height="4" rx="2" fill="white"/></svg>'});}catch(e){}
   }
 }
 
@@ -1809,18 +1521,7 @@ function enterApp(){
   document.getElementById('mainApp').style.display='block';
   document.getElementById('notifBtn').style.display='flex';
   initUI();startListeners();initEmojiBar();startOnline();loadPrayerLog().then(()=>{renderStreakDash();renderCountdownDash();});setTimeout(initChannels,100);
-  // PWA banner po přihlášení
-  setTimeout(()=>{
-    showPwaBanner();
-    // OneSignal: označ uživatele tagem pro cílené notifikace
-    if(window._OneSignal&&CU?.username){
-      try{
-        window._OneSignal.User.addTag('username',CU.username);
-        window._OneSignal.User.addTag('role',CU.role||'unknown');
-      }catch(e){}
-    }
-  },2500);
-  setTimeout(requestPush,5000);
+  setTimeout(requestPush,2000);
 }
 
 function initUI(){
@@ -3364,13 +3065,7 @@ window.showProfile=()=>{
       <div class="ns-row"><label>💬 Nové zprávy v chatu</label><label class="toggle"><input type="checkbox" id="ns3" ${notifSettings.newChat?'checked':''}><span class="slider"></span></label></div>
       <div class="ns-row"><label>⏰ Připomínka stráže (24h předem)</label><label class="toggle"><input type="checkbox" id="ns4" ${notifSettings.watchReminder?'checked':''}><span class="slider"></span></label></div>
     </div>
-    <button class="bp" onclick="saveNS()" style="margin-bottom:10px">Uložit nastavení oznámení</button>
-    <!-- ── Push notifikace (OneSignal) ── -->
-    <button class="bp" id="osPushBtn" onclick="enableOSPush()" style="margin-bottom:10px;background:linear-gradient(135deg,var(--purple),var(--purple-d))">🔔 Zapnout push oznámení</button>
-    <div style="font-size:.73rem;color:var(--muted);margin-bottom:16px;line-height:1.5">Push oznámení dorazí i když je browser/appka zavřená. Na iPhone: nejprve přidej Oxygen na plochu.</div>
-    <!-- ── Přidat na plochu (PWA) ── -->
-    <button class="bp" onclick="installPwa()" style="margin-bottom:6px;background:linear-gradient(135deg,rgba(6,214,160,.4),rgba(6,214,160,.2));border:1px solid rgba(6,214,160,.4);color:var(--green)">📱 Přidat Oxygen na plochu</button>
-    <div style="font-size:.73rem;color:var(--muted);margin-bottom:16px;line-height:1.5">Na iPhone: Safari → Sdílet → Přidat na plochu. Na Android/Chrome: tlačítko výše.</div>
+    <button class="bp" onclick="saveNS()" style="margin-bottom:16px">Uložit nastavení oznámení</button>
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px">
       <div class="scard"><div class="snum">${pC}</div><div class="slbl">Modliteb</div></div>
       <div class="scard"><div class="snum">${reqs.filter(r=>r.createdBy===CU.username).length}</div><div class="slbl">Žádostí</div></div>
@@ -3397,13 +3092,6 @@ window.showProfile=()=>{
   </div>`;
   modal.addEventListener('click',e=>{if(e.target===modal)closeModal('profileModal');});
   document.body.appendChild(modal);
-  // Aktualizuj stav push tlačítka po vykreslení
-  setTimeout(async()=>{
-    if(window._OneSignal){
-      try{window._osSubscribed=await window._OneSignal.User.PushSubscription.optedIn;}catch(e){}
-    }
-    updatePushStatusUI();
-  },100);
 };
 window.selEm=(e,el)=>{_selEmoji=e;document.querySelectorAll('.ep-e').forEach(x=>x.classList.remove('sel'));el.classList.add('sel');const p=document.getElementById('profPrev');if(p){p.textContent=e||ini(CU.name);p.style.fontSize=e?'1.8rem':'.95rem';p.style.background=e?'var(--surface)':'linear-gradient(135deg,var(--purple),var(--purple-d))'; }};
 window.saveEmoji=async()=>{try{await updateDoc(doc(db,'users',CU.username),{emoji:_selEmoji});CU.emoji=_selEmoji;const av=document.getElementById('uavEl');if(_selEmoji){av.textContent=_selEmoji;av.classList.add('ea');}else{av.textContent=ini(CU.name);av.classList.remove('ea');}toast('Profilovka uložena ✓');}catch(e){toast('Chyba: '+e.message);}};
@@ -3825,7 +3513,32 @@ function renderCountdownMy(){
   </div>`;
 }
 
-// ── PWA install banner se zobrazí automaticky přes showPwaBanner() výše ───
+// ── PWA ───────────────────────────────────────────────────────────────────
+let _deferredPrompt=null;
+window.addEventListener('beforeinstallprompt',e=>{
+  e.preventDefault();_deferredPrompt=e;
+  // Show banner after user is logged in
+  setTimeout(showPwaBanner,3000);
+});
+function showPwaBanner(){
+  if(!CU||localStorage.getItem('oxygen_pwa_dismissed'))return;
+  const b=document.getElementById('banners');
+  if(b&&!b.querySelector('#pwaBanner')){
+    const div=document.createElement('div');div.className='pwa-banner';div.id='pwaBanner';
+    div.innerHTML=`<span style="font-size:1.2rem">📱</span><span class="pwa-banner-txt">Přidej Oxygen na plochu pro rychlý přístup</span><button class="bs b-ok" onclick="installPwa()">Přidat</button><button class="bs b-ghost" style="margin-left:4px" onclick="dismissPwa()">Ne</button>`;
+    b.appendChild(div);
+  }
+}
+window.installPwa=async()=>{
+  if(!_deferredPrompt)return;
+  _deferredPrompt.prompt();
+  const{outcome}=await _deferredPrompt.userChoice;
+  if(outcome==='accepted')toast('✅ Oxygen přidáno na plochu!');
+  _deferredPrompt=null;
+  document.getElementById('pwaBanner')?.remove();
+  localStorage.setItem('oxygen_pwa_dismissed','1');
+};
+window.dismissPwa=()=>{document.getElementById('pwaBanner')?.remove();localStorage.setItem('oxygen_pwa_dismissed','1');};
 
 
 
@@ -4052,6 +3765,56 @@ window.toggleMembersPanel=function(){
 window.closeChatOverlays=closeChatOverlays;
 
 restoreSession();
+
+// ── PWA: Service Worker + Push ─────────────────────────────────────────────
+(async function initPWA(){
+  if(!('serviceWorker' in navigator)) return;
+  let swReg;
+  try { swReg = await navigator.serviceWorker.register('sw.js'); console.log('[PWA] SW registered'); }
+  catch(e){ console.warn('[PWA] SW failed', e); return; }
+
+  window.requestPushPermission = async function(){
+    if(!('PushManager' in window)) return;
+    const perm = await Notification.requestPermission();
+    if(perm !== 'granted') return;
+    // Nahraď VAPID_PUBLIC_KEY svým vlastním klíčem (viz níže)
+    const VAPID_PUBLIC_KEY = 'BEl62iUYgUivxIkv69yViEuiBIa-Ib9-SkvMeAtA3LFgDzkrxZJjSgSnfckjZkm4dkPK5oI6GkF_KJvPkHiPOcU';
+    try {
+      const sub = await swReg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+      });
+      // Pošli sub na svůj backend: fetch('/api/push-subscribe', {method:'POST', body:JSON.stringify(sub), headers:{'Content-Type':'application/json'}})
+      console.log('[PWA] Subscription:', JSON.stringify(sub));
+      const banner = document.getElementById('pushBanner');
+      if(banner) banner.remove();
+    } catch(e){ console.warn('[PWA] Subscribe error', e); }
+  };
+
+  function urlBase64ToUint8Array(b64){
+    const pad = '='.repeat((4 - b64.length % 4) % 4);
+    const base64 = (b64 + pad).replace(/-/g,'+').replace(/_/g,'/');
+    const raw = atob(base64);
+    return Uint8Array.from([...raw].map(c=>c.charCodeAt(0)));
+  }
+
+  const existing = await swReg.pushManager.getSubscription();
+  if(!existing && Notification.permission === 'default'){
+    const tryShowBanner = setInterval(()=>{
+      const target = document.querySelector('#mainApp .sec.on') || document.querySelector('.sec.on');
+      if(!target) return;
+      clearInterval(tryShowBanner);
+      if(document.getElementById('pushBanner')) return;
+      const b = document.createElement('div');
+      b.id = 'pushBanner'; b.className = 'push-banner';
+      b.innerHTML = '<span style="font-size:1.2rem">🔔</span>'
+        +'<span class="push-banner-txt">Zapni oznámení a nikdy nezmeškej modlitební výzvu.</span>'
+        +'<button class="bs b-pray" onclick="requestPushPermission()">Zapnout</button>'
+        +'<button class="bs b-ghost" style="margin-left:4px" onclick="document.getElementById(\'pushBanner\').remove()">✕</button>';
+      target.prepend(b);
+    }, 1000);
+  }
+})();
 </script>
 </body>
 </html>
