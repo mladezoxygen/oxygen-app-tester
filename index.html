@@ -1538,7 +1538,7 @@ function enterApp(){
   document.getElementById('mainApp').style.display='block';
   document.getElementById('notifBtn').style.display='flex';
   initUI();startListeners();initEmojiBar();startOnline();loadPrayerLog().then(()=>{renderStreakDash();renderCountdownDash();});setTimeout(initChannels,100);
-  // Push se zapíná v profilu
+  setTimeout(function(){ if(typeof requestPushPermission === "function") requestPushPermission(); },2500);
 }
 
 function initUI(){
@@ -3076,7 +3076,7 @@ window.showProfile=()=>{
     <div class="ep">${EMOJIS.map(e=>`<div class="ep-e ${e===_selEmoji?'sel':''}" onclick="selEm('${e}',this)">${e}</div>`).join('')}<div class="ep-e ${!_selEmoji?'sel':''}" onclick="selEm('',this)" title="Bez emoji (iniciály)">🔤</div></div>
     <button class="bp" style="margin-bottom:18px" onclick="saveEmoji()">Uložit profilovku</button>
     <div class="lbl">Nastavení oznámení</div>
-    <div id="pushRow" style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:rgba(123,47,190,.12);border:1px solid rgba(123,47,190,.3);border-radius:10px;margin-bottom:10px"><span>🔔</span><span id="pushTxt" style="flex:1;font-size:.84rem;color:var(--purple-xl)">Kontroluji stav...</span><button id="pushBtn" class="bs b-pray" onclick="window._pushAction&&window._pushAction()">...</button></div>
+    <div id="pushRow" style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:rgba(123,47,190,.12);border:1px solid rgba(123,47,190,.3);border-radius:10px;margin-bottom:10px"><span>🔔</span><span id="pushTxt" style="flex:1;font-size:.84rem;color:var(--purple-xl)">Kontroluji stav...</span><button id="pushBtn" class="bs b-pray" style="display:none" onclick="window._doPush&&window._doPush()">...</button></div>
     <div style="background:rgba(0,0,0,.15);border-radius:10px;padding:10px 14px;margin-bottom:14px">
       <div class="ns-row"><label>🙏 Nové žádosti o modlitbu</label><label class="toggle"><input type="checkbox" id="ns1" ${notifSettings.newRequest?'checked':''}><span class="slider"></span></label></div>
       <div class="ns-row"><label>💬 Nové komentáře</label><label class="toggle"><input type="checkbox" id="ns2" ${notifSettings.newComment?'checked':''}><span class="slider"></span></label></div>
@@ -3110,61 +3110,43 @@ window.showProfile=()=>{
   </div>`;
   modal.addEventListener('click',e=>{if(e.target===modal)closeModal('profileModal');});
   document.body.appendChild(modal);
-  // Check push status and set up button
-  setTimeout(async()=>{
+  // Push status check
+  (async function checkPush(){
     const txt=document.getElementById('pushTxt');
     const btn=document.getElementById('pushBtn');
     if(!txt||!btn)return;
-    if(!('Notification' in window)||!('PushManager' in window)){
-      txt.textContent='Push není podporován v tomto prohlížeči';
-      btn.style.display='none';
-      return;
-    }
+    const hasPush=('Notification' in window)&&('PushManager' in window)&&('serviceWorker' in navigator);
+    if(!hasPush){txt.textContent='Push není podporován';return;}
     if(Notification.permission==='denied'){
-      txt.textContent='🚫 Zablokováno – odblokuj v nastavení Chrome';
-      txt.style.color='var(--red)';
-      btn.style.display='none';
-      return;
+      txt.textContent='🚫 Zablokováno v nastavení Chrome';txt.style.color='var(--red)';return;
     }
-    const reg=await navigator.serviceWorker.ready.catch(()=>null);
-    const sub=reg?await reg.pushManager.getSubscription().catch(()=>null):null;
-    if(Notification.permission==='granted'&&sub){
-      txt.textContent='Push oznámení jsou zapnutá ✓';
-      txt.style.color='var(--green)';
-      btn.textContent='Vypnout';
-      btn.className='bs b-del';
-      window._pushAction=async()=>{
-        await sub.unsubscribe();
-        toast('🔕 Push oznámení vypnuta');
-        closeModal('profileModal');
-        showProfile();
-      };
+    let sub=null;
+    try{
+      const reg=await Promise.race([navigator.serviceWorker.ready,new Promise((_,r)=>setTimeout(r,4000))]);
+      sub=await reg.pushManager.getSubscription();
+    }catch(e){}
+    if(sub&&Notification.permission==='granted'){
+      txt.textContent='Zapnutá ✓';txt.style.color='var(--green)';
+      btn.textContent='Vypnout';btn.className='bs b-del';btn.style.display='';
+      window._doPush=async()=>{await sub.unsubscribe();toast('🔕 Vypnuto');closeModal('profileModal');showProfile();};
     } else {
-      txt.textContent='Push oznámení jsou vypnutá';
-      txt.style.color='var(--purple-xl)';
-      btn.textContent='Zapnout';
-      btn.className='bs b-pray';
-      window._pushAction=async()=>{
-        const perm=await Notification.requestPermission();
-        if(perm!=='granted'){toast('Oznámení byla zamítnuta');return;}
+      txt.textContent='Vypnutá – klikni pro zapnutí';txt.style.color='var(--purple-xl)';
+      btn.textContent='Zapnout';btn.className='bs b-pray';btn.style.display='';
+      window._doPush=async()=>{
+        const p=await Notification.requestPermission();
+        if(p!=='granted'){toast('Zamítnuto v prohlížeči');return;}
         try{
-          const r=await navigator.serviceWorker.ready;
+          const reg=await Promise.race([navigator.serviceWorker.ready,new Promise((_,r)=>setTimeout(r,5000))]);
           const VAPID='BIPJ71wz5UPb1uwd0__I3z4ZmLQPDG90M_jUs617taQwxZ5Sr5JsjNsJ6vBO9GjzyxCS9szNyNCJER4rAZTHCq4';
-          const pad='='.repeat((4-VAPID.length%4)%4);
-          const b64=(VAPID+pad).replace(/-/g,'+').replace(/_/g,'/');
+          const b64=(VAPID+'==').replace(/-/g,'+').replace(/_/g,'/');
           const key=Uint8Array.from([...atob(b64)].map(c=>c.charCodeAt(0)));
-          const s=await r.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:key});
-          await fetch('https://jliulttlsrigfafoqbgp.supabase.co/functions/v1/save-subscription',{
-            method:'POST',headers:{'Content-Type':'application/json'},
-            body:JSON.stringify({subscription:s,user_id:CU?.username||'anon'})
-          });
-          toast('🔔 Push oznámení zapnutá!');
-          closeModal('profileModal');
-          showProfile();
-        }catch(e){toast('Chyba: '+e.message);}
+          const s=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:key});
+          await fetch('https://jliulttlsrigfafoqbgp.supabase.co/functions/v1/save-subscription',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({subscription:s,user_id:CU?.username||'anon'})});
+          toast('🔔 Push zapnuto!');closeModal('profileModal');showProfile();
+        }catch(e){toast('Chyba: '+e.message);console.error(e);}
       };
     }
-  }, 0);
+  })();
 };
 window.selEm=(e,el)=>{_selEmoji=e;document.querySelectorAll('.ep-e').forEach(x=>x.classList.remove('sel'));el.classList.add('sel');const p=document.getElementById('profPrev');if(p){p.textContent=e||ini(CU.name);p.style.fontSize=e?'1.8rem':'.95rem';p.style.background=e?'var(--surface)':'linear-gradient(135deg,var(--purple),var(--purple-d))'; }};
 window.saveEmoji=async()=>{try{await updateDoc(doc(db,'users',CU.username),{emoji:_selEmoji});CU.emoji=_selEmoji;const av=document.getElementById('uavEl');if(_selEmoji){av.textContent=_selEmoji;av.classList.add('ea');}else{av.textContent=ini(CU.name);av.classList.remove('ea');}toast('Profilovka uložena ✓');}catch(e){toast('Chyba: '+e.message);}};
