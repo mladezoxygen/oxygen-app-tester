@@ -1,5 +1,5 @@
 // Oxygen PWA – Service Worker
-const CACHE = 'oxygen-v1';
+const CACHE = 'oxygen-v2';
 const OFFLINE_URL = '/';
 
 // ── INSTALL: pre-cache shell ─────────────────────────────────────────────────
