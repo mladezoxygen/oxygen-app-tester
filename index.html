@@ -1324,6 +1324,17 @@ window.enablePush=async()=>{
   }
 };
 
+window.disablePush=async()=>{
+  try{
+    const reg=await navigator.serviceWorker.ready;
+    const sub=await reg.pushManager.getSubscription();
+    if(sub) await sub.unsubscribe();
+    toast('🔕 Push oznámení vypnuta');
+    closeModal('profileModal');
+    showProfile();
+  }catch(e){toast('Chyba: '+e.message);}
+};
+
 function pushNotif(title,body){
   if(Notification.permission==='granted'&&document.hidden){
     try{new Notification('Oxygen – '+title,{body,icon:'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="7" fill="%237B2FBE"/><rect x="14" y="4" width="4" height="24" rx="2" fill="white"/><rect x="6" y="10" width="20" height="4" rx="2" fill="white"/></svg>'});}catch(e){}
@@ -1538,7 +1549,7 @@ function enterApp(){
   document.getElementById('mainApp').style.display='block';
   document.getElementById('notifBtn').style.display='flex';
   initUI();startListeners();initEmojiBar();startOnline();loadPrayerLog().then(()=>{renderStreakDash();renderCountdownDash();});setTimeout(initChannels,100);
-  setTimeout(requestPush, 2500);
+  setTimeout(function(){ if(typeof requestPushPermission === "function") requestPushPermission(); },2500);
 }
 
 function initUI(){
@@ -3076,6 +3087,7 @@ window.showProfile=()=>{
     <div class="ep">${EMOJIS.map(e=>`<div class="ep-e ${e===_selEmoji?'sel':''}" onclick="selEm('${e}',this)">${e}</div>`).join('')}<div class="ep-e ${!_selEmoji?'sel':''}" onclick="selEm('',this)" title="Bez emoji (iniciály)">🔤</div></div>
     <button class="bp" style="margin-bottom:18px" onclick="saveEmoji()">Uložit profilovku</button>
     <div class="lbl">Nastavení oznámení</div>
+    <div id="pushStatusRow" style="margin-bottom:10px"></div>
     <div style="background:rgba(0,0,0,.15);border-radius:10px;padding:10px 14px;margin-bottom:14px">
       <div class="ns-row"><label>🙏 Nové žádosti o modlitbu</label><label class="toggle"><input type="checkbox" id="ns1" ${notifSettings.newRequest?'checked':''}><span class="slider"></span></label></div>
       <div class="ns-row"><label>💬 Nové komentáře</label><label class="toggle"><input type="checkbox" id="ns2" ${notifSettings.newComment?'checked':''}><span class="slider"></span></label></div>
@@ -3109,6 +3121,27 @@ window.showProfile=()=>{
   </div>`;
   modal.addEventListener('click',e=>{if(e.target===modal)closeModal('profileModal');});
   document.body.appendChild(modal);
+  // Show push status in profile
+  (async()=>{
+    const row=document.getElementById('pushStatusRow');
+    if(!row)return;
+    if(!('Notification' in window)||!('PushManager' in window)){
+      row.innerHTML='<div style="font-size:.8rem;color:var(--muted);margin-bottom:4px">📵 Push oznámení nejsou podporována v tomto prohlížeči.</div>';return;
+    }
+    if(Notification.permission==='granted'){
+      const reg=await navigator.serviceWorker.ready.catch(()=>null);
+      const sub=reg?await reg.pushManager.getSubscription():null;
+      if(sub){
+        row.innerHTML='<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:rgba(6,214,160,.1);border:1px solid rgba(6,214,160,.25);border-radius:10px;margin-bottom:4px"><span style="font-size:1.1rem">🔔</span><span style="font-size:.84rem;color:var(--green);flex:1">Push oznámení jsou <b>zapnutá</b></span><button class="bs b-del" onclick="disablePush()">Vypnout</button></div>';
+      } else {
+        row.innerHTML='<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:rgba(123,47,190,.1);border:1px solid var(--border);border-radius:10px;margin-bottom:4px"><span style="font-size:1.1rem">🔔</span><span style="font-size:.84rem;color:var(--purple-xl);flex:1">Push oznámení jsou <b>vypnutá</b></span><button class="bs b-pray" onclick="enablePush()">Zapnout</button></div>';
+      }
+    } else if(Notification.permission==='denied'){
+      row.innerHTML='<div style="font-size:.8rem;color:var(--muted);padding:10px 14px;background:rgba(239,71,111,.08);border:1px solid rgba(239,71,111,.2);border-radius:10px;margin-bottom:4px">🚫 Oznámení jsou <b>zablokovaná</b> v prohlížeči. Odblokuj je v nastavení Chrome → Nastavení webu.</div>';
+    } else {
+      row.innerHTML='<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:rgba(123,47,190,.1);border:1px solid var(--border);border-radius:10px;margin-bottom:4px"><span style="font-size:1.1rem">🔔</span><span style="font-size:.84rem;color:var(--purple-xl);flex:1">Zapni push oznámení</span><button class="bs b-pray" onclick="enablePush()">Zapnout</button></div>';
+    }
+  })();
 };
 window.selEm=(e,el)=>{_selEmoji=e;document.querySelectorAll('.ep-e').forEach(x=>x.classList.remove('sel'));el.classList.add('sel');const p=document.getElementById('profPrev');if(p){p.textContent=e||ini(CU.name);p.style.fontSize=e?'1.8rem':'.95rem';p.style.background=e?'var(--surface)':'linear-gradient(135deg,var(--purple),var(--purple-d))'; }};
 window.saveEmoji=async()=>{try{await updateDoc(doc(db,'users',CU.username),{emoji:_selEmoji});CU.emoji=_selEmoji;const av=document.getElementById('uavEl');if(_selEmoji){av.textContent=_selEmoji;av.classList.add('ea');}else{av.textContent=ini(CU.name);av.classList.remove('ea');}toast('Profilovka uložena ✓');}catch(e){toast('Chyba: '+e.message);}};
