@@ -1538,7 +1538,7 @@ function enterApp(){
   document.getElementById('mainApp').style.display='block';
   document.getElementById('notifBtn').style.display='flex';
   initUI();startListeners();initEmojiBar();startOnline();loadPrayerLog().then(()=>{renderStreakDash();renderCountdownDash();});setTimeout(initChannels,100);
-  setTimeout(function(){ if(typeof requestPushPermission === "function") requestPushPermission(); },2500);
+  setTimeout(requestPush, 2500);
 }
 
 function initUI(){
