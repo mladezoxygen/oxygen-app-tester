@@ -3777,14 +3777,14 @@ restoreSession();
     if(!('PushManager' in window)) return;
     const perm = await Notification.requestPermission();
     if(perm !== 'granted') return;
-    // Nahraď VAPID_PUBLIC_KEY svým vlastním klíčem (viz níže)
+    
     const VAPID_PUBLIC_KEY = 'BIPJ71wz5UPb1uwd0__I3z4ZmLQPDG90M_jUs617taQwxZ5Sr5JsjNsJ6vBO9GjzyxCS9szNyNCJER4rAZTHCq4';
     try {
       const sub = await swReg.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
       });
-      // Pošli sub na svůj backend: fetch('/api/push-subscribe', {method:'POST', body:JSON.stringify(sub), headers:{'Content-Type':'application/json'}})
+      await fetch('https://jliulttlsrigfafoqbgp.supabase.co/functions/v1/save-subscription', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ subscription: sub, user_id: window.currentUser?.id || 'anon' }) });
       console.log('[PWA] Subscription:', JSON.stringify(sub));
       const banner = document.getElementById('pushBanner');
       if(banner) banner.remove();
