@@ -2,7 +2,7 @@
   "name": "Oxygen – Modlitební Tým",
   "short_name": "Oxygen",
   "description": "Modlitební aplikace pro tým Oxygen",
-  "start_url": "/",
+  "start_url": "/oxygen-app-tester/",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#1A0833",
@@ -23,6 +23,10 @@
     }
   ],
   "screenshots": [],
-  "categories": ["lifestyle", "social"],
-  "prefer_related_applications": false
+  "categories": [
+    "lifestyle",
+    "social"
+  ],
+  "prefer_related_applications": false,
+  "scope": "/oxygen-app-tester/"
 }

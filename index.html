@@ -3136,15 +3136,14 @@ window.showProfile=()=>{
         const p=await Notification.requestPermission();
         if(p!=='granted'){toast('Zamítnuto v prohlížeči');return;}
         try{
-          const reg=await navigator.serviceWorker.ready;
+          const reg=await Promise.race([navigator.serviceWorker.ready,new Promise((_,r)=>setTimeout(r,5000))]);
           const VAPID='BIPJ71wz5UPb1uwd0__I3z4ZmLQPDG90M_jUs617taQwxZ5Sr5JsjNsJ6vBO9GjzyxCS9szNyNCJER4rAZTHCq4';
-          const padding='='.repeat((4-VAPID.length%4)%4);
-          const b64=(VAPID+padding).replace(/-/g,'+').replace(/_/g,'/');
+          const b64=(VAPID+'==').replace(/-/g,'+').replace(/_/g,'/');
           const key=Uint8Array.from([...atob(b64)].map(c=>c.charCodeAt(0)));
           const s=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:key});
           await fetch('https://jliulttlsrigfafoqbgp.supabase.co/functions/v1/save-subscription',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({subscription:s,user_id:CU?.username||'anon'})});
           toast('🔔 Push zapnuto!');closeModal('profileModal');showProfile();
-        }catch(err){toast('Chyba: '+(err&&err.message?err.message:String(err)));console.error(err);}
+        }catch(e){toast('Chyba: '+e.message);console.error(e);}
       };
     }
   })();
