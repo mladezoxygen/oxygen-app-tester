@@ -3778,7 +3778,7 @@ restoreSession();
     const perm = await Notification.requestPermission();
     if(perm !== 'granted') return;
     // Nahraď VAPID_PUBLIC_KEY svým vlastním klíčem (viz níže)
-    const VAPID_PUBLIC_KEY = 'BIPJ71wz5UPb1uwd0__I3z4ZmLQPDG90M_jUs617taQwxZ5Sr5JsjNsJ6vBO9GjzyxCS9szNyNCJER4rAZTHCq4';
+    const VAPID_PUBLIC_KEY = 'BEl62iUYgUivxIkv69yViEuiBIa-Ib9-SkvMeAtA3LFgDzkrxZJjSgSnfckjZkm4dkPK5oI6GkF_KJvPkHiPOcU';
     try {
       const sub = await swReg.pushManager.subscribe({
         userVisibleOnly: true,
