@@ -1287,7 +1287,6 @@ window.dismissPush=()=>{
 };
 
 window.enablePush=async()=>{
-  // iOS Safari doesn't support the Notifications API in the standard way
   const isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent)&&!window.MSStream;
   if(isIOS){
     document.getElementById('pushBanner')?.remove();
@@ -1299,9 +1298,27 @@ window.enablePush=async()=>{
     const perm=await Notification.requestPermission();
     document.getElementById('pushBanner')?.remove();
     localStorage.setItem('oxygen_push_dismissed','1');
-    if(perm==='granted'){toast('🔔 Oznámení zapnutá!');}
-    else{toast('Oznámení byla zamítnuta v nastavení prohlížeče');}
+    if(perm!=='granted'){toast('Oznámení byla zamítnuta v nastavení prohlížeče');return;}
+    // Web Push subscription
+    if('serviceWorker' in navigator && 'PushManager' in window){
+      const reg=await navigator.serviceWorker.ready;
+      const VAPID='BIPJ71wz5UPb1uwd0__I3z4ZmLQPDG90M_jUs617taQwxZ5Sr5JsjNsJ6vBO9GjzyxCS9szNyNCJER4rAZTHCq4';
+      const pad='='.repeat((4-VAPID.length%4)%4);
+      const b64=(VAPID+pad).replace(/-/g,'+').replace(/_/g,'/');
+      const raw=atob(b64);
+      const key=Uint8Array.from([...raw].map(c=>c.charCodeAt(0)));
+      const sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:key});
+      await fetch('https://jliulttlsrigfafoqbgp.supabase.co/functions/v1/save-subscription',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({subscription:sub,user_id:CU?.id||CU?.name||'anon'})
+      });
+      toast('🔔 Oznámení zapnutá!');
+    } else {
+      toast('🔔 Oznámení zapnutá!');
+    }
   }catch(e){
+    console.warn('[PWA] enablePush error',e);
     document.getElementById('pushBanner')?.remove();
     localStorage.setItem('oxygen_push_dismissed','1');
   }
@@ -1521,7 +1538,7 @@ function enterApp(){
   document.getElementById('mainApp').style.display='block';
   document.getElementById('notifBtn').style.display='flex';
   initUI();startListeners();initEmojiBar();startOnline();loadPrayerLog().then(()=>{renderStreakDash();renderCountdownDash();});setTimeout(initChannels,100);
-  setTimeout(requestPush,2000);
+  setTimeout(function(){ if(typeof requestPushPermission === "function") requestPushPermission(); },2500);
 }
 
 function initUI(){
@@ -3766,55 +3783,7 @@ window.closeChatOverlays=closeChatOverlays;
 
 restoreSession();
 
-// ── PWA: Service Worker + Push ─────────────────────────────────────────────
-(async function initPWA(){
-  if(!('serviceWorker' in navigator)) return;
-  let swReg;
-  try { swReg = await navigator.serviceWorker.register('sw.js'); console.log('[PWA] SW registered'); }
-  catch(e){ console.warn('[PWA] SW failed', e); return; }
 
-  window.requestPushPermission = async function(){
-    if(!('PushManager' in window)) return;
-    const perm = await Notification.requestPermission();
-    if(perm !== 'granted') return;
-    
-    const VAPID_PUBLIC_KEY = 'BIPJ71wz5UPb1uwd0__I3z4ZmLQPDG90M_jUs617taQwxZ5Sr5JsjNsJ6vBO9GjzyxCS9szNyNCJER4rAZTHCq4';
-    try {
-      const sub = await swReg.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
-      });
-      await fetch('https://jliulttlsrigfafoqbgp.supabase.co/functions/v1/save-subscription', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ subscription: sub, user_id: window.currentUser?.id || 'anon' }) });
-      console.log('[PWA] Subscription:', JSON.stringify(sub));
-      const banner = document.getElementById('pushBanner');
-      if(banner) banner.remove();
-    } catch(e){ console.warn('[PWA] Subscribe error', e); }
-  };
-
-  function urlBase64ToUint8Array(b64){
-    const pad = '='.repeat((4 - b64.length % 4) % 4);
-    const base64 = (b64 + pad).replace(/-/g,'+').replace(/_/g,'/');
-    const raw = atob(base64);
-    return Uint8Array.from([...raw].map(c=>c.charCodeAt(0)));
-  }
-
-  const existing = await swReg.pushManager.getSubscription();
-  if(!existing && Notification.permission === 'default'){
-    const tryShowBanner = setInterval(()=>{
-      const target = document.querySelector('#mainApp .sec.on') || document.querySelector('.sec.on');
-      if(!target) return;
-      clearInterval(tryShowBanner);
-      if(document.getElementById('pushBanner')) return;
-      const b = document.createElement('div');
-      b.id = 'pushBanner'; b.className = 'push-banner';
-      b.innerHTML = '<span style="font-size:1.2rem">🔔</span>'
-        +'<span class="push-banner-txt">Zapni oznámení a nikdy nezmeškej modlitební výzvu.</span>'
-        +'<button class="bs b-pray" onclick="requestPushPermission()">Zapnout</button>'
-        +'<button class="bs b-ghost" style="margin-left:4px" onclick="document.getElementById(\'pushBanner\').remove()">✕</button>';
-      target.prepend(b);
-    }, 1000);
-  }
-})();
 </script>
 </body>
 </html>
