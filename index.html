@@ -267,22 +267,31 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 .wpi-tags{display:flex;flex-wrap:wrap;gap:3px;margin-bottom:7px}
 .wpi-actions{display:flex;gap:4px;flex-wrap:wrap;align-items:center}
 .wpi-parts{font-size:.69rem;color:var(--muted);margin-top:4px}
-/* WATCH GROUP SECTION HEADERS */
-.wg-header{display:flex;align-items:center;gap:10px;margin:18px 0 10px;padding-bottom:7px;border-bottom:1px solid var(--border);user-select:none}
-.wg-header:first-child{margin-top:0}
+/* WATCH GROUP SECTIONS */
+.wg-section{border-radius:14px;padding:14px 16px;margin-bottom:22px}
+.wg-section:last-child{margin-bottom:0}
+.wg-section.curr{background:rgba(255,209,102,.05);border:1px solid rgba(255,209,102,.18)}
+.wg-section.future{background:rgba(123,47,190,.07);border:1px solid rgba(155,79,222,.18)}
+.wg-section.past{background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.07)}
+.wg-section .wc{margin-bottom:10px}
+.wg-section .wc:last-child{margin-bottom:0}
+.wg-header{display:flex;align-items:center;gap:10px;margin-bottom:14px;user-select:none}
 .wg-header-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
-.wg-header.curr .wg-header-dot{background:var(--gold);box-shadow:0 0 6px var(--gold);animation:pulse-gold 2s infinite}
-.wg-header.future .wg-header-dot{background:var(--purple-xl)}
-.wg-header.past .wg-header-dot{background:var(--muted)}
-.wg-header-label{font-size:.68rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
-.wg-header.curr .wg-header-label{color:var(--gold)}
-.wg-header.future .wg-header-label{color:var(--purple-xl)}
-.wg-header.past .wg-header-label{color:var(--muted)}
-.wg-header-count{font-size:.67rem;font-weight:700;padding:1px 7px;border-radius:20px;margin-left:2px}
-.wg-header.curr .wg-header-count{background:rgba(255,209,102,.14);color:var(--gold)}
-.wg-header.future .wg-header-count{background:rgba(155,79,222,.14);color:var(--purple-xl)}
-.wg-header.past .wg-header-count{background:rgba(255,255,255,.07);color:var(--muted)}
-.wg-line{flex:1;height:1px;background:var(--border)}
+.wg-section.curr .wg-header-dot{background:var(--gold);box-shadow:0 0 6px var(--gold);animation:pulse-gold 2s infinite}
+.wg-section.future .wg-header-dot{background:var(--purple-xl)}
+.wg-section.past .wg-header-dot{background:var(--muted)}
+.wg-header-label{font-size:.72rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+.wg-section.curr .wg-header-label{color:var(--gold)}
+.wg-section.future .wg-header-label{color:var(--purple-xl)}
+.wg-section.past .wg-header-label{color:var(--muted)}
+.wg-header-count{font-size:.67rem;font-weight:700;padding:1px 8px;border-radius:20px}
+.wg-section.curr .wg-header-count{background:rgba(255,209,102,.15);color:var(--gold)}
+.wg-section.future .wg-header-count{background:rgba(155,79,222,.15);color:var(--purple-xl)}
+.wg-section.past .wg-header-count{background:rgba(255,255,255,.07);color:var(--muted)}
+.wg-line{flex:1;height:1px}
+.wg-section.curr .wg-line{background:rgba(255,209,102,.2)}
+.wg-section.future .wg-line{background:rgba(155,79,222,.2)}
+.wg-section.past .wg-line{background:rgba(255,255,255,.07)}
 /* WATCH LIST CARDS */
 .wc{background:var(--card-bg);border:1px solid var(--border);border-radius:14px;padding:0;margin-bottom:12px;animation:fu .3s ease;overflow:hidden}
 .wc.wc-curr{border-color:rgba(255,209,102,.35);animation:fu .3s ease,wc-curr-glow 3.5s ease 1s infinite}
@@ -2157,23 +2166,12 @@ window.renderWatch=function renderWatch(){
     el.innerHTML=`<div class="empty"><div class="ei">⌚</div><p>${msgs[WF]||msgs.all}</p></div>`;return;
   }
   const pastMore=(WF==='all'&&!window._showAllPast&&(window._pastWatchTotal||0)>PAST_LIMIT);
-  // Group headers for tabs where multiple timing groups appear together
   const showGroupHeaders=(WF==='all'||WF==='mine');
-  let lastGroup=null;
-  const groupCounts={curr:list.filter(w=>watchTiming(w).isCurr).length,future:list.filter(w=>watchTiming(w).isFuture).length,past:list.filter(w=>watchTiming(w).isPast).length};
   const groupLabels={curr:'Probíhá teď',future:'Plánované stráže',past:'Minulé stráže'};
   const groupIcons={curr:'🔥',future:'📅',past:'📜'};
-  el.innerHTML=list.map(w=>{
+
+  function renderCard(w){
     const {isCurr,isFuture,isPast}=watchTiming(w);
-    let groupHeaderHTML='';
-    if(showGroupHeaders){
-      const group=isCurr?'curr':isFuture?'future':'past';
-      if(group!==lastGroup){
-        lastGroup=group;
-        const cnt=groupCounts[group];
-        groupHeaderHTML=`<div class="wg-header ${group}"><div class="wg-header-dot"></div><span class="wg-header-label">${groupIcons[group]} ${groupLabels[group]}</span><span class="wg-header-count">${cnt}</span><div class="wg-line"></div></div>`;
-      }
-    }
     const isLeader=w.assignedTo===CU.username;
     const iJoin=(w.participants||[]).includes(CU.username);
     const canDel=isAdmin()||w.createdBy===CU.username||w.assignedTo===CU.username;
@@ -2186,14 +2184,13 @@ window.renderWatch=function renderWatch(){
     const parts=w.participants||[];
     const partCount=parts.length;
     const totalLabel=csWatchLeader(partCount);
-    // avatars: leader first (gold border), then participants
     const leaderAv=watchAvatarEl(w.assignedTo,true);
     const partAvatars=parts.slice(0,6).map(un=>watchAvatarEl(un,false)).join('');
     const extraAv=parts.length>6?`<div class="wc-av" style="background:var(--surface);color:var(--muted);font-size:.6rem">+${parts.length-6}</div>`:'';
     const partNames=parts.slice(0,5).map(un=>{const u=userByUn(un);return u?.name?.split(' ')[0]||un;}).join(', ')+(parts.length>5?' a další':'');
     const animatePast=isPast&&window._animatePast;
     const wc_extra_cls=isCurr?' wc-curr':isFuture?' wc-future':animatePast?' wc-past-new':'';
-    return groupHeaderHTML+`<div class="wc${wc_extra_cls}">
+    return`<div class="wc${wc_extra_cls}">
       <div class="wc-header">
         <div class="wc-header-left">
           <div class="wc-status ${statusCls}">
@@ -2225,15 +2222,35 @@ window.renderWatch=function renderWatch(){
         </div>
       </div>
     </div>`;
+  }
+
+  if(showGroupHeaders){
+    const groups=[
+      {key:'curr',items:list.filter(w=>watchTiming(w).isCurr)},
+      {key:'future',items:list.filter(w=>watchTiming(w).isFuture)},
+      {key:'past',items:list.filter(w=>watchTiming(w).isPast)},
+    ].filter(g=>g.items.length);
+    el.innerHTML=groups.map(g=>`<div class="wg-section ${g.key}">
+      <div class="wg-header">
+        <div class="wg-header-dot"></div>
+        <span class="wg-header-label">${groupIcons[g.key]} ${groupLabels[g.key]}</span>
+        <span class="wg-header-count">${g.items.length}</span>
+        <div class="wg-line"></div>
+      </div>
+      ${g.items.map(w=>renderCard(w)).join('')}
+    </div>`).join('');
+  } else {
+    el.innerHTML=list.map(w=>renderCard(w)).join('');
+  }
   window._animatePast=false;
-  }).join('');
-  // Append "load more" button as DOM element so it's never stale
+  // Append "load more" button inside the past section (or at bottom if no grouping)
   if(WF==='all'&&window._showAllPast!==true&&(window._pastWatchTotal||0)>10){
     const btn=document.createElement('div');
-    btn.style.cssText='text-align:center;padding:14px 0';
+    btn.style.cssText='text-align:center;padding:10px 0 2px';
     btn.innerHTML=`<button class="bs b-ghost" style="font-size:.82rem">📜 Zobrazit všechny minulé stráže (${window._pastWatchTotal})</button>`;
     btn.querySelector('button').onclick=()=>{window._showAllPast=true;window._animatePast=true;renderWatch();};
-    el.appendChild(btn);
+    const pastSection=el.querySelector('.wg-section.past')||el;
+    pastSection.appendChild(btn);
   }
 }
 
