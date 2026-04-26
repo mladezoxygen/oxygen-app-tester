@@ -292,6 +292,24 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 .wg-section.curr .wg-line{background:rgba(255,209,102,.2)}
 .wg-section.future .wg-line{background:rgba(155,79,222,.2)}
 .wg-section.past .wg-line{background:rgba(255,255,255,.07)}
+/* Past watch search */
+.past-search-bar{display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid rgba(255,255,255,.07)}
+.past-search-input{flex:1;min-width:140px;padding:8px 12px;background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:9px;color:var(--text);font-family:'Nunito',sans-serif;font-size:.84rem;outline:none;transition:border-color .2s}
+.past-search-input:focus{border-color:var(--purple-l);background:rgba(255,255,255,.08)}
+.past-search-input::placeholder{color:var(--muted)}
+.past-search-chip{padding:5px 11px;border-radius:20px;font-size:.75rem;font-weight:700;cursor:pointer;font-family:'Nunito',sans-serif;border:1px solid var(--border);background:transparent;color:var(--muted);transition:all .15s;white-space:nowrap}
+.past-search-chip:hover{border-color:var(--border-l);color:var(--text)}
+.past-search-chip.on{background:rgba(123,47,190,.25);border-color:var(--purple-l);color:var(--purple-xl)}
+.past-search-empty{text-align:center;padding:20px;color:var(--muted);font-size:.84rem;font-style:italic}
+/* Collapsible past section */
+.wg-header.collapsible{cursor:pointer;border-radius:8px;padding:4px 6px;margin:-4px -6px;transition:background .15s}
+.wg-header.collapsible:hover{background:rgba(255,255,255,.05)}
+.wg-collapse-arrow{font-size:.7rem;color:var(--muted);transition:transform .25s ease;flex-shrink:0;margin-left:2px}
+.wg-collapse-arrow.open{transform:rotate(0deg)}
+.wg-collapse-arrow.closed{transform:rotate(-90deg)}
+.wg-cards{display:grid;grid-template-rows:1fr;transition:grid-template-rows .3s ease,opacity .25s ease;opacity:1;overflow:hidden}
+.wg-cards.collapsed{grid-template-rows:0fr;opacity:0}
+.wg-cards-inner{min-height:0}
 /* WATCH LIST CARDS */
 .wc{background:var(--card-bg);border:1px solid var(--border);border-radius:14px;padding:0;margin-bottom:12px;animation:fu .3s ease;overflow:hidden}
 .wc.wc-curr{border-color:rgba(255,209,102,.35);animation:fu .3s ease,wc-curr-glow 3.5s ease 1s infinite}
@@ -1872,7 +1890,7 @@ window.delChk=async id=>{const item=(window._chk||[]).find(x=>x._id===id);if(!it
 // Anyone can join an existing watch as participant
 // Leader is NOT in participants[] – tracked separately via assignedTo
 
-window.setWF=(f,btn)=>{WF=f;document.querySelectorAll('#sec-watch .tab').forEach(b=>b.classList.remove('on'));btn.classList.add('on');renderWatch();};
+window.setWF=(f,btn)=>{WF=f;document.querySelectorAll('#sec-watch .tab').forEach(b=>b.classList.remove('on'));btn.classList.add('on');if(f!=='all'){window._pastSearchQ='';window._pastSearchMine=false;}renderWatch();};
 
 function watchesOnDay(dateStart){
   return(window._watch||[]).filter(w=>{
@@ -2150,22 +2168,13 @@ window.renderWatch=function renderWatch(){
   if(WF==='curr')list=allW.filter(w=>watchTiming(w).isCurr);
   else if(WF==='future')list=allW.filter(w=>watchTiming(w).isFuture);
   else if(WF==='mine')list=allW.filter(w=>iAmInvolved(w));
-  // For 'all' tab: limit past watches to avoid infinite scroll — show all curr/future + last N past
-  const PAST_LIMIT=10;
-  if(WF==='all'){
-    const currFut=list.filter(w=>!watchTiming(w).isPast);
-    const past=list.filter(w=>watchTiming(w).isPast);
-    const showAll=window._showAllPast===true;
-    list=[...currFut,...(showAll?past:past.slice(0,PAST_LIMIT))];
-    window._pastWatchTotal=past.length;
-    window._pastWatchShown=showAll?past.length:Math.min(past.length,PAST_LIMIT);
-  }
+  // For 'all' tab: exclude past (handled separately with search in the grouped section)
+  if(WF==='all')list=allW.filter(w=>!watchTiming(w).isPast);
   const el=document.getElementById('watchList');
   if(!list.length){
     const msgs={curr:'Žádná aktuální stráž.',future:'Žádná plánovaná stráž.',mine:'Zatím nejsi u žádné stráže.<br>Přidej se v kalendáři výše.',all:'Žádné stráže ještě nebyly přidány.<br>Admin nebo modlitebník může přidat stráž kliknutím na den v kalendáři.'};
     el.innerHTML=`<div class="empty"><div class="ei">⌚</div><p>${msgs[WF]||msgs.all}</p></div>`;return;
   }
-  const pastMore=(WF==='all'&&!window._showAllPast&&(window._pastWatchTotal||0)>PAST_LIMIT);
   const showGroupHeaders=(WF==='all'||WF==='mine');
   const groupLabels={curr:'Probíhá teď',future:'Plánované stráže',past:'Minulé stráže'};
   const groupIcons={curr:'🔥',future:'📅',past:'📜'};
@@ -2225,33 +2234,61 @@ window.renderWatch=function renderWatch(){
   }
 
   if(showGroupHeaders){
+    const allPast=(window._watch||[]).filter(w=>watchTiming(w).isPast);
+    allPast.sort((a,b)=>new Date(b.startDate)-new Date(a.startDate));
+    // Apply past search filter
+    const pq=(window._pastSearchQ||'').toLowerCase().trim();
+    const pMine=window._pastSearchMine===true;
+    const filteredPast=allPast.filter(w=>{
+      if(pMine&&!iAmInvolved(w))return false;
+      if(pq){
+        const ldr=userByUn(w.assignedTo);
+        const ldrName=(ldr?ldr.name:w.person||'').toLowerCase();
+        const date=(w.date||'').toLowerCase();
+        const topics=(w.topics||[]).join(' ').toLowerCase();
+        if(!ldrName.includes(pq)&&!date.includes(pq)&&!topics.includes(pq))return false;
+      }
+      return true;
+    });
     const groups=[
       {key:'curr',items:list.filter(w=>watchTiming(w).isCurr)},
       {key:'future',items:list.filter(w=>watchTiming(w).isFuture)},
-      {key:'past',items:list.filter(w=>watchTiming(w).isPast)},
-    ].filter(g=>g.items.length);
-    el.innerHTML=groups.map(g=>`<div class="wg-section ${g.key}">
-      <div class="wg-header">
-        <div class="wg-header-dot"></div>
-        <span class="wg-header-label">${groupIcons[g.key]} ${groupLabels[g.key]}</span>
-        <span class="wg-header-count">${g.items.length}</span>
-        <div class="wg-line"></div>
-      </div>
-      ${g.items.map(w=>renderCard(w)).join('')}
-    </div>`).join('');
+      {key:'past',items:filteredPast,total:allPast.length},
+    ].filter(g=>g.items.length||g.key==='past');
+    const pastCollapsed=window._pastCollapsed===true;
+    el.innerHTML=groups.map(g=>{
+      const isPastGroup=g.key==='past'&&WF==='all';
+      const isCollapsed=isPastGroup&&pastCollapsed&&!pq&&!pMine;
+      const headerCls=isPastGroup?'wg-header collapsible':'wg-header';
+      const headerClick=isPastGroup?`onclick="window._pastCollapsed=!window._pastCollapsed;renderWatch()"`:'';
+      const arrow=isPastGroup?`<span class="wg-collapse-arrow ${isCollapsed?'closed':'open'}">▾</span>`:'';
+      const searchBar=isPastGroup?`<div class="past-search-bar">
+        <input class="past-search-input" type="text" placeholder="🔍 Hledat vedoucího, datum, téma…" value="${esc(window._pastSearchQ||'')}" oninput="window._pastSearchQ=this.value;window._pastCollapsed=false;renderWatch()" />
+        <button class="past-search-chip${pMine?' on':''}" onclick="window._pastSearchMine=!window._pastSearchMine;window._pastCollapsed=false;renderWatch()">⭐ Moje</button>
+      </div>`:'';
+      const cardsHTML=g.items.length
+        ?g.items.map(w=>renderCard(w)).join('')
+        :`<div class="past-search-empty">Žádné minulé stráže neodpovídají hledání.</div>`;
+      return`<div class="wg-section ${g.key}">
+        <div class="${headerCls}" ${headerClick}>
+          <div class="wg-header-dot"></div>
+          <span class="wg-header-label">${groupIcons[g.key]} ${groupLabels[g.key]}</span>
+          <span class="wg-header-count">${g.items.length}${g.total&&g.total!==g.items.length?` / ${g.total}`:''}</span>
+          <div class="wg-line"></div>
+          ${arrow}
+        </div>
+        <div class="wg-cards${isCollapsed?' collapsed':''}">
+          <div class="wg-cards-inner">
+            ${searchBar}
+            ${cardsHTML}
+          </div>
+        </div>
+      </div>`;
+    }).join('');
   } else {
     el.innerHTML=list.map(w=>renderCard(w)).join('');
   }
   window._animatePast=false;
-  // Append "load more" button inside the past section (or at bottom if no grouping)
-  if(WF==='all'&&window._showAllPast!==true&&(window._pastWatchTotal||0)>10){
-    const btn=document.createElement('div');
-    btn.style.cssText='text-align:center;padding:10px 0 2px';
-    btn.innerHTML=`<button class="bs b-ghost" style="font-size:.82rem">📜 Zobrazit všechny minulé stráže (${window._pastWatchTotal})</button>`;
-    btn.querySelector('button').onclick=()=>{window._showAllPast=true;window._animatePast=true;renderWatch();};
-    const pastSection=el.querySelector('.wg-section.past')||el;
-    pastSection.appendChild(btn);
-  }
 }
 
 window.delWatch=async id=>{
