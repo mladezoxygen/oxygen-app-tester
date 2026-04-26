@@ -267,6 +267,22 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 .wpi-tags{display:flex;flex-wrap:wrap;gap:3px;margin-bottom:7px}
 .wpi-actions{display:flex;gap:4px;flex-wrap:wrap;align-items:center}
 .wpi-parts{font-size:.69rem;color:var(--muted);margin-top:4px}
+/* WATCH GROUP SECTION HEADERS */
+.wg-header{display:flex;align-items:center;gap:10px;margin:18px 0 10px;padding-bottom:7px;border-bottom:1px solid var(--border);user-select:none}
+.wg-header:first-child{margin-top:0}
+.wg-header-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.wg-header.curr .wg-header-dot{background:var(--gold);box-shadow:0 0 6px var(--gold);animation:pulse-gold 2s infinite}
+.wg-header.future .wg-header-dot{background:var(--purple-xl)}
+.wg-header.past .wg-header-dot{background:var(--muted)}
+.wg-header-label{font-size:.68rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+.wg-header.curr .wg-header-label{color:var(--gold)}
+.wg-header.future .wg-header-label{color:var(--purple-xl)}
+.wg-header.past .wg-header-label{color:var(--muted)}
+.wg-header-count{font-size:.67rem;font-weight:700;padding:1px 7px;border-radius:20px;margin-left:2px}
+.wg-header.curr .wg-header-count{background:rgba(255,209,102,.14);color:var(--gold)}
+.wg-header.future .wg-header-count{background:rgba(155,79,222,.14);color:var(--purple-xl)}
+.wg-header.past .wg-header-count{background:rgba(255,255,255,.07);color:var(--muted)}
+.wg-line{flex:1;height:1px;background:var(--border)}
 /* WATCH LIST CARDS */
 .wc{background:var(--card-bg);border:1px solid var(--border);border-radius:14px;padding:0;margin-bottom:12px;animation:fu .3s ease;overflow:hidden}
 .wc.wc-curr{border-color:rgba(255,209,102,.35);animation:fu .3s ease,wc-curr-glow 3.5s ease 1s infinite}
@@ -310,18 +326,6 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 .wc-badge{display:inline-flex;align-items:center;font-size:.67rem;font-weight:800;padding:2px 7px;border-radius:20px;letter-spacing:.02em;margin-left:6px;vertical-align:middle;white-space:nowrap}
 .wc-badge-leader{background:rgba(255,209,102,.18);color:var(--gold);border:1px solid rgba(255,209,102,.3)}
 .wc-badge-join{background:rgba(6,214,160,.12);color:var(--green);border:1px solid rgba(6,214,160,.25)}
-/* Watch section dividers */
-.ws-divider{display:flex;align-items:center;gap:10px;margin:20px 0 12px}
-.ws-divider:first-child{margin-top:4px}
-.ws-divider-line{flex:1;height:1px;background:var(--border)}
-.ws-divider-label{font-size:.7rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;white-space:nowrap;display:flex;align-items:center;gap:5px}
-.ws-divider.curr .ws-divider-label{color:var(--gold)}
-.ws-divider.curr .ws-divider-line{background:rgba(255,209,102,.2)}
-.ws-divider.future .ws-divider-label{color:var(--purple-xl)}
-.ws-divider.future .ws-divider-line{background:rgba(155,79,222,.15)}
-.ws-divider.past .ws-divider-label{color:var(--muted)}
-.ws-divider-count{font-size:.65rem;font-weight:700;padding:1px 7px;border-radius:20px;background:rgba(255,255,255,.06);color:var(--muted);margin-left:2px}
-.ws-empty-section{padding:8px 4px;font-size:.82rem;color:var(--muted);font-style:italic}
 /* DIARY */
 .de{background:var(--card-bg);border:1px solid var(--border);border-radius:12px;padding:17px;margin-bottom:10px;animation:fu .3s ease}
 .da{font-weight:800;color:var(--purple-xl);font-size:.85rem}.dd{color:var(--muted);font-size:.7rem}
@@ -1065,6 +1069,14 @@ input:checked+.slider::before{transform:translateX(18px)}
           <div style="display:flex;align-items:center;gap:5px;font-size:.71rem;color:var(--gold)"><div style="width:9px;height:9px;border-radius:2px;background:rgba(255,209,102,.4)"></div>Probíhá teď</div>
           <div style="display:flex;align-items:center;gap:5px;font-size:.71rem;color:var(--purple-xl)"><div style="width:9px;height:9px;border-radius:2px;background:rgba(155,79,222,.3)"></div>Plánovaná</div>
           <div style="display:flex;align-items:center;gap:5px;font-size:.71rem;color:var(--green)"><div style="width:9px;height:9px;border-radius:2px;background:rgba(6,214,160,.3)"></div>Moje stráž</div>
+        </div>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:12px">
+        <div class="tabs" style="margin-bottom:0">
+          <button class="tab on" onclick="setWF('all',this)">Vše</button>
+          <button class="tab" onclick="setWF('curr',this)">⌚ Aktuální</button>
+          <button class="tab" onclick="setWF('future',this)">📅 Plánované</button>
+          <button class="tab" onclick="setWF('mine',this)">⭐ Moje</button>
         </div>
       </div>
       <div id="watchList"><div class="loading"><div class="spin"></div>Načítám…</div></div>
@@ -2116,70 +2128,6 @@ function watchAvatarEl(un,isLeader){
   return u?.emoji?`<div class="${cls}" title="${esc(title)}" ${click}>${u.emoji}</div>`:`<div class="${cls}" title="${esc(title)}" ${click}>${ini(u?.name||un)}</div>`;
 }
 
-function renderWatchCard(w){
-  const {isCurr,isFuture,isPast}=watchTiming(w);
-  const isLeader=w.assignedTo===CU.username;
-  const iJoin=(w.participants||[]).includes(CU.username);
-  const canDel=isAdmin()||w.createdBy===CU.username||w.assignedTo===CU.username;
-  const gcalUrl=makeGCalUrl(w);
-  const statusCls=isCurr?'curr':isFuture?'future':'past';
-  const statusTxt=isCurr?'Probíhá teď':isFuture?'Plánovaná stráž':'Minulá stráž';
-  const statusIcon=isCurr?'🔥':isFuture?'📅':'📜';
-  const ldr=userByUn(w.assignedTo);
-  const ldrName=ldr?ldr.name:w.person;
-  const parts=w.participants||[];
-  const partCount=parts.length;
-  const totalLabel=csWatchLeader(partCount);
-  const leaderAv=watchAvatarEl(w.assignedTo,true);
-  const partAvatars=parts.slice(0,6).map(un=>watchAvatarEl(un,false)).join('');
-  const extraAv=parts.length>6?`<div class="wc-av" style="background:var(--surface);color:var(--muted);font-size:.6rem">+${parts.length-6}</div>`:'';
-  const partNames=parts.slice(0,5).map(un=>{const u=userByUn(un);return u?.name?.split(' ')[0]||un;}).join(', ')+(parts.length>5?' a další':'');
-  const animatePast=isPast&&window._animatePast;
-  const wc_extra_cls=isCurr?' wc-curr':isFuture?' wc-future':animatePast?' wc-past-new':'';
-  return`<div class="wc${wc_extra_cls}">
-    <div class="wc-header">
-      <div class="wc-header-left">
-        <div class="wc-status ${statusCls}">
-          <div class="wc-status-dot"></div>${statusIcon} ${statusTxt}${isLeader?'<span class="wc-badge wc-badge-leader">👑 Ty vedeš</span>':iJoin?'<span class="wc-badge wc-badge-join">✓ Účastníš se</span>':''}
-        </div>
-        <div class="wc-leader">${esc(ldrName)}</div>
-        <div class="wc-leader-sub">${esc(w.date)}</div>
-      </div>
-      <div class="wc-header-right" style="flex-direction:row;gap:4px;align-items:center">
-        ${canDel?`<button class="bs b-del" onclick="delWatch('${w._id}')">🗑</button>`:''}
-        ${gcalUrl?`<a href="${gcalUrl}" target="_blank" rel="noopener" class="bs b-gcal" style="text-decoration:none" title="Přidat do Google Kalendáře">📅</a>`:''}
-      </div>
-    </div>
-    <div class="wc-body">
-      ${(w.topics||[]).length?`<div class="wt">${(w.topics||[]).map(t=>`<span class="wtag">${esc(t)}</span>`).join('')}</div>`:''}
-      <div class="wc-participants-section">
-        <div class="wc-participants-label">👥 ${totalLabel}</div>
-        <div class="wc-av-stack">${leaderAv}${partAvatars}${extraAv}</div>
-        ${partCount?`<div style="font-size:.72rem;color:var(--muted);margin-top:4px">${esc(partNames)}</div>`:`<div style="font-size:.72rem;color:var(--muted);margin-top:4px;font-style:italic">${isLeader?'Ještě se nikdo nepřidal – sdílej stráž s týmem':'Ještě nikdo přidaný – přidej se!'}</div>`}
-        ${(canMgr()&&partCount)?`<button class="bs b-ghost" style="font-size:.7rem;margin-top:6px;padding:3px 9px" onclick="showRemoveParticipantsModal('${w._id}')">⚙ Spravovat účastníky</button>`:''}
-      </div>
-      <div class="wc-join-row">
-        ${isLeader
-          ?`<span class="wc-join-note">👑 Jsi vedoucí – tato stráž patří tobě</span>`
-          :isPast
-            ?`<span class="wc-join-note" style="color:var(--muted)">${iJoin?'✓ Zúčastnil/a ses':'Tato stráž již proběhla'}</span>`
-            :`<button class="bs b-join${iJoin?' on':''}" onclick="toggleJoinWatch('${w._id}',this)">${iJoin?'✓ Účastním se':'+ Přidat se ke stráži'}</button><span class="wc-join-note">${iJoin?'Klikni pro odhlášení':'Připoj se k modlitbě'}</span>`
-        }
-      </div>
-    </div>
-  </div>`;
-}
-
-function renderWatchGroup(groupId,title,watches,colorCls,defaultOpen){
-  // kept for compatibility, unused
-}
-
-window.toggleWatchGroup=function(){};
-
-function wsDivider(cls,icon,label,count){
-  return`<div class="ws-divider ${cls}"><div class="ws-divider-line"></div><span class="ws-divider-label">${icon} ${label}<span class="ws-divider-count">${count}</span></span><div class="ws-divider-line"></div></div>`;
-}
-
 window.renderWatch=function renderWatch(){
   const allW=[...(window._watch||[])];
   allW.sort((a,b)=>{
@@ -2189,48 +2137,105 @@ window.renderWatch=function renderWatch(){
     if(ta.isPast&&tb.isPast)return new Date(b.startDate)-new Date(a.startDate);
     return 0;
   });
+  let list=allW;
+  if(WF==='curr')list=allW.filter(w=>watchTiming(w).isCurr);
+  else if(WF==='future')list=allW.filter(w=>watchTiming(w).isFuture);
+  else if(WF==='mine')list=allW.filter(w=>iAmInvolved(w));
+  // For 'all' tab: limit past watches to avoid infinite scroll — show all curr/future + last N past
+  const PAST_LIMIT=10;
+  if(WF==='all'){
+    const currFut=list.filter(w=>!watchTiming(w).isPast);
+    const past=list.filter(w=>watchTiming(w).isPast);
+    const showAll=window._showAllPast===true;
+    list=[...currFut,...(showAll?past:past.slice(0,PAST_LIMIT))];
+    window._pastWatchTotal=past.length;
+    window._pastWatchShown=showAll?past.length:Math.min(past.length,PAST_LIMIT);
+  }
   const el=document.getElementById('watchList');
-  if(!allW.length){
-    el.innerHTML=`<div class="empty"><div class="ei">⌚</div><p>Žádné stráže ještě nebyly přidány.<br>Admin nebo modlitebník může přidat stráž kliknutím na den v kalendáři.</p></div>`;
-    return;
+  if(!list.length){
+    const msgs={curr:'Žádná aktuální stráž.',future:'Žádná plánovaná stráž.',mine:'Zatím nejsi u žádné stráže.<br>Přidej se v kalendáři výše.',all:'Žádné stráže ještě nebyly přidány.<br>Admin nebo modlitebník může přidat stráž kliknutím na den v kalendáři.'};
+    el.innerHTML=`<div class="empty"><div class="ei">⌚</div><p>${msgs[WF]||msgs.all}</p></div>`;return;
   }
-  const curr=allW.filter(w=>watchTiming(w).isCurr);
-  const future=allW.filter(w=>watchTiming(w).isFuture);
-  const past=allW.filter(w=>watchTiming(w).isPast);
-  const PAST_LIMIT=6;
-  const showAllPast=window._showAllPast===true;
-  const pastShown=showAllPast?past:past.slice(0,PAST_LIMIT);
-
-  let html='';
-
-  // Probíhá teď
-  html+=wsDivider('curr','🔥','Probíhá teď',curr.length);
-  if(curr.length){
-    html+=curr.map(w=>renderWatchCard(w)).join('');
-  } else {
-    html+=`<div class="ws-empty-section">Žádná stráž teď neprobíhá.</div>`;
-  }
-
-  // Plánované
-  html+=wsDivider('future','📅','Plánované',future.length);
-  if(future.length){
-    html+=future.map(w=>renderWatchCard(w)).join('');
-  } else {
-    html+=`<div class="ws-empty-section">Žádná plánovaná stráž – klikni na den v kalendáři výše.</div>`;
-  }
-
-  // Minulé
-  if(past.length){
-    html+=wsDivider('past','📜','Minulé',past.length);
-    html+=pastShown.map(w=>renderWatchCard(w)).join('');
-    if(!showAllPast&&past.length>PAST_LIMIT){
-      html+=`<div style="text-align:center;padding:10px 0 4px"><button class="bs b-ghost" style="font-size:.8rem" onclick="window._showAllPast=true;renderWatch()">Zobrazit všechny minulé stráže (${past.length})</button></div>`;
+  const pastMore=(WF==='all'&&!window._showAllPast&&(window._pastWatchTotal||0)>PAST_LIMIT);
+  // Group headers for tabs where multiple timing groups appear together
+  const showGroupHeaders=(WF==='all'||WF==='mine');
+  let lastGroup=null;
+  const groupCounts={curr:list.filter(w=>watchTiming(w).isCurr).length,future:list.filter(w=>watchTiming(w).isFuture).length,past:list.filter(w=>watchTiming(w).isPast).length};
+  const groupLabels={curr:'Probíhá teď',future:'Plánované stráže',past:'Minulé stráže'};
+  const groupIcons={curr:'🔥',future:'📅',past:'📜'};
+  el.innerHTML=list.map(w=>{
+    const {isCurr,isFuture,isPast}=watchTiming(w);
+    let groupHeaderHTML='';
+    if(showGroupHeaders){
+      const group=isCurr?'curr':isFuture?'future':'past';
+      if(group!==lastGroup){
+        lastGroup=group;
+        const cnt=groupCounts[group];
+        groupHeaderHTML=`<div class="wg-header ${group}"><div class="wg-header-dot"></div><span class="wg-header-label">${groupIcons[group]} ${groupLabels[group]}</span><span class="wg-header-count">${cnt}</span><div class="wg-line"></div></div>`;
+      }
     }
-  }
-
+    const isLeader=w.assignedTo===CU.username;
+    const iJoin=(w.participants||[]).includes(CU.username);
+    const canDel=isAdmin()||w.createdBy===CU.username||w.assignedTo===CU.username;
+    const gcalUrl=makeGCalUrl(w);
+    const statusCls=isCurr?'curr':isFuture?'future':'past';
+    const statusTxt=isCurr?'Probíhá teď':isFuture?'Plánovaná stráž':'Minulá stráž';
+    const statusIcon=isCurr?'🔥':isFuture?'📅':'📜';
+    const ldr=userByUn(w.assignedTo);
+    const ldrName=ldr?ldr.name:w.person;
+    const parts=w.participants||[];
+    const partCount=parts.length;
+    const totalLabel=csWatchLeader(partCount);
+    // avatars: leader first (gold border), then participants
+    const leaderAv=watchAvatarEl(w.assignedTo,true);
+    const partAvatars=parts.slice(0,6).map(un=>watchAvatarEl(un,false)).join('');
+    const extraAv=parts.length>6?`<div class="wc-av" style="background:var(--surface);color:var(--muted);font-size:.6rem">+${parts.length-6}</div>`:'';
+    const partNames=parts.slice(0,5).map(un=>{const u=userByUn(un);return u?.name?.split(' ')[0]||un;}).join(', ')+(parts.length>5?' a další':'');
+    const animatePast=isPast&&window._animatePast;
+    const wc_extra_cls=isCurr?' wc-curr':isFuture?' wc-future':animatePast?' wc-past-new':'';
+    return groupHeaderHTML+`<div class="wc${wc_extra_cls}">
+      <div class="wc-header">
+        <div class="wc-header-left">
+          <div class="wc-status ${statusCls}">
+            <div class="wc-status-dot"></div>${statusIcon} ${statusTxt}${isLeader?'<span class="wc-badge wc-badge-leader">👑 Ty vedeš</span>':iJoin?'<span class="wc-badge wc-badge-join">✓ Účastníš se</span>':''}
+          </div>
+          <div class="wc-leader">${esc(ldrName)}</div>
+          <div class="wc-leader-sub">${esc(w.date)}</div>
+        </div>
+        <div class="wc-header-right" style="flex-direction:row;gap:4px;align-items:center">
+          ${canDel?`<button class="bs b-del" onclick="delWatch('${w._id}')">🗑</button>`:''}
+          ${gcalUrl?`<a href="${gcalUrl}" target="_blank" rel="noopener" class="bs b-gcal" style="text-decoration:none" title="Přidat do Google Kalendáře">📅</a>`:''}
+        </div>
+      </div>
+      <div class="wc-body">
+        ${(w.topics||[]).length?`<div class="wt">${(w.topics||[]).map(t=>`<span class="wtag">${esc(t)}</span>`).join('')}</div>`:''}
+        <div class="wc-participants-section">
+          <div class="wc-participants-label">👥 ${totalLabel}</div>
+          <div class="wc-av-stack">${leaderAv}${partAvatars}${extraAv}</div>
+          ${partCount?`<div style="font-size:.72rem;color:var(--muted);margin-top:4px">${esc(partNames)}</div>`:`<div style="font-size:.72rem;color:var(--muted);margin-top:4px;font-style:italic">${isLeader?'Ještě se nikdo nepřidal – sdílej stráž s týmem':'Ještě nikdo přidaný – přidej se!'}</div>`}
+          ${(canMgr()&&partCount)?`<button class="bs b-ghost" style="font-size:.7rem;margin-top:6px;padding:3px 9px" onclick="showRemoveParticipantsModal('${w._id}')">⚙ Spravovat účastníky</button>`:''}
+        </div>
+        <div class="wc-join-row">
+          ${isLeader
+            ?`<span class="wc-join-note">👑 Jsi vedoucí – tato stráž patří tobě</span>`
+            :isPast
+              ?`<span class="wc-join-note" style="color:var(--muted)">${iJoin?'✓ Zúčastnil/a ses':'Tato stráž již proběhla'}</span>`
+              :`<button class="bs b-join${iJoin?' on':''}" onclick="toggleJoinWatch('${w._id}',this)">${iJoin?'✓ Účastním se':'+ Přidat se ke stráži'}</button><span class="wc-join-note">${iJoin?'Klikni pro odhlášení':'Připoj se k modlitbě'}</span>`
+          }
+        </div>
+      </div>
+    </div>`;
   window._animatePast=false;
-  el.innerHTML=html;
-};
+  }).join('');
+  // Append "load more" button as DOM element so it's never stale
+  if(WF==='all'&&window._showAllPast!==true&&(window._pastWatchTotal||0)>10){
+    const btn=document.createElement('div');
+    btn.style.cssText='text-align:center;padding:14px 0';
+    btn.innerHTML=`<button class="bs b-ghost" style="font-size:.82rem">📜 Zobrazit všechny minulé stráže (${window._pastWatchTotal})</button>`;
+    btn.querySelector('button').onclick=()=>{window._showAllPast=true;window._animatePast=true;renderWatch();};
+    el.appendChild(btn);
+  }
+}
 
 window.delWatch=async id=>{
   const w=(window._watch||[]).find(x=>x._id===id);if(!w)return;
