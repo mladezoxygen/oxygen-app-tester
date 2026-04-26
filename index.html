@@ -293,14 +293,15 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 .wg-section.future .wg-line{background:rgba(155,79,222,.2)}
 .wg-section.past .wg-line{background:rgba(255,255,255,.07)}
 /* Past watch search */
-.past-search-bar{display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid rgba(255,255,255,.07)}
-.past-search-input{flex:1;min-width:140px;padding:8px 12px;background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:9px;color:var(--text);font-family:'Nunito',sans-serif;font-size:.84rem;outline:none;transition:border-color .2s}
-.past-search-input:focus{border-color:var(--purple-l);background:rgba(255,255,255,.08)}
-.past-search-input::placeholder{color:var(--muted)}
-.past-search-chip{padding:5px 11px;border-radius:20px;font-size:.75rem;font-weight:700;cursor:pointer;font-family:'Nunito',sans-serif;border:1px solid var(--border);background:transparent;color:var(--muted);transition:all .15s;white-space:nowrap}
-.past-search-chip:hover{border-color:var(--border-l);color:var(--text)}
-.past-search-chip.on{background:rgba(123,47,190,.25);border-color:var(--purple-l);color:var(--purple-xl)}
-.past-search-empty{text-align:center;padding:20px;color:var(--muted);font-size:.84rem;font-style:italic}
+.watch-search-row{display:flex;gap:8px;align-items:center;margin-bottom:14px;flex-wrap:wrap}
+.watch-search-wrap{flex:1;min-width:180px;position:relative;display:flex;align-items:center}
+.watch-search-icon{position:absolute;left:11px;font-size:.85rem;pointer-events:none;line-height:1}
+.watch-search-input{width:100%;padding:9px 34px 9px 34px;background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:'Nunito',sans-serif;font-size:.86rem;outline:none;transition:border-color .2s,background .2s}
+.watch-search-input:focus{border-color:var(--purple-l);background:rgba(255,255,255,.08)}
+.watch-search-input::placeholder{color:var(--muted)}
+.watch-search-clear{position:absolute;right:8px;background:none;border:none;color:var(--muted);cursor:pointer;font-size:.8rem;padding:4px;line-height:1;border-radius:4px;transition:color .15s;display:none}
+.watch-search-clear:hover{color:var(--text)}
+.watch-search-input:not(:placeholder-shown)~.watch-search-clear{display:block}
 /* Collapsible past section */
 .wg-header.collapsible{cursor:pointer;border-radius:8px;padding:4px 6px;margin:-4px -6px;transition:background .15s}
 .wg-header.collapsible:hover{background:rgba(255,255,255,.05)}
@@ -1106,6 +1107,14 @@ input:checked+.slider::before{transform:translateX(18px)}
           <button class="tab" onclick="setWF('mine',this)">⭐ Moje</button>
         </div>
       </div>
+      <div class="watch-search-row">
+        <div class="watch-search-wrap">
+          <span class="watch-search-icon">🔍</span>
+          <input class="watch-search-input" id="watchSearchInput" type="text" placeholder="Hledat vedoucího, datum, téma…" oninput="window._watchSearchQ=this.value;renderWatch()" autocomplete="off" />
+          <button class="watch-search-clear" id="watchSearchClear" onclick="window._watchSearchQ='';document.getElementById('watchSearchInput').value='';renderWatch()" title="Vymazat">✕</button>
+        </div>
+        <button class="past-search-chip" id="watchSearchMineBtn" onclick="window._watchSearchMine=!window._watchSearchMine;this.classList.toggle('on');renderWatch()">⭐ Moje</button>
+      </div>
       <div id="watchList"><div class="loading"><div class="spin"></div>Načítám…</div></div>
     </div>
 
@@ -1890,7 +1899,7 @@ window.delChk=async id=>{const item=(window._chk||[]).find(x=>x._id===id);if(!it
 // Anyone can join an existing watch as participant
 // Leader is NOT in participants[] – tracked separately via assignedTo
 
-window.setWF=(f,btn)=>{WF=f;document.querySelectorAll('#sec-watch .tab').forEach(b=>b.classList.remove('on'));btn.classList.add('on');if(f!=='all'){window._pastSearchQ='';window._pastSearchMine=false;}renderWatch();};
+window.setWF=(f,btn)=>{WF=f;document.querySelectorAll('#sec-watch .tab').forEach(b=>b.classList.remove('on'));btn.classList.add('on');window._watchSearchQ='';window._watchSearchMine=false;const inp=document.getElementById('watchSearchInput');if(inp)inp.value='';const mb=document.getElementById('watchSearchMineBtn');if(mb)mb.classList.remove('on');renderWatch();};
 
 function watchesOnDay(dateStart){
   return(window._watch||[]).filter(w=>{
@@ -2156,6 +2165,25 @@ function watchAvatarEl(un,isLeader){
 }
 
 window.renderWatch=function renderWatch(){
+  // Sync search UI state without touching scroll
+  const searchInput=document.getElementById('watchSearchInput');
+  const searchMineBtn=document.getElementById('watchSearchMineBtn');
+  if(searchInput&&searchInput.value!==(window._watchSearchQ||''))searchInput.value=window._watchSearchQ||'';
+  if(searchMineBtn)searchMineBtn.classList.toggle('on',!!window._watchSearchMine);
+
+  const sq=(window._watchSearchQ||'').toLowerCase().trim();
+  const sMine=!!window._watchSearchMine;
+
+  function matchesSearch(w){
+    if(sMine&&!iAmInvolved(w))return false;
+    if(!sq)return true;
+    const ldr=userByUn(w.assignedTo);
+    const ldrName=(ldr?ldr.name:w.person||'').toLowerCase();
+    const date=(w.date||'').toLowerCase();
+    const topics=(w.topics||[]).join(' ').toLowerCase();
+    return ldrName.includes(sq)||date.includes(sq)||topics.includes(sq);
+  }
+
   const allW=[...(window._watch||[])];
   allW.sort((a,b)=>{
     const ta=watchTiming(a),tb=watchTiming(b);
@@ -2164,18 +2192,18 @@ window.renderWatch=function renderWatch(){
     if(ta.isPast&&tb.isPast)return new Date(b.startDate)-new Date(a.startDate);
     return 0;
   });
+
   let list=allW;
   if(WF==='curr')list=allW.filter(w=>watchTiming(w).isCurr);
   else if(WF==='future')list=allW.filter(w=>watchTiming(w).isFuture);
   else if(WF==='mine')list=allW.filter(w=>iAmInvolved(w));
-  // For 'all' tab: exclude past (handled separately with search in the grouped section)
-  if(WF==='all')list=allW.filter(w=>!watchTiming(w).isPast);
+
+  // Apply global search
+  list=list.filter(w=>matchesSearch(w));
+
   const el=document.getElementById('watchList');
-  if(!list.length){
-    const msgs={curr:'Žádná aktuální stráž.',future:'Žádná plánovaná stráž.',mine:'Zatím nejsi u žádné stráže.<br>Přidej se v kalendáři výše.',all:'Žádné stráže ještě nebyly přidány.<br>Admin nebo modlitebník může přidat stráž kliknutím na den v kalendáři.'};
-    el.innerHTML=`<div class="empty"><div class="ei">⌚</div><p>${msgs[WF]||msgs.all}</p></div>`;return;
-  }
   const showGroupHeaders=(WF==='all'||WF==='mine');
+
   const groupLabels={curr:'Probíhá teď',future:'Plánované stráže',past:'Minulé stráže'};
   const groupIcons={curr:'🔥',future:'📅',past:'📜'};
 
@@ -2197,8 +2225,7 @@ window.renderWatch=function renderWatch(){
     const partAvatars=parts.slice(0,6).map(un=>watchAvatarEl(un,false)).join('');
     const extraAv=parts.length>6?`<div class="wc-av" style="background:var(--surface);color:var(--muted);font-size:.6rem">+${parts.length-6}</div>`:'';
     const partNames=parts.slice(0,5).map(un=>{const u=userByUn(un);return u?.name?.split(' ')[0]||un;}).join(', ')+(parts.length>5?' a další':'');
-    const animatePast=isPast&&window._animatePast;
-    const wc_extra_cls=isCurr?' wc-curr':isFuture?' wc-future':animatePast?' wc-past-new':'';
+    const wc_extra_cls=isCurr?' wc-curr':isFuture?' wc-future':'';
     return`<div class="wc${wc_extra_cls}">
       <div class="wc-header">
         <div class="wc-header-left">
@@ -2233,54 +2260,41 @@ window.renderWatch=function renderWatch(){
     </div>`;
   }
 
+  if(!list.length&&!showGroupHeaders){
+    const isSearching=sq||sMine;
+    const msgs={curr:'Žádná aktuální stráž.',future:'Žádná plánovaná stráž.',mine:'Zatím nejsi u žádné stráže.<br>Přidej se v kalendáři výše.',all:'Žádné stráže ještě nebyly přidány.'};
+    el.innerHTML=`<div class="empty"><div class="ei">⌚</div><p>${isSearching?'Nic neodpovídá hledání.':msgs[WF]||msgs.all}</p></div>`;
+    return;
+  }
+
   if(showGroupHeaders){
-    const allPast=(window._watch||[]).filter(w=>watchTiming(w).isPast);
-    allPast.sort((a,b)=>new Date(b.startDate)-new Date(a.startDate));
-    // Apply past search filter
-    const pq=(window._pastSearchQ||'').toLowerCase().trim();
-    const pMine=window._pastSearchMine===true;
-    const filteredPast=allPast.filter(w=>{
-      if(pMine&&!iAmInvolved(w))return false;
-      if(pq){
-        const ldr=userByUn(w.assignedTo);
-        const ldrName=(ldr?ldr.name:w.person||'').toLowerCase();
-        const date=(w.date||'').toLowerCase();
-        const topics=(w.topics||[]).join(' ').toLowerCase();
-        if(!ldrName.includes(pq)&&!date.includes(pq)&&!topics.includes(pq))return false;
-      }
-      return true;
-    });
     const groups=[
       {key:'curr',items:list.filter(w=>watchTiming(w).isCurr)},
       {key:'future',items:list.filter(w=>watchTiming(w).isFuture)},
-      {key:'past',items:filteredPast,total:allPast.length},
-    ].filter(g=>g.items.length||g.key==='past');
-    const pastCollapsed=window._pastCollapsed===true;
+      {key:'past',items:list.filter(w=>watchTiming(w).isPast)},
+    ].filter(g=>g.items.length);
+    if(!groups.length){
+      el.innerHTML=`<div class="empty"><div class="ei">⌚</div><p>Nic neodpovídá hledání.</p></div>`;
+      return;
+    }
+    const pastCollapsed=window._pastCollapsed===true&&!sq&&!sMine;
     el.innerHTML=groups.map(g=>{
       const isPastGroup=g.key==='past'&&WF==='all';
-      const isCollapsed=isPastGroup&&pastCollapsed&&!pq&&!pMine;
+      const isCollapsed=isPastGroup&&pastCollapsed;
       const headerCls=isPastGroup?'wg-header collapsible':'wg-header';
       const headerClick=isPastGroup?`onclick="window._pastCollapsed=!window._pastCollapsed;renderWatch()"`:'';
       const arrow=isPastGroup?`<span class="wg-collapse-arrow ${isCollapsed?'closed':'open'}">▾</span>`:'';
-      const searchBar=isPastGroup?`<div class="past-search-bar">
-        <input class="past-search-input" type="text" placeholder="🔍 Hledat vedoucího, datum, téma…" value="${esc(window._pastSearchQ||'')}" oninput="window._pastSearchQ=this.value;window._pastCollapsed=false;renderWatch()" />
-        <button class="past-search-chip${pMine?' on':''}" onclick="window._pastSearchMine=!window._pastSearchMine;window._pastCollapsed=false;renderWatch()">⭐ Moje</button>
-      </div>`:'';
-      const cardsHTML=g.items.length
-        ?g.items.map(w=>renderCard(w)).join('')
-        :`<div class="past-search-empty">Žádné minulé stráže neodpovídají hledání.</div>`;
       return`<div class="wg-section ${g.key}">
         <div class="${headerCls}" ${headerClick}>
           <div class="wg-header-dot"></div>
           <span class="wg-header-label">${groupIcons[g.key]} ${groupLabels[g.key]}</span>
-          <span class="wg-header-count">${g.items.length}${g.total&&g.total!==g.items.length?` / ${g.total}`:''}</span>
+          <span class="wg-header-count">${g.items.length}</span>
           <div class="wg-line"></div>
           ${arrow}
         </div>
         <div class="wg-cards${isCollapsed?' collapsed':''}">
           <div class="wg-cards-inner">
-            ${searchBar}
-            ${cardsHTML}
+            ${g.items.map(w=>renderCard(w)).join('')}
           </div>
         </div>
       </div>`;
