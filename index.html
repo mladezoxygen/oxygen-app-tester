@@ -267,50 +267,6 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 .wpi-tags{display:flex;flex-wrap:wrap;gap:3px;margin-bottom:7px}
 .wpi-actions{display:flex;gap:4px;flex-wrap:wrap;align-items:center}
 .wpi-parts{font-size:.69rem;color:var(--muted);margin-top:4px}
-/* WATCH GROUP SECTIONS */
-.wg-section{border-radius:14px;padding:14px 16px;margin-bottom:22px}
-.wg-section:last-child{margin-bottom:0}
-.wg-section.curr{background:rgba(255,209,102,.05);border:1px solid rgba(255,209,102,.18)}
-.wg-section.future{background:rgba(123,47,190,.07);border:1px solid rgba(155,79,222,.18)}
-.wg-section.past{background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.07)}
-.wg-section .wc{margin-bottom:10px}
-.wg-section .wc:last-child{margin-bottom:0}
-.wg-header{display:flex;align-items:center;gap:10px;margin-bottom:14px;user-select:none}
-.wg-header-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
-.wg-section.curr .wg-header-dot{background:var(--gold);box-shadow:0 0 6px var(--gold);animation:pulse-gold 2s infinite}
-.wg-section.future .wg-header-dot{background:var(--purple-xl)}
-.wg-section.past .wg-header-dot{background:var(--muted)}
-.wg-header-label{font-size:.72rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
-.wg-section.curr .wg-header-label{color:var(--gold)}
-.wg-section.future .wg-header-label{color:var(--purple-xl)}
-.wg-section.past .wg-header-label{color:var(--muted)}
-.wg-header-count{font-size:.67rem;font-weight:700;padding:1px 8px;border-radius:20px}
-.wg-section.curr .wg-header-count{background:rgba(255,209,102,.15);color:var(--gold)}
-.wg-section.future .wg-header-count{background:rgba(155,79,222,.15);color:var(--purple-xl)}
-.wg-section.past .wg-header-count{background:rgba(255,255,255,.07);color:var(--muted)}
-.wg-line{flex:1;height:1px}
-.wg-section.curr .wg-line{background:rgba(255,209,102,.2)}
-.wg-section.future .wg-line{background:rgba(155,79,222,.2)}
-.wg-section.past .wg-line{background:rgba(255,255,255,.07)}
-/* Past watch search */
-.watch-search-row{display:flex;gap:8px;align-items:center;margin-bottom:14px;flex-wrap:wrap}
-.watch-search-wrap{flex:1;min-width:180px;position:relative;display:flex;align-items:center}
-.watch-search-icon{position:absolute;left:11px;font-size:.85rem;pointer-events:none;line-height:1}
-.watch-search-input{width:100%;padding:9px 34px 9px 34px;background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:'Nunito',sans-serif;font-size:.86rem;outline:none;transition:border-color .2s,background .2s}
-.watch-search-input:focus{border-color:var(--purple-l);background:rgba(255,255,255,.08)}
-.watch-search-input::placeholder{color:var(--muted)}
-.watch-search-clear{position:absolute;right:8px;background:none;border:none;color:var(--muted);cursor:pointer;font-size:.8rem;padding:4px;line-height:1;border-radius:4px;transition:color .15s;display:none}
-.watch-search-clear:hover{color:var(--text)}
-.watch-search-input:not(:placeholder-shown)~.watch-search-clear{display:block}
-/* Collapsible past section */
-.wg-header.collapsible{cursor:pointer;border-radius:8px;padding:4px 6px;margin:-4px -6px;transition:background .15s}
-.wg-header.collapsible:hover{background:rgba(255,255,255,.05)}
-.wg-collapse-arrow{font-size:.7rem;color:var(--muted);transition:transform .25s ease;flex-shrink:0;margin-left:2px}
-.wg-collapse-arrow.open{transform:rotate(0deg)}
-.wg-collapse-arrow.closed{transform:rotate(-90deg)}
-.wg-cards{display:grid;grid-template-rows:1fr;transition:grid-template-rows .3s ease,opacity .25s ease;opacity:1;overflow:hidden}
-.wg-cards.collapsed{grid-template-rows:0fr;opacity:0}
-.wg-cards-inner{min-height:0}
 /* WATCH LIST CARDS */
 .wc{background:var(--card-bg);border:1px solid var(--border);border-radius:14px;padding:0;margin-bottom:12px;animation:fu .3s ease;overflow:hidden}
 .wc.wc-curr{border-color:rgba(255,209,102,.35);animation:fu .3s ease,wc-curr-glow 3.5s ease 1s infinite}
@@ -1107,14 +1063,6 @@ input:checked+.slider::before{transform:translateX(18px)}
           <button class="tab" onclick="setWF('mine',this)">⭐ Moje</button>
         </div>
       </div>
-      <div class="watch-search-row">
-        <div class="watch-search-wrap">
-          <span class="watch-search-icon">🔍</span>
-          <input class="watch-search-input" id="watchSearchInput" type="text" placeholder="Hledat vedoucího, datum, téma…" oninput="window._watchSearchQ=this.value;renderWatch()" autocomplete="off" />
-          <button class="watch-search-clear" id="watchSearchClear" onclick="window._watchSearchQ='';document.getElementById('watchSearchInput').value='';renderWatch()" title="Vymazat">✕</button>
-        </div>
-        <button class="past-search-chip" id="watchSearchMineBtn" onclick="window._watchSearchMine=!window._watchSearchMine;this.classList.toggle('on');renderWatch()">⭐ Moje</button>
-      </div>
       <div id="watchList"><div class="loading"><div class="spin"></div>Načítám…</div></div>
     </div>
 
@@ -1478,6 +1426,7 @@ window.submitPublicPrayer=async()=>{
       ?`✓ Žádost odeslána, ${senderName}! Budeme se za tebe modlit.`
       :'✓ Žádost odeslána anonymně! Budeme se za tebe modlit.';
     msgEl.style.display='block';
+    sendDiscordPrayerRequest(senderName||'Anonymní', text, cat, !senderName);
     document.getElementById('pubText').value='';
     document.getElementById('pubName').value='';
     _pubName='';
@@ -1772,11 +1721,50 @@ window.sendCmt=async(cn,docId,isAnon,createdBy)=>{
 window.delCmt=async(cn,id,docId,isAnon,createdBy)=>{confirmDialog('Smazat komentář?',async()=>{try{await deleteDoc(doc(db,cn+'_comments',id));await refreshCmts(cn,docId,isAnon==='true',createdBy);toast('Komentář smazán');}catch(e){toast('Chyba: '+e.message);}});};
 
 // ── REQUESTS ──────────────────────────────────────────────────────────────
+// ── DISCORD WEBHOOK ───────────────────────────────────────────────────────
+const DISCORD_WEBHOOK = 'ZDE_VLOZ_SVUJ_WEBHOOK_URL';
+const DISCORD_ROLE_ID = '1417990322067341434';
+
+async function sendDiscordPrayerRequest(name, text, cat, isAnon) {
+  const categoryEmoji = {
+    'osobní': '💜', 'rodina': '👨‍👩‍👧', 'zdraví': '❤️‍🩹',
+    'vztahy': '🤝', 'práce': '💼', 'duchovní': '✝️', 'jiné': '🕊️'
+  };
+  const emoji = categoryEmoji[cat] || '🙏';
+  const displayName = isAnon ? '🎭 Anonymní' : `🙏 ${name}`;
+
+  const embed = {
+    title: '🙏 Nová žádost o modlitbu',
+    color: 0x7B2FBE,
+    fields: [
+      { name: '👤 Od', value: isAnon ? '*Anonymní*' : name, inline: true },
+      { name: `${emoji} Kategorie`, value: cat || 'jiné', inline: true },
+      { name: '📝 Žádost', value: text.length > 1000 ? text.slice(0, 997) + '…' : text }
+    ],
+    footer: { text: 'Oxygen – Modlitební tým' },
+    timestamp: new Date().toISOString()
+  };
+
+  try {
+    await fetch(DISCORD_WEBHOOK, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        content: `<@&${DISCORD_ROLE_ID}> ${isAnon ? 'Anonymní žádost o modlitbu 🎭' : `${name} žádá o modlitbu 🙏`}`,
+        embeds: [embed]
+      })
+    });
+  } catch(e) {
+    console.warn('Discord webhook selhal:', e);
+  }
+}
+// ──────────────────────────────────────────────────────────────────────────
+
 window.addRequest=async()=>{
   const text=document.getElementById('reqText').value.trim();const cat=document.getElementById('reqCat').value;
   if(!text){toast('✏️ Napiš prosím žádost');return;}
   const reqType=document.getElementById('reqType')?.value||'jednorázová';
-  try{await addDoc(collection(db,'requests'),{name:CU.name,text,cat,reqType,prayedBy:[],answered:false,createdBy:CU.username,ts:serverTimestamp()});document.getElementById('reqText').value='';toast('🙏 Žádost přidána!');}catch(e){toast('Chyba: '+e.message);}
+  try{await addDoc(collection(db,'requests'),{name:CU.name,text,cat,reqType,prayedBy:[],answered:false,createdBy:CU.username,ts:serverTimestamp()});document.getElementById('reqText').value='';toast('🙏 Žádost přidána!');sendDiscordPrayerRequest(CU.name,text,cat,false);}catch(e){toast('Chyba: '+e.message);}
 };
 window.setRF=(f,btn)=>{RF=f;btn.closest('div.tabs').querySelectorAll('.tab').forEach(b=>b.classList.remove('on'));btn.classList.add('on');renderReqs();};
 window.setRT=(t,btn)=>{RT=t;btn.closest('div.tabs').querySelectorAll('.tab').forEach(b=>b.classList.remove('on'));btn.classList.add('on');renderReqs();};
@@ -1899,7 +1887,7 @@ window.delChk=async id=>{const item=(window._chk||[]).find(x=>x._id===id);if(!it
 // Anyone can join an existing watch as participant
 // Leader is NOT in participants[] – tracked separately via assignedTo
 
-window.setWF=(f,btn)=>{WF=f;document.querySelectorAll('#sec-watch .tab').forEach(b=>b.classList.remove('on'));btn.classList.add('on');window._watchSearchQ='';window._watchSearchMine=false;const inp=document.getElementById('watchSearchInput');if(inp)inp.value='';const mb=document.getElementById('watchSearchMineBtn');if(mb)mb.classList.remove('on');renderWatch();};
+window.setWF=(f,btn)=>{WF=f;document.querySelectorAll('#sec-watch .tab').forEach(b=>b.classList.remove('on'));btn.classList.add('on');renderWatch();};
 
 function watchesOnDay(dateStart){
   return(window._watch||[]).filter(w=>{
@@ -2165,25 +2153,6 @@ function watchAvatarEl(un,isLeader){
 }
 
 window.renderWatch=function renderWatch(){
-  // Sync search UI state without touching scroll
-  const searchInput=document.getElementById('watchSearchInput');
-  const searchMineBtn=document.getElementById('watchSearchMineBtn');
-  if(searchInput&&searchInput.value!==(window._watchSearchQ||''))searchInput.value=window._watchSearchQ||'';
-  if(searchMineBtn)searchMineBtn.classList.toggle('on',!!window._watchSearchMine);
-
-  const sq=(window._watchSearchQ||'').toLowerCase().trim();
-  const sMine=!!window._watchSearchMine;
-
-  function matchesSearch(w){
-    if(sMine&&!iAmInvolved(w))return false;
-    if(!sq)return true;
-    const ldr=userByUn(w.assignedTo);
-    const ldrName=(ldr?ldr.name:w.person||'').toLowerCase();
-    const date=(w.date||'').toLowerCase();
-    const topics=(w.topics||[]).join(' ').toLowerCase();
-    return ldrName.includes(sq)||date.includes(sq)||topics.includes(sq);
-  }
-
   const allW=[...(window._watch||[])];
   allW.sort((a,b)=>{
     const ta=watchTiming(a),tb=watchTiming(b);
@@ -2192,22 +2161,27 @@ window.renderWatch=function renderWatch(){
     if(ta.isPast&&tb.isPast)return new Date(b.startDate)-new Date(a.startDate);
     return 0;
   });
-
   let list=allW;
   if(WF==='curr')list=allW.filter(w=>watchTiming(w).isCurr);
   else if(WF==='future')list=allW.filter(w=>watchTiming(w).isFuture);
   else if(WF==='mine')list=allW.filter(w=>iAmInvolved(w));
-
-  // Apply global search
-  list=list.filter(w=>matchesSearch(w));
-
+  // For 'all' tab: limit past watches to avoid infinite scroll — show all curr/future + last N past
+  const PAST_LIMIT=10;
+  if(WF==='all'){
+    const currFut=list.filter(w=>!watchTiming(w).isPast);
+    const past=list.filter(w=>watchTiming(w).isPast);
+    const showAll=window._showAllPast===true;
+    list=[...currFut,...(showAll?past:past.slice(0,PAST_LIMIT))];
+    window._pastWatchTotal=past.length;
+    window._pastWatchShown=showAll?past.length:Math.min(past.length,PAST_LIMIT);
+  }
   const el=document.getElementById('watchList');
-  const showGroupHeaders=(WF==='all'||WF==='mine');
-
-  const groupLabels={curr:'Probíhá teď',future:'Plánované stráže',past:'Minulé stráže'};
-  const groupIcons={curr:'🔥',future:'📅',past:'📜'};
-
-  function renderCard(w){
+  if(!list.length){
+    const msgs={curr:'Žádná aktuální stráž.',future:'Žádná plánovaná stráž.',mine:'Zatím nejsi u žádné stráže.<br>Přidej se v kalendáři výše.',all:'Žádné stráže ještě nebyly přidány.<br>Admin nebo modlitebník může přidat stráž kliknutím na den v kalendáři.'};
+    el.innerHTML=`<div class="empty"><div class="ei">⌚</div><p>${msgs[WF]||msgs.all}</p></div>`;return;
+  }
+  const pastMore=(WF==='all'&&!window._showAllPast&&(window._pastWatchTotal||0)>PAST_LIMIT);
+  el.innerHTML=list.map(w=>{
     const {isCurr,isFuture,isPast}=watchTiming(w);
     const isLeader=w.assignedTo===CU.username;
     const iJoin=(w.participants||[]).includes(CU.username);
@@ -2221,11 +2195,13 @@ window.renderWatch=function renderWatch(){
     const parts=w.participants||[];
     const partCount=parts.length;
     const totalLabel=csWatchLeader(partCount);
+    // avatars: leader first (gold border), then participants
     const leaderAv=watchAvatarEl(w.assignedTo,true);
     const partAvatars=parts.slice(0,6).map(un=>watchAvatarEl(un,false)).join('');
     const extraAv=parts.length>6?`<div class="wc-av" style="background:var(--surface);color:var(--muted);font-size:.6rem">+${parts.length-6}</div>`:'';
     const partNames=parts.slice(0,5).map(un=>{const u=userByUn(un);return u?.name?.split(' ')[0]||un;}).join(', ')+(parts.length>5?' a další':'');
-    const wc_extra_cls=isCurr?' wc-curr':isFuture?' wc-future':'';
+    const animatePast=isPast&&window._animatePast;
+    const wc_extra_cls=isCurr?' wc-curr':isFuture?' wc-future':animatePast?' wc-past-new':'';
     return`<div class="wc${wc_extra_cls}">
       <div class="wc-header">
         <div class="wc-header-left">
@@ -2258,51 +2234,16 @@ window.renderWatch=function renderWatch(){
         </div>
       </div>
     </div>`;
-  }
-
-  if(!list.length&&!showGroupHeaders){
-    const isSearching=sq||sMine;
-    const msgs={curr:'Žádná aktuální stráž.',future:'Žádná plánovaná stráž.',mine:'Zatím nejsi u žádné stráže.<br>Přidej se v kalendáři výše.',all:'Žádné stráže ještě nebyly přidány.'};
-    el.innerHTML=`<div class="empty"><div class="ei">⌚</div><p>${isSearching?'Nic neodpovídá hledání.':msgs[WF]||msgs.all}</p></div>`;
-    return;
-  }
-
-  if(showGroupHeaders){
-    const groups=[
-      {key:'curr',items:list.filter(w=>watchTiming(w).isCurr)},
-      {key:'future',items:list.filter(w=>watchTiming(w).isFuture)},
-      {key:'past',items:list.filter(w=>watchTiming(w).isPast)},
-    ].filter(g=>g.items.length);
-    if(!groups.length){
-      el.innerHTML=`<div class="empty"><div class="ei">⌚</div><p>Nic neodpovídá hledání.</p></div>`;
-      return;
-    }
-    const pastCollapsed=window._pastCollapsed===true&&!sq&&!sMine;
-    el.innerHTML=groups.map(g=>{
-      const isPastGroup=g.key==='past'&&WF==='all';
-      const isCollapsed=isPastGroup&&pastCollapsed;
-      const headerCls=isPastGroup?'wg-header collapsible':'wg-header';
-      const headerClick=isPastGroup?`onclick="window._pastCollapsed=!window._pastCollapsed;renderWatch()"`:'';
-      const arrow=isPastGroup?`<span class="wg-collapse-arrow ${isCollapsed?'closed':'open'}">▾</span>`:'';
-      return`<div class="wg-section ${g.key}">
-        <div class="${headerCls}" ${headerClick}>
-          <div class="wg-header-dot"></div>
-          <span class="wg-header-label">${groupIcons[g.key]} ${groupLabels[g.key]}</span>
-          <span class="wg-header-count">${g.items.length}</span>
-          <div class="wg-line"></div>
-          ${arrow}
-        </div>
-        <div class="wg-cards${isCollapsed?' collapsed':''}">
-          <div class="wg-cards-inner">
-            ${g.items.map(w=>renderCard(w)).join('')}
-          </div>
-        </div>
-      </div>`;
-    }).join('');
-  } else {
-    el.innerHTML=list.map(w=>renderCard(w)).join('');
-  }
   window._animatePast=false;
+  }).join('');
+  // Append "load more" button as DOM element so it's never stale
+  if(WF==='all'&&window._showAllPast!==true&&(window._pastWatchTotal||0)>10){
+    const btn=document.createElement('div');
+    btn.style.cssText='text-align:center;padding:14px 0';
+    btn.innerHTML=`<button class="bs b-ghost" style="font-size:.82rem">📜 Zobrazit všechny minulé stráže (${window._pastWatchTotal})</button>`;
+    btn.querySelector('button').onclick=()=>{window._showAllPast=true;window._animatePast=true;renderWatch();};
+    el.appendChild(btn);
+  }
 }
 
 window.delWatch=async id=>{
